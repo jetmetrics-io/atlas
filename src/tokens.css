@@ -1,0 +1,208 @@
+/* ============================================================
+   JETMETRICS BRAND SYSTEM — DESIGN TOKENS
+   Единственный источник правды. Подключай ЭТОТ файл первым в
+   любом лендинге/продукте и обращайся к переменным, а не к хексам.
+   Обновляешь цвет/шрифт здесь — меняется везде.
+   v1.0 · 2026-07-03
+   ============================================================ */
+
+/* ---- Шрифты грузятся отдельно (см. assets/fonts.md):
+   <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"> */
+
+:root {
+  /* ========== БРЕНД-ЯДРО ========== */
+  --jm-green:            #0E9C7D;  /* сигнатура бренда */
+  --jm-green-press:      #0B7D64;  /* hover / active */
+  --jm-green-deep:       #064D2B;  /* акцентный текст на светлом */
+  --jm-green-tint:       #E7F6F1;  /* фон-подложка */
+  --jm-green-tint-soft:  #E8FBF7;
+
+  /* ========== СЕМАНТИЧЕСКИЕ АКЦЕНТЫ (несут смысл причинности) ========== */
+  /* green уже выше = POSITIVE / focus / success                          */
+  --jm-coral:            #FF5C60;  /* NEGATIVE / cost / risk / падение    */
+  --jm-coral-text:       #DC4048;  /* тот же смысл, но контрастнее для текста на светлом */
+  --jm-coral-tint:       #FDE9EA;
+
+  --jm-yellow:           #FFC700;  /* ATTENTION / lever / watch           */
+  --jm-yellow-text:      #A07A00;  /* жёлтый не читается как текст — вот замена */
+  --jm-yellow-tint:      #FFF4D6;
+
+  --jm-blue:             #4991FF;  /* INFO / driver / secondary           */
+  --jm-blue-press:       #357EF0;
+  --jm-blue-tint:        #EAF2FF;
+
+  --jm-purple:           #9370DB;  /* TERTIARY / outcome / segment        */
+  --jm-purple-text:      #6D4FB0;
+  --jm-purple-tint:      #F0EBFA;
+
+  /* ========== НЕЙТРАЛИ ========== */
+  --jm-ink:              #080B0D;  /* дисплей-текст + фон тёмных секций   */
+  --jm-ink-800:          #15181C;
+  --jm-ink-700:          #1A1F26;
+  --jm-text:             #20262E;  /* основной текст body                 */
+  --jm-muted:            #6B7372;  /* вторичный текст                     */
+  --jm-faint:            #98A0A6;  /* подписи, плейсхолдеры               */
+  --jm-line:             #E4E8EC;  /* границы                             */
+  --jm-line-soft:        #EEF1F3;  /* мягкие разделители                  */
+  --jm-bg:               #F6F8FA;  /* фон страницы                        */
+  --jm-surface:          #FFFFFF;  /* карточки                            */
+  --jm-chart-compare:    #C9CED3;  /* линия сравнения на графиках         */
+
+  /* На тёмных секциях (ink фон) */
+  --jm-on-dark:          #FFFFFF;
+  --jm-on-dark-muted:    rgba(255,255,255,.64);
+  --jm-on-dark-line:     rgba(255,255,255,.14);
+
+  /* ========== ТИПОГРАФИКА ========== */
+  --jm-font-sans: 'Onest', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --jm-font-mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+
+  /* Шкала кегля (1rem = 16px) */
+  --jm-display-xl: 3.5rem;    /* hero H1                */
+  --jm-display-l:  2.75rem;
+  --jm-display-m:  2rem;
+  --jm-h1:         1.75rem;
+  --jm-h2:         1.375rem;
+  --jm-h3:         1.125rem;
+  --jm-body-l:     1.125rem;
+  --jm-body:       1rem;
+  --jm-body-s:     0.875rem;
+  --jm-label:      0.75rem;   /* mono uppercase tracked */
+  --jm-caption:    0.75rem;
+
+  /* Веса */
+  --jm-w-regular:  400;
+  --jm-w-medium:   500;
+  --jm-w-semibold: 600;
+  --jm-w-bold:     700;
+  --jm-w-black:    800;  /* только дисплей-заголовки */
+
+  /* Интерлиньяж */
+  --jm-lh-tight:   1.05;  /* дисплей */
+  --jm-lh-snug:    1.2;   /* заголовки */
+  --jm-lh-body:    1.6;   /* текст */
+  --jm-tracking-label: 0.08em;
+
+  /* ========== СЕТКА / ОТСТУПЫ (шаг 4px) ========== */
+  --jm-space-1:  4px;
+  --jm-space-2:  8px;
+  --jm-space-3:  12px;
+  --jm-space-4:  16px;
+  --jm-space-5:  20px;
+  --jm-space-6:  24px;
+  --jm-space-8:  32px;
+  --jm-space-10: 40px;
+  --jm-space-12: 48px;
+  --jm-space-16: 64px;
+  --jm-space-20: 80px;
+  --jm-space-24: 96px;
+  --jm-space-32: 128px;
+
+  --jm-container:      1160px;  /* макс. ширина контента */
+  --jm-container-narrow: 720px; /* текстовые блоки       */
+  --jm-gutter:         24px;
+  --jm-section-y:      96px;    /* вертикальный отступ секции (desktop) */
+
+  /* ========== РАДИУСЫ ========== */
+  --jm-r-xs:   6px;
+  --jm-r-sm:   8px;   /* инпуты, мелкие чипы */
+  --jm-r-md:   12px;  /* кнопки              */
+  --jm-r-lg:   16px;  /* карточки            */
+  --jm-r-xl:   20px;  /* крупные панели      */
+  --jm-r-pill: 999px; /* бейджи, чипы        */
+
+  /* ========== ТЕНИ / ГЛУБИНА ========== */
+  --jm-e1: 0 1px 2px rgba(8,11,13,.06);
+  --jm-e2: 0 4px 16px rgba(8,11,13,.06);   /* карточка по умолчанию */
+  --jm-e3: 0 12px 32px rgba(8,11,13,.10);  /* поднятая / hover      */
+  --jm-ring: 0 0 0 3px rgba(14,156,125,.28); /* focus-кольцо        */
+
+  /* ========== ГРАНИЦЫ ========== */
+  --jm-border: 1px solid var(--jm-line);
+
+  /* ========== АНИМАЦИЯ ========== */
+  --jm-ease: cubic-bezier(.2,.6,.2,1);
+  --jm-dur:  .17s;
+}
+
+/* ============================================================
+   ТЁМНАЯ ТЕМА — data-theme="dark" на <html>. Переопределяем
+   только нейтрали (переворот) и слегка ярчим акценты (см.
+   Brand System / foundations/10_theming-dark-mode.md).
+   ============================================================ */
+[data-theme="dark"] {
+  /* нейтрали переворачиваются */
+  --jm-ink:              #F5F7F9;
+  --jm-ink-800:          #E6EAEE;
+  --jm-ink-700:          #1B2027;  /* приподнятая поверхность (модалка/поповер) */
+  --jm-text:             #E6EAEE;
+  --jm-muted:            #9BA3AC;
+  --jm-faint:            #7C848D;
+  --jm-line:             #262B31;
+  --jm-line-soft:        #1E2229;
+  --jm-bg:               #0C0F12;
+  --jm-surface:          #14181D;
+  --jm-chart-compare:    #3A424B;
+
+  /* акценты чуть ярче, роли те же */
+  --jm-green:            #16B08C;
+  --jm-green-press:      #12C29A;
+  --jm-green-deep:       #7EE8CB;
+  --jm-coral:            #FF6B6E;
+  --jm-coral-text:       #FF8A8C;
+  --jm-yellow:           #FFD23F;
+  --jm-yellow-text:      #E7B22E;
+  --jm-blue:             #5B9CFF;
+  --jm-blue-press:       #7AAEFF;
+  --jm-purple:           #A98BE6;
+  --jm-purple-text:      #C0A8F0;
+
+  /* тинты — полупрозрачные, чтобы ложиться на тёмный фон */
+  --jm-green-tint:       rgba(22,176,140,.16);
+  --jm-green-tint-soft:  rgba(22,176,140,.12);
+  --jm-coral-tint:       rgba(255,107,110,.16);
+  --jm-yellow-tint:      rgba(255,210,63,.16);
+  --jm-blue-tint:        rgba(91,156,255,.16);
+  --jm-purple-tint:      rgba(169,139,230,.16);
+
+  /* тени усилены на тёмном */
+  --jm-e1: 0 1px 2px rgba(0,0,0,.4);
+  --jm-e2: 0 4px 16px rgba(0,0,0,.42);
+  --jm-e3: 0 12px 32px rgba(0,0,0,.52);
+  --jm-ring: 0 0 0 3px rgba(22,176,140,.36);
+}
+
+/* ========== БРЕЙКПОИНТЫ (для справки — используй в @media) ==========
+   sm: 640px · md: 768px · lg: 1024px · xl: 1280px
+   На мобиле: --jm-section-y ужимается до 56px, display-xl до 2.25rem. */
+@media (max-width: 768px) {
+  :root {
+    --jm-display-xl: 2.25rem;
+    --jm-display-l:  1.875rem;
+    --jm-display-m:  1.5rem;
+    --jm-section-y:  56px;
+  }
+}
+
+/* ============================================================
+   БАЗОВЫЕ УТИЛИТЫ (необязательные, но задают дефолтный тон)
+   ============================================================ */
+.jm-base {
+  font-family: var(--jm-font-sans);
+  color: var(--jm-text);
+  background: var(--jm-bg);
+  font-size: var(--jm-body);
+  line-height: var(--jm-lh-body);
+  -webkit-font-smoothing: antialiased;
+}
+.jm-display { font-weight: var(--jm-w-black); line-height: var(--jm-lh-tight); letter-spacing: -0.02em; color: var(--jm-ink); }
+.jm-accent  { color: var(--jm-green); }
+.jm-muted   { color: var(--jm-muted); }
+.jm-label   {
+  font-family: var(--jm-font-mono);
+  font-size: var(--jm-label);
+  font-weight: var(--jm-w-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--jm-tracking-label);
+  color: var(--jm-muted);
+}
