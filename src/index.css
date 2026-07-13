@@ -131,21 +131,32 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
   background: var(--jm-green-tint); border-radius: var(--jm-r-pill); padding: 3px 9px;
 }
 
-/* Закрытые карты: замок + переход на покупку. Имя и счётчик видны чётко (без матового стекла). */
-.mcard__lock { position: absolute; top: 18px; right: 20px; color: var(--jm-faint); display: grid; place-items: center; transition: color var(--jm-dur) var(--jm-ease); }
-.mcard--locked:hover { border-color: var(--jm-green); }
-.mcard--locked:hover .mcard__lock { color: var(--jm-green); }
-/* Место под CTA зарезервировано (padding-bottom) заранее, а сам CTA спозиционирован
-   абсолютно и на ховере лишь проявляется — карточка НЕ меняет высоту, поэтому нет
-   реф-лоу каталога и мигающей полосы прокрутки в iframe. */
-.mcard--locked { padding-bottom: 46px; }
-.mcard__cta {
-  position: absolute; left: 22px; bottom: 18px; opacity: 0; white-space: nowrap;
-  font-family: var(--jm-font-mono); font-size: 11px; font-weight: 700; letter-spacing: .04em;
-  color: var(--jm-green);
-  transition: opacity var(--jm-dur) var(--jm-ease);
+/* Закрытые карты: замок-чип. В покое — только иконка замка в углу; на ховере чип
+   раскрывается вправо-влево в «Открыть все карты». Чип позиционирован АБСОЛЮТНО,
+   поэтому его рост НЕ меняет высоту карточки → нет реф-лоу каталога и мигания. */
+.mcard__lock {
+  position: absolute; top: 15px; right: 15px; z-index: 2;
+  display: inline-flex; align-items: center; height: 28px; padding: 0 6px;
+  border-radius: var(--jm-r-pill); color: var(--jm-faint); background: transparent;
+  overflow: hidden; white-space: nowrap;
+  transition: color var(--jm-dur) var(--jm-ease), background var(--jm-dur) var(--jm-ease);
 }
-.mcard--locked:hover .mcard__cta { opacity: 1; }
+.mcard__lock svg { flex: none; }
+.mcard__lock-txt {
+  max-width: 0; opacity: 0; overflow: hidden;
+  font-family: var(--jm-font-mono); font-size: 11px; font-weight: 700; letter-spacing: .02em;
+  transition: max-width var(--jm-dur) var(--jm-ease), opacity var(--jm-dur) var(--jm-ease), margin-left var(--jm-dur) var(--jm-ease);
+}
+.mcard--locked:hover { border-color: var(--jm-green); }
+.mcard--locked:hover .mcard__lock { color: var(--jm-green); background: var(--jm-green-tint); }
+.mcard--locked:hover .mcard__lock-txt { max-width: 170px; opacity: 1; margin-left: 5px; }
+
+/* Витрина бесплатных карт — вверху каталога, чтобы первый экран не был сплошь «под замком». */
+.catalog__bar { display: flex; justify-content: flex-end; padding-top: 14px; margin-bottom: -4px; }
+.freebar { margin: 6px 0 40px; padding: 18px 20px 22px; border: 1px solid var(--jm-green); border-radius: var(--jm-r-xl); background: var(--jm-green-tint-soft); }
+.freebar__head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.freebar__badge { font-family: var(--jm-font-mono); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #fff; background: var(--jm-green); border-radius: var(--jm-r-pill); padding: 4px 11px; flex: none; }
+.freebar__title { font-weight: var(--jm-w-semibold); font-size: var(--jm-body); color: var(--jm-ink); }
 
 /* ── Экран карты ── */
 .mapscreen { display: flex; flex-direction: column; height: calc(100vh - 64px); min-height: 0; }

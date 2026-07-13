@@ -12,6 +12,7 @@ import { GroupNode } from './GroupNode'
 import { NodeCard } from './NodeCard'
 import { EdgeCard } from './EdgeCard'
 import { Tour, type TourStep } from './Tour'
+import { ThemeToggle } from '../site/ThemeToggle'
 import { roleStyle, signColor } from '../atlas/style'
 import type { AtlasEdge } from '../atlas/types'
 
@@ -637,6 +638,8 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
             onPaneClick={() => { setSelNode(null); setSelEdge(null); setActiveRole(null) }}
           >
             <Background color="#C4CCD4" gap={22} size={1.6} />
+            {/* Шапки в приложении нет — переключатель темы живёт на холсте (верх-право). */}
+            <Panel position="top-right" className="themepanel"><ThemeToggle /></Panel>
             <MiniMap
               pannable zoomable
               nodeColor={(n) => n.type === 'group' ? 'transparent' : roleStyle((n.data as { role: string }).role).color}

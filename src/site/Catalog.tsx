@@ -1,4 +1,5 @@
 import { FAMILIES, sectionsOfFamily, BASE, TIER, isSectionFree } from '../atlas/atlas'
+import { ThemeToggle } from './ThemeToggle'
 
 // Куда ведёт клик по закрытой карте (лендинг с покупкой полного доступа).
 const BUY_URL = 'https://джетметрикс.рф/atlas'
@@ -48,6 +49,8 @@ const ICONS: Record<string, JSX.Element> = {
   ),
 }
 
+type Sec = { name: string; slug: string; nodes: number }
+
 export function Catalog({ onOpen }: { onOpen: (section: string) => void }) {
   const meta = BASE.meta as { updated?: string }
   const families = FAMILIES.filter((f) => sectionsOfFamily(f).length > 0)
@@ -61,9 +64,50 @@ export function Catalog({ onOpen }: { onOpen: (section: string) => void }) {
     [String(totalMetrics), 'метрик'],
   ]
 
+  // Бесплатные карты (только free-сборка) — для витрины сверху, чтобы первый экран
+  // не был сплошь «под замком».
+  const freeMaps: Sec[] = TIER === 'free'
+    ? BASE.sections.filter((s) => s.name && isSectionFree(s.name))
+    : []
+
+  // Одна карточка каталога. showIndex — моно-индекс в углу (только full-сборка).
+  const card = (s: Sec, index?: number) => {
+    const free = isSectionFree(s.name)
+    const locked = TIER === 'free' && !free
+    const cls = 'mcard' +
+      (TIER === 'free' && free ? ' mcard--free' : '') +
+      (locked ? ' mcard--locked' : '')
+    return (
+      <div key={s.slug} className={cls}
+        onClick={() => (locked ? goBuy() : onOpen(s.name))}>
+        {locked ? (
+          // Замок-чип: в покое — только иконка; на ховере раскрывается в «Открыть все карты».
+          // Абсолютное позиционирование → раскрытие НЕ меняет высоту карточки.
+          <span className="mcard__lock" aria-label="Открыть все карты">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none"
+              stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="5" y="11" width="14" height="9" rx="2" />
+              <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+            </svg>
+            <span className="mcard__lock-txt">Открыть все карты</span>
+          </span>
+        ) : TIER === 'full' && typeof index === 'number' ? (
+          <span className="mcard__ix">{String(index + 1).padStart(2, '0')}</span>
+        ) : null}
+        {TIER === 'free' && free && <span className="mcard__badge">Бесплатно</span>}
+        <div className="mcard__nm">{s.name}</div>
+        <div className="mcard__meta">{s.nodes} метрик</div>
+      </div>
+    )
+  }
+
   return (
     <div className="catalog">
       <div className="container">
+        <div className="catalog__bar">
+          <ThemeToggle />
+        </div>
+
         <div className="catalog__top">
           <div className="catalog__hero">
             <span className="eyebrow"><span className="line" />АТЛАС МЕТРИК</span>
@@ -87,6 +131,20 @@ export function Catalog({ onOpen }: { onOpen: (section: string) => void }) {
           </aside>
         </div>
 
+        {freeMaps.length > 0 && (
+          <section className="freebar">
+            <div className="freebar__head">
+              <span className="freebar__badge">Открыто бесплатно</span>
+              <span className="freebar__title">
+                {freeMaps.length} {freeMaps.length === 1 ? 'карта' : 'карты'} доступны целиком — откройте и посмотрите, как это работает
+              </span>
+            </div>
+            <div className="mapgrid">
+              {freeMaps.map((s) => card(s))}
+            </div>
+          </section>
+        )}
+
         {FAMILIES.map((fam) => {
           const secs = sectionsOfFamily(fam)
           if (!secs.length) return null
@@ -103,35 +161,7 @@ export function Catalog({ onOpen }: { onOpen: (section: string) => void }) {
                 <span className="family__blurb">{fam.blurb}</span>
               </div>
               <div className="mapgrid">
-                {secs.map((s, i) => {
-                  const free = isSectionFree(s.name)
-                  // В full-сборке все карты обычные. В free — бесплатные с бейджем,
-                  // закрытые с замком и переходом на покупку.
-                  const locked = TIER === 'free' && !free
-                  const cls = 'mcard' +
-                    (TIER === 'free' && free ? ' mcard--free' : '') +
-                    (locked ? ' mcard--locked' : '')
-                  return (
-                    <div key={s.slug} className={cls}
-                      onClick={() => (locked ? goBuy() : onOpen(s.name))}>
-                      {locked ? (
-                        <span className="mcard__lock" aria-label="Закрытая карта">
-                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
-                            stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="5" y="11" width="14" height="9" rx="2" />
-                            <path d="M8 11V8a4 4 0 0 1 8 0v3" />
-                          </svg>
-                        </span>
-                      ) : (
-                        <span className="mcard__ix">{String(i + 1).padStart(2, '0')}</span>
-                      )}
-                      {TIER === 'free' && free && <span className="mcard__badge">Бесплатно</span>}
-                      <div className="mcard__nm">{s.name}</div>
-                      <div className="mcard__meta">{s.nodes} метрик</div>
-                      {locked && <span className="mcard__cta">Открыть все карты →</span>}
-                    </div>
-                  )
-                })}
+                {secs.map((s, i) => card(s, i))}
               </div>
             </section>
           )

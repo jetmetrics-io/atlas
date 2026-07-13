@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Header } from './site/Header'
 import { Footer } from './site/Footer'
 import { Catalog } from './site/Catalog'
 import { MapView } from './map/MapView'
@@ -53,7 +52,6 @@ export default function App() {
 
   return (
     <div className={`site${EMBED ? ' site--embed' : ''}`}>
-      {!EMBED && <Header onHome={() => setSection(null)} />}
       <main className="site__main">
         {section ? (
           <MapView section={section} onBack={() => setSection(null)} />
