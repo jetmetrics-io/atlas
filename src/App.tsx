@@ -29,21 +29,23 @@ export default function App() {
 
   // В embed сообщаем родителю (странице Тильды) высоту контента, чтобы iframe рос
   // под неё — тогда внутренней полосы прокрутки нет, остаётся одна страничная.
+  // Простой опрос: шлём высоту только когда она изменилась. Надёжнее, чем
+  // ResizeObserver/rAF (их тайминг зависит от движка и подгрузки шрифтов).
   useEffect(() => {
     if (!EMBED) return
-    let raf = 0
-    const send = () => {
-      cancelAnimationFrame(raf)
-      raf = requestAnimationFrame(() => {
-        const h = Math.ceil(document.documentElement.scrollHeight)
+    document.documentElement.classList.add('jm-embed')
+    let last = 0
+    const tick = () => {
+      const h = Math.ceil(document.documentElement.scrollHeight)
+      if (h && h !== last) {
+        last = h
         window.parent.postMessage({ type: 'jm-atlas-height', height: h }, '*')
-      })
+      }
     }
-    send()
-    const ro = new ResizeObserver(send)
-    ro.observe(document.body)
-    window.addEventListener('resize', send)
-    return () => { cancelAnimationFrame(raf); ro.disconnect(); window.removeEventListener('resize', send) }
+    tick()
+    const id = window.setInterval(tick, 350)
+    window.addEventListener('resize', tick)
+    return () => { window.clearInterval(id); window.removeEventListener('resize', tick) }
   }, [])
 
   return (

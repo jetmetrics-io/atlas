@@ -22,6 +22,11 @@ button { font-family: inherit; cursor: pointer; }
    Карта — фиксированное «окно» приложения (свой pan/zoom внутри, страницу не тянет). */
 .site--embed { min-height: 0; }
 .site--embed .mapscreen { height: 800px; }
+
+/* В embed снимаем жёсткую привязку высоты к вьюпорту (html/body/#root=100%),
+   иначе каталог измеряется короче реального и обрезается. Контент течёт
+   естественно → document.scrollHeight = настоящая высота → iframe точен. */
+html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; min-height: 100%; }
 .container { max-width: var(--jm-container); margin: 0 auto; padding: 0 var(--jm-gutter); width: 100%; }
 
 /* ── Header ── */
