@@ -1,16 +1,6 @@
 import { FAMILIES, sectionsOfFamily, BASE, TIER, isSectionFree } from '../atlas/atlas'
 import { ThemeToggle } from './ThemeToggle'
-
-// Куда ведёт клик по закрытой карте (лендинг с покупкой полного доступа).
-const BUY_URL = 'https://джетметрикс.рф/atlas'
-
-// Уводим ВЕРХНЕЕ окно (мы внутри iframe на Тильде) на страницу покупки.
-function goBuy() {
-  try {
-    if (window.top && window.top !== window.self) { window.top.location.href = BUY_URL; return }
-  } catch { /* cross-origin чтение запрещено, но навигация ниже сработает */ }
-  window.location.href = BUY_URL
-}
+import { EMBED, BUY_URL, goTop, mapPageUrl } from './nav'
 
 const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
   'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
@@ -70,6 +60,16 @@ export function Catalog({ onOpen }: { onOpen: (section: string) => void }) {
     ? BASE.sections.filter((s) => s.name && isSectionFree(s.name))
     : []
 
+  // Клик по карте: закрытая → покупка; в embed открытая ведёт на СВОЮ страницу Тильды
+  // (если она заведена), иначе — открываем карту внутри приложения.
+  const openCard = (name: string) => {
+    if (EMBED) {
+      const page = mapPageUrl(name)
+      if (page) { goTop(page); return }
+    }
+    onOpen(name)
+  }
+
   // Одна карточка каталога. showIndex — моно-индекс в углу (только full-сборка).
   const card = (s: Sec, index?: number) => {
     const free = isSectionFree(s.name)
@@ -79,7 +79,7 @@ export function Catalog({ onOpen }: { onOpen: (section: string) => void }) {
       (locked ? ' mcard--locked' : '')
     return (
       <div key={s.slug} className={cls}
-        onClick={() => (locked ? goBuy() : onOpen(s.name))}>
+        onClick={() => (locked ? goTop(BUY_URL) : openCard(s.name))}>
         {locked ? (
           // Замок-чип: в покое — только иконка; на ховере раскрывается в «Открыть все карты».
           // Абсолютное позиционирование → раскрытие НЕ меняет высоту карточки.

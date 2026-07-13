@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Footer } from './site/Footer'
 import { Catalog } from './site/Catalog'
 import { MapView } from './map/MapView'
 import { BASE, isSectionFree } from './atlas/atlas'
+import { EMBED, CATALOG_PAGE, goTop } from './site/nav'
 
 function sectionFromUrl(): string | null {
   const p = new URLSearchParams(window.location.search).get('map')
@@ -11,14 +12,11 @@ function sectionFromUrl(): string | null {
   return BASE.sections.some((s) => s.name === p) && isSectionFree(p) ? p : null
 }
 
-// Встраиваемый режим (?embed=1): без своей шапки/футера — их даёт хост-страница
-// (нативный блок Тильды). Приложение занимает весь контейнер.
-const EMBED =
-  typeof window !== 'undefined' &&
-  new URLSearchParams(window.location.search).get('embed') === '1'
-
 export default function App() {
   const [section, setSection] = useState<string | null>(() => sectionFromUrl())
+  // Открыто ли приложение сразу на карте (её отдельная страница Тильды) — тогда «назад»
+  // ведёт на страницу каталога, а не сворачивает SPA.
+  const openedOnMap = useRef(sectionFromUrl() !== null)
 
   useEffect(() => {
     const url = new URL(window.location.href)
@@ -54,7 +52,14 @@ export default function App() {
     <div className={`site${EMBED ? ' site--embed' : ''}`}>
       <main className="site__main">
         {section ? (
-          <MapView section={section} onBack={() => setSection(null)} />
+          <MapView
+            section={section}
+            onBack={() => {
+              // Если карту открыли как отдельную страницу — «назад» ведёт на каталог Тильды.
+              if (EMBED && openedOnMap.current) goTop(CATALOG_PAGE)
+              else setSection(null)
+            }}
+          />
         ) : (
           <Catalog onOpen={(s) => setSection(s)} />
         )}
