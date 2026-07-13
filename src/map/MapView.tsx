@@ -599,20 +599,6 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
 
   return (
     <div className="mapscreen">
-      <div className="mapbar">
-        <button className="mapbar__backbtn" onClick={onBack} title="В каталог" aria-label="В каталог">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
-        </button>
-        <div className="mapbar__head">
-          <span className="mapbar__fam">{fam?.title ?? 'Атлас'}</span>
-          <span className="mapbar__title" data-tour="title">{section}</span>
-        </div>
-        <span className="mapbar__spacer" />
-        <div className="seg" data-tour="modes">
-          <button className={mode === 'spine' ? 'is-active' : ''} onClick={() => setMode('spine')}>Основное</button>
-          <button className={mode === 'full' ? 'is-active' : ''} onClick={() => setMode('full')}>Полностью</button>
-        </div>
-      </div>
       <div className="mapcanvas">
         <ReactFlowProvider>
           <ReactFlow
@@ -637,8 +623,24 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
             onPaneClick={() => { setSelNode(null); setSelEdge(null); setActiveRole(null) }}
           >
             <Background color="#C4CCD4" gap={22} size={1.6} />
-            {/* Шапки в приложении нет — переключатель темы живёт на холсте (верх-право). */}
-            <Panel position="top-right" className="themepanel"><ThemeToggle /></Panel>
+            {/* Полосы-шапки нет — её края вынесены на холст. Верх-лево: назад + название. */}
+            <Panel position="top-left" className="maptop">
+              <button className="mapbar__backbtn" onClick={onBack} title="В каталог" aria-label="В каталог">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+              </button>
+              <div className="maptop__head">
+                <span className="maptop__fam">{fam?.title ?? 'Атлас'}</span>
+                <span className="maptop__title" data-tour="title">{section}</span>
+              </div>
+            </Panel>
+            {/* Верх-право: режим карты + тема. */}
+            <Panel position="top-right" className="maptr">
+              <div className="seg" data-tour="modes">
+                <button className={mode === 'spine' ? 'is-active' : ''} onClick={() => setMode('spine')}>Основное</button>
+                <button className={mode === 'full' ? 'is-active' : ''} onClick={() => setMode('full')}>Полностью</button>
+              </div>
+              <ThemeToggle />
+            </Panel>
             <MiniMap
               pannable zoomable
               nodeColor={(n) => n.type === 'group' ? 'transparent' : roleStyle((n.data as { role: string }).role).color}

@@ -164,14 +164,19 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 /* ── Экран карты ── */
 /* Шапки в приложении больше нет — карта занимает весь вьюпорт (не вычитаем её высоту). */
 .mapscreen { display: flex; flex-direction: column; height: 100vh; min-height: 0; }
-.mapbar { display: flex; align-items: center; gap: var(--jm-space-4); height: 74px; padding: 0 var(--jm-gutter); border-bottom: 1px solid var(--jm-line); background: var(--jm-surface); }
+/* Полосы-шапки над картой больше нет — её края вынесены плавающими панелями
+   на холст, карта занимает всю высоту. Верх-лево: назад + название карты. */
+.maptop { display: flex; align-items: center; gap: 9px; background: var(--jm-surface); border: 1px solid var(--jm-line); border-radius: 12px; box-shadow: var(--jm-e2); padding: 6px 12px 6px 7px; }
+.maptop__head { display: flex; flex-direction: column; gap: 1px; line-height: 1.1; min-width: 0; }
+.maptop__fam { font-family: var(--jm-font-mono); font-size: 9.5px; color: var(--jm-faint); text-transform: uppercase; letter-spacing: .07em; }
+.maptop__title { font-weight: var(--jm-w-bold); font-size: 1rem; letter-spacing: -.01em; color: var(--jm-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px; }
+/* Верх-право: режим карты + тема. */
+.maptr { display: flex; align-items: center; gap: 10px; }
 .mapbar__backbtn { width: 34px; height: 34px; display: grid; place-items: center; flex: none; border: 1px solid var(--jm-line); border-radius: 9px; background: transparent; color: var(--jm-muted); transition: all var(--jm-dur) var(--jm-ease); }
 .mapbar__backbtn:hover { color: var(--jm-ink); border-color: var(--jm-green); }
 .mapbar__backbtn:focus-visible { outline: none; box-shadow: var(--jm-ring); }
-.mapbar__head { display: flex; flex-direction: column; gap: 2px; line-height: 1.15; min-width: 0; }
-.mapbar__fam { font-family: var(--jm-font-mono); font-size: var(--jm-label); color: var(--jm-faint); text-transform: uppercase; letter-spacing: .08em; }
-.mapbar__title { font-weight: var(--jm-w-bold); font-size: 1.25rem; letter-spacing: -.01em; color: var(--jm-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mapbar__spacer { flex: 1; }
+/* Поиск/помощь тоже в верх-лево — сдвигаем ниже панели названия, чтобы не перекрывались. */
+.react-flow__panel.top.left.search { margin-top: 62px; }
 
 /* toggle свёрнуто/развёрнуто */
 .seg { display: inline-flex; background: var(--jm-bg); border: 1px solid var(--jm-line); border-radius: var(--jm-r-md); padding: 2px; }
