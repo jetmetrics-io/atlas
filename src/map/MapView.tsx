@@ -18,8 +18,9 @@ import type { AtlasEdge } from '../atlas/types'
 const nodeTypes = { metric: MetricNode, group: GroupNode }
 const edgeTypes = { metric: MetricEdge }
 
-// Отступ рамки подраздела от крайних карточек внутри него.
-const GROUP_PAD = 26
+// Максимальный отступ рамки подраздела от крайних карточек внутри него (где хватает
+// места между зонами; вплотную к соседу отступ ужимается адаптивно — см. sidePad).
+const GROUP_PAD = 30
 
 type Mode = 'spine' | 'full'
 
@@ -290,9 +291,12 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
     // больше GROUP_PAD. Так между зонами всегда остаётся просвет GAP, а сверху ещё и
     // место под ярлык-заголовок (LABEL). Наложений и торчащих в чужую зону ярлыков нет.
     const cores = [...gb.entries()].map(([title, b]) => ({ title, ...b }))
-    const GAP = 18   // гарантированный просвет между рамками соседних зон
-    const LABEL = 18 // доп. место над верхней гранью под ярлык-заголовок
-    const MINPAD = 4
+    // GAP — зазор между рамками соседних зон. По вертикали в этом зазоре сидит ярлык-
+    // заголовок нижней зоны (высота ~18px), поэтому его хватает и на подпись, и на
+    // визуальный разрыв — отдельно место под ярлык НЕ отнимаем, иначе внутренний отступ
+    // карточки от рамки схлопывается почти в ноль (карточка липнет к границе).
+    const GAP = 16
+    const MINPAD = 8 // карточка никогда не прилипает к рамке ближе этого
     // Ближайшее расстояние от грани зоны c до края другой зоны на той же стороне
     // (учитываем только зоны, пересекающиеся с c по перпендикулярной оси).
     const sidePad = (c: typeof cores[0], side: 'top' | 'bottom' | 'left' | 'right') => {
@@ -307,9 +311,8 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
         else if (side === 'left' && olapY && o.x1 <= c.x0) best = Math.min(best, c.x0 - o.x1)
       }
       if (best === Infinity) return GROUP_PAD
-      // По вертикали резервируем ещё LABEL (ярлык нижней зоны живёт в этом зазоре).
-      const reserve = side === 'top' || side === 'bottom' ? GAP + LABEL : GAP
-      return Math.max(MINPAD, Math.min(GROUP_PAD, (best - reserve) / 2))
+      // Половина зазора до соседа — обе зоны отступают поровну, между рамками остаётся GAP.
+      return Math.max(MINPAD, Math.min(GROUP_PAD, (best - GAP) / 2))
     }
     const groupNodes: Node[] = cores.map((c) => {
       const x0 = c.x0 - sidePad(c, 'left'), y0 = c.y0 - sidePad(c, 'top')
