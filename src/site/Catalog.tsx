@@ -1,5 +1,4 @@
 import { FAMILIES, sectionsOfFamily, BASE, TIER, isSectionFree } from '../atlas/atlas'
-import { ThemeToggle } from './ThemeToggle'
 import { EMBED, BUY_URL, goTop, mapPageUrl } from './nav'
 
 const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
@@ -104,10 +103,6 @@ export function Catalog({ onOpen }: { onOpen: (section: string) => void }) {
   return (
     <div className="catalog">
       <div className="container">
-        <div className="catalog__bar">
-          <ThemeToggle />
-        </div>
-
         <div className="catalog__top">
           <div className="catalog__hero">
             <span className="eyebrow"><span className="line" />АТЛАС МЕТРИК</span>

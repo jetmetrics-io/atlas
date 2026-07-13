@@ -155,7 +155,6 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 .mcard--locked:hover .mcard__lock-txt { max-width: 170px; opacity: 1; margin-left: 5px; }
 
 /* Витрина бесплатных карт — вверху каталога, чтобы первый экран не был сплошь «под замком». */
-.catalog__bar { display: flex; justify-content: flex-end; padding-top: 14px; margin-bottom: -4px; }
 .freebar { margin: 6px 0 40px; padding: 18px 20px 22px; border: 1px solid var(--jm-green); border-radius: var(--jm-r-xl); background: var(--jm-green-tint-soft); }
 .freebar__head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
 .freebar__badge { font-family: var(--jm-font-mono); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #fff; background: var(--jm-green); border-radius: var(--jm-r-pill); padding: 4px 11px; flex: none; }
@@ -182,32 +181,40 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
   --jm-chrome-line: rgba(255,255,255,.10);
   --jm-chrome-shadow: 0 10px 28px -8px rgba(0,0,0,.62), 0 2px 8px rgba(0,0,0,.46);
 }
-.idbar, .tools .seg, .tools .help__btn, .tools .search__btn, .tools .search__box,
-.tools .themetoggle, .zoomctl, .legend {
+.crumbs, .util, .zoomctl, .legend {
   background: var(--jm-chrome);
-  -webkit-backdrop-filter: blur(14px) saturate(1.6);
-  backdrop-filter: blur(14px) saturate(1.6);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   border: 1px solid var(--jm-chrome-line);
   box-shadow: var(--jm-chrome-shadow);
 }
 
-/* Верх-лево — «вы здесь»: назад + название карты, одной пилюлей. */
-.idbar { display: flex; align-items: center; gap: 3px; border-radius: var(--jm-r-pill); padding: 5px 16px 5px 6px; }
-.idbar__back { width: 32px; height: 32px; display: grid; place-items: center; flex: none; border: none; border-radius: 50%; background: transparent; color: var(--jm-muted); cursor: pointer; transition: background var(--jm-dur) var(--jm-ease), color var(--jm-dur) var(--jm-ease); }
-.idbar__back:hover { background: color-mix(in srgb, var(--jm-ink) 8%, transparent); color: var(--jm-ink); }
-.idbar__back:focus-visible { outline: none; box-shadow: var(--jm-ring); }
-.idbar__id { display: flex; flex-direction: column; gap: 0; line-height: 1.12; min-width: 0; }
-.idbar__crumb { font-family: var(--jm-font-mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--jm-faint); }
-.idbar__title { font-weight: var(--jm-w-bold); font-size: .95rem; letter-spacing: -.01em; color: var(--jm-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 280px; }
+/* Верх-лево — хлебная крошка: «Все карты» (ссылка назад в каталог) › текущая карта.
+   Разнесены назначение (куда ведёт) и текущее положение — не сливаются в один элемент. */
+.crumbs { display: flex; align-items: center; gap: 8px; border-radius: var(--jm-r-pill); padding: 8px 16px; font-size: var(--jm-body-s); }
+.crumbs__back { border: none; background: transparent; padding: 0; font: inherit; font-weight: var(--jm-w-medium); color: var(--jm-muted); cursor: pointer; border-radius: 5px; transition: color var(--jm-dur) var(--jm-ease); }
+.crumbs__back:hover { color: var(--jm-green); text-decoration: underline; text-underline-offset: 2px; }
+.crumbs__back:focus-visible { outline: none; box-shadow: var(--jm-ring); }
+.crumbs__sep { color: var(--jm-faint); font-size: 15px; line-height: 1; }
+.crumbs__cur { font-weight: var(--jm-w-bold); color: var(--jm-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
 
-/* Верх-право — инструменты: режим карты · поиск · помощь · тема. */
-.tools { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; justify-content: flex-end; max-width: min(560px, 72vw); }
+/* Верх-право — инструменты: режим карты + утилиты (помощь · поиск). */
+.tools { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; justify-content: flex-end; max-width: min(520px, 72vw); }
 
-/* Переключатель режима «Основное / Полностью». */
-.seg { display: inline-flex; border-radius: var(--jm-r-pill); padding: 3px; }
-.seg button { border: none; background: transparent; padding: 6px 14px; border-radius: var(--jm-r-pill); font-size: var(--jm-body-s); font-weight: var(--jm-w-medium); color: var(--jm-muted); cursor: pointer; transition: color var(--jm-dur) var(--jm-ease); }
-.seg button:hover { color: var(--jm-ink); }
-.seg button.is-active { background: var(--jm-surface); color: var(--jm-ink); box-shadow: var(--jm-e1); }
+/* Переключатель режима «Основное / Полностью». Дорожка затемнена, активный пункт —
+   белая приподнятая плашка с тенью и жирным текстом: сразу видно, что выбрано. */
+.seg { display: inline-flex; padding: 3px; border-radius: var(--jm-r-pill); background: color-mix(in srgb, var(--jm-ink) 9%, var(--jm-chrome-strong)); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border: 1px solid var(--jm-chrome-line); box-shadow: var(--jm-chrome-shadow); }
+.seg button { border: none; background: transparent; padding: 6px 15px; border-radius: var(--jm-r-pill); font-size: var(--jm-body-s); font-weight: var(--jm-w-medium); color: var(--jm-muted); cursor: pointer; transition: color var(--jm-dur) var(--jm-ease); }
+.seg button:hover:not(.is-active) { color: var(--jm-text); }
+.seg button.is-active { background: var(--jm-surface); color: var(--jm-ink); font-weight: var(--jm-w-semibold); box-shadow: var(--jm-e2); }
+
+/* Утилиты в одном пельменьке — общий контур, разделители между ячейками
+   (никаких «разноцветных рамок» у отдельных кнопок). */
+.util { display: inline-flex; align-items: stretch; border-radius: var(--jm-r-pill); }
+.util > * { border-radius: 0; }
+.util > * + * { border-left: 1px solid var(--jm-chrome-line); }
+.util > :first-child { border-top-left-radius: var(--jm-r-pill); border-bottom-left-radius: var(--jm-r-pill); }
+.util > :last-child { border-top-right-radius: var(--jm-r-pill); border-bottom-right-radius: var(--jm-r-pill); }
 
 .mapcanvas { position: relative; flex: 1; min-height: 0; background: var(--jm-bg); }
 
@@ -238,14 +245,12 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 .zoomctl button:last-child { border-bottom: none; font-size: 18px; color: var(--jm-muted); }
 .zoomctl button:hover { background: var(--jm-chrome-hover); color: var(--jm-ink); }
 
-/* поиск метрики (лупа → поле). help + search живут внутри .tools (верх-право). */
-.search { display: flex; align-items: flex-start; gap: 8px; }
-.search__btn { width: 36px; height: 36px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: var(--jm-ink); cursor: pointer; transition: background .12s; }
-.search__btn:hover { background: var(--jm-chrome-hover); }
-/* Кнопка «?» — вызвать онбординг-тур снова (рядом с поиском). */
-.help__btn { width: 36px; height: 36px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: var(--jm-muted); cursor: pointer; font-family: var(--jm-font-mono); font-size: 17px; font-weight: 600; transition: background .12s, color .12s; }
-.help__btn:hover { background: var(--jm-chrome-hover); color: var(--jm-ink); }
-.search__box { position: relative; display: flex; align-items: center; gap: 7px; width: 264px; border-radius: var(--jm-r-pill); padding: 0 8px 0 12px; height: 38px; }
+/* поиск метрики (лупа → поле) и помощь — ячейки пельменька .util. */
+.util .help__btn, .util .search__btn { width: 40px; align-self: stretch; flex: none; display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: var(--jm-muted); cursor: pointer; transition: background .12s, color .12s; }
+.util .search__btn { color: var(--jm-ink); }
+.util .help__btn { font-family: var(--jm-font-mono); font-size: 17px; font-weight: 600; }
+.util .help__btn:hover, .util .search__btn:hover { background: var(--jm-chrome-hover); color: var(--jm-ink); }
+.search__box { position: relative; display: flex; align-items: center; gap: 7px; width: 250px; padding: 0 6px 0 12px; height: 38px; background: transparent; }
 .search__ic { color: var(--jm-faint); flex: none; }
 .search__box input { flex: 1; border: none; outline: none; background: transparent; font-family: var(--jm-font-sans); font-size: var(--jm-body-s); color: var(--jm-ink); }
 .search__box input::placeholder { color: var(--jm-faint); }
@@ -257,12 +262,6 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 .search__d { width: 8px; height: 8px; border-radius: 50%; flex: none; }
 .search__nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .search__empty { position: absolute; top: calc(100% + 6px); left: 0; right: 0; padding: 10px 12px; background: var(--jm-surface); border: 1px solid var(--jm-line); border-radius: 10px; box-shadow: var(--jm-e2); font-size: var(--jm-caption); color: var(--jm-faint); }
-
-/* ── переключатель темы (луна/солнце) ── */
-/* Тумблер темы — в едином стиле с кнопками поиска/помощи на холсте карты. */
-.themetoggle { width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; color: var(--jm-muted); cursor: pointer; transition: background .12s, color .12s; }
-.themetoggle:hover { background: var(--jm-chrome-hover); color: var(--jm-ink); }
-.themetoggle:focus-visible { outline: none; box-shadow: var(--jm-ring); }
 
 /* Миниатюра карты: очертания заметны — мягкая тень + тонкий контур. */
 .react-flow__minimap {

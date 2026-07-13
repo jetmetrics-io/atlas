@@ -4,7 +4,7 @@ import {
   MarkerType, type Node, type Edge, type Viewport,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { buildMap, familyOf } from '../atlas/atlas'
+import { buildMap } from '../atlas/atlas'
 import { nodeById } from '../atlas/atlas'
 import { MetricNode } from './MetricNode'
 import { MetricEdge } from './MetricEdge'
@@ -12,7 +12,6 @@ import { GroupNode } from './GroupNode'
 import { NodeCard } from './NodeCard'
 import { EdgeCard } from './EdgeCard'
 import { Tour, type TourStep } from './Tour'
-import { ThemeToggle } from '../site/ThemeToggle'
 import { roleStyle, signColor } from '../atlas/style'
 import type { AtlasEdge } from '../atlas/types'
 
@@ -104,16 +103,16 @@ function SearchBox({ nodes, onPick, onHelp }: { nodes: SearchNode[]; onPick: (id
     setQ(''); setOpen(false)
   }
   return (
-    <div className={`search${open ? ' is-open' : ''}`} data-tour="search">
+    <>
       <button className="help__btn" onClick={onHelp} title="Как читать карту" aria-label="Как читать карту">?</button>
       {!open ? (
-        <button className="search__btn" onClick={() => setOpen(true)} title="Поиск метрики" aria-label="Поиск метрики">
+        <button className="search__btn" data-tour="search" onClick={() => setOpen(true)} title="Поиск метрики" aria-label="Поиск метрики">
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round">
             <circle cx="11" cy="11" r="7" /><path d="m20 20-3.2-3.2" />
           </svg>
         </button>
       ) : (
-        <div className="search__box">
+        <div className="search__box" data-tour="search">
           <svg className="search__ic" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round">
             <circle cx="11" cy="11" r="7" /><path d="m20 20-3.2-3.2" />
           </svg>
@@ -138,7 +137,7 @@ function SearchBox({ nodes, onPick, onHelp }: { nodes: SearchNode[]; onPick: (id
           {query.length >= 2 && matches.length === 0 && <div className="search__empty">Ничего не найдено</div>}
         </div>
       )}
-    </div>
+    </>
   )
 }
 
@@ -169,7 +168,6 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
   const [forceEdgeKey, setForceEdgeKey] = useState<string | null>(null)
 
   const map = useMemo(() => buildMap(section), [section])
-  const fam = familyOf(section)
 
   // Ключевая метрика карты + показательная влияющая связь (для шагов тура).
   const keyNodeId = useMemo(() => map.nodes.find((n) => n.key)?.id ?? null, [map])
@@ -621,29 +619,25 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
             onPaneClick={() => { setSelNode(null); setSelEdge(null); setActiveRole(null) }}
           >
             <Background color="#C4CCD4" gap={22} size={1.6} />
-            {/* Верх-лево — «вы здесь»: назад + название карты. Крошку-направление
-                показываем только когда она ОТЛИЧАЕТСЯ от имени карты (иначе дубль). */}
-            <Panel position="top-left" className="idbar">
-              <button className="idbar__back" onClick={onBack} title="В каталог" aria-label="В каталог">
-                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
-              </button>
-              <div className="idbar__id">
-                {fam && fam.title !== section && <span className="idbar__crumb">{fam.title}</span>}
-                <span className="idbar__title" data-tour="title">{section}</span>
-              </div>
+            {/* Верх-лево — хлебная крошка: «Все карты» (назад в каталог) › текущая карта. */}
+            <Panel position="top-left" className="crumbs">
+              <button className="crumbs__back" onClick={onBack} title="Все карты" aria-label="Вернуться ко всем картам">Все карты</button>
+              <span className="crumbs__sep" aria-hidden>›</span>
+              <span className="crumbs__cur" data-tour="title">{section}</span>
             </Panel>
-            {/* Верх-право — инструменты: режим · поиск/помощь · тема. */}
+            {/* Верх-право — режим карты + утилиты (помощь · поиск). */}
             <Panel position="top-right" className="tools">
               <div className="seg" data-tour="modes">
                 <button className={mode === 'spine' ? 'is-active' : ''} onClick={() => setMode('spine')}>Основное</button>
                 <button className={mode === 'full' ? 'is-active' : ''} onClick={() => setMode('full')}>Полностью</button>
               </div>
-              <SearchBox
-                nodes={map.nodes}
-                onPick={(id) => { setSelNode(id); setSelEdge(null) }}
-                onHelp={startTour}
-              />
-              <ThemeToggle />
+              <div className="util">
+                <SearchBox
+                  nodes={map.nodes}
+                  onPick={(id) => { setSelNode(id); setSelEdge(null) }}
+                  onHelp={startTour}
+                />
+              </div>
             </Panel>
             <MiniMap
               pannable zoomable
