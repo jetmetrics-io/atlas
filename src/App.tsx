@@ -37,7 +37,9 @@ export default function App() {
     document.documentElement.classList.add('jm-embed')
     let last = 0
     const tick = () => {
-      const h = Math.ceil(document.documentElement.scrollHeight)
+      // body.scrollHeight, а НЕ documentElement — последний раздувается высотой
+      // самого iframe и не даёт высоте уменьшиться (каталог→карта осталась бы длинной).
+      const h = Math.ceil(document.body.scrollHeight)
       if (h && h !== last) {
         last = h
         window.parent.postMessage({ type: 'jm-atlas-height', height: h }, '*')
