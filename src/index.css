@@ -119,6 +119,28 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; min-heigh
 .mcard__nm { margin-top: auto; font-weight: var(--jm-w-semibold); font-size: 1.35rem; line-height: 1.14; letter-spacing: -.02em; color: var(--jm-ink); }
 .mcard__meta { margin-top: 11px; font-family: var(--jm-font-mono); font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--jm-faint); }
 
+/* Бесплатные карты (free-сборка): зелёная обводка + бейдж «Бесплатно» */
+.mcard--free { border-color: var(--jm-green); }
+.mcard--free:hover { border-color: var(--jm-green); box-shadow: 0 0 0 1px var(--jm-green), var(--jm-e2); }
+.mcard__badge {
+  position: absolute; top: 18px; left: 22px;
+  font-family: var(--jm-font-mono); font-size: 10px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--jm-green);
+  background: var(--jm-green-tint); border-radius: var(--jm-r-pill); padding: 3px 9px;
+}
+
+/* Закрытые карты: замок + переход на покупку. Имя и счётчик видны чётко (без матового стекла). */
+.mcard__lock { position: absolute; top: 18px; right: 20px; color: var(--jm-faint); display: grid; place-items: center; transition: color var(--jm-dur) var(--jm-ease); }
+.mcard--locked:hover { border-color: var(--jm-green); }
+.mcard--locked:hover .mcard__lock { color: var(--jm-green); }
+.mcard__cta {
+  max-height: 0; opacity: 0; overflow: hidden; white-space: nowrap;
+  font-family: var(--jm-font-mono); font-size: 11px; font-weight: 700; letter-spacing: .04em;
+  color: var(--jm-green);
+  transition: max-height var(--jm-dur) var(--jm-ease), opacity var(--jm-dur) var(--jm-ease), margin-top var(--jm-dur) var(--jm-ease);
+}
+.mcard--locked:hover .mcard__cta { max-height: 24px; opacity: 1; margin-top: 12px; }
+
 /* ── Экран карты ── */
 .mapscreen { display: flex; flex-direction: column; height: calc(100vh - 64px); min-height: 0; }
 .mapbar { display: flex; align-items: center; gap: var(--jm-space-4); height: 74px; padding: 0 var(--jm-gutter); border-bottom: 1px solid var(--jm-line); background: var(--jm-surface); }

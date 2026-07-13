@@ -1,9 +1,21 @@
 // Загрузчик Базы + группировка карт по семействам + сборка одной карты
 // (нормализация авторских координат под React Flow).
-import raw from './atlas_base.json'
+// ВАЖНО: импортируем atlas_data.json — генерируемый файл сборки (scripts/gen-data.mjs).
+// В free-сборке из него физически вырезаны узлы/связи закрытых карт.
+import raw from './atlas_data.json'
 import type { AtlasBase, AtlasNode, AtlasEdge, Family } from './types'
 
 export const BASE = raw as unknown as AtlasBase
+
+// Тир сборки и список бесплатных карт (проставляются генератором в meta).
+const _meta = BASE.meta as { tier?: string; freeSections?: string[] }
+export const TIER: 'free' | 'full' = _meta.tier === 'free' ? 'free' : 'full'
+const FREE_SET = new Set(_meta.freeSections ?? [])
+
+/** Доступна ли карта в текущей сборке (в full — все; в free — только бесплатные). */
+export function isSectionFree(name: string): boolean {
+  return TIER === 'full' || FREE_SET.has(name)
+}
 
 const norm = (s: string) =>
   (s || '').replace(/​/g, '').replace(/\s+/g, ' ').trim().toLowerCase()

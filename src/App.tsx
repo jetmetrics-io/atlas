@@ -3,12 +3,13 @@ import { Header } from './site/Header'
 import { Footer } from './site/Footer'
 import { Catalog } from './site/Catalog'
 import { MapView } from './map/MapView'
-import { BASE } from './atlas/atlas'
+import { BASE, isSectionFree } from './atlas/atlas'
 
 function sectionFromUrl(): string | null {
   const p = new URLSearchParams(window.location.search).get('map')
   if (!p) return null
-  return BASE.sections.some((s) => s.name === p) ? p : null
+  // Открываем только карты, данные которых есть в этой сборке (в free — только бесплатные).
+  return BASE.sections.some((s) => s.name === p) && isSectionFree(p) ? p : null
 }
 
 // Встраиваемый режим (?embed=1): без своей шапки/футера — их даёт хост-страница

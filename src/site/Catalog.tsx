@@ -1,4 +1,15 @@
-import { FAMILIES, sectionsOfFamily, BASE } from '../atlas/atlas'
+import { FAMILIES, sectionsOfFamily, BASE, TIER, isSectionFree } from '../atlas/atlas'
+
+// Куда ведёт клик по закрытой карте (лендинг с покупкой полного доступа).
+const BUY_URL = 'https://джетметрикс.рф/atlas'
+
+// Уводим ВЕРХНЕЕ окно (мы внутри iframe на Тильде) на страницу покупки.
+function goBuy() {
+  try {
+    if (window.top && window.top !== window.self) { window.top.location.href = BUY_URL; return }
+  } catch { /* cross-origin чтение запрещено, но навигация ниже сработает */ }
+  window.location.href = BUY_URL
+}
 
 const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
   'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
@@ -92,13 +103,35 @@ export function Catalog({ onOpen }: { onOpen: (section: string) => void }) {
                 <span className="family__blurb">{fam.blurb}</span>
               </div>
               <div className="mapgrid">
-                {secs.map((s, i) => (
-                  <div key={s.slug} className="mcard" onClick={() => onOpen(s.name)}>
-                    <span className="mcard__ix">{String(i + 1).padStart(2, '0')}</span>
-                    <div className="mcard__nm">{s.name}</div>
-                    <div className="mcard__meta">{s.nodes} метрик</div>
-                  </div>
-                ))}
+                {secs.map((s, i) => {
+                  const free = isSectionFree(s.name)
+                  // В full-сборке все карты обычные. В free — бесплатные с бейджем,
+                  // закрытые с замком и переходом на покупку.
+                  const locked = TIER === 'free' && !free
+                  const cls = 'mcard' +
+                    (TIER === 'free' && free ? ' mcard--free' : '') +
+                    (locked ? ' mcard--locked' : '')
+                  return (
+                    <div key={s.slug} className={cls}
+                      onClick={() => (locked ? goBuy() : onOpen(s.name))}>
+                      {locked ? (
+                        <span className="mcard__lock" aria-label="Закрытая карта">
+                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
+                            stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="5" y="11" width="14" height="9" rx="2" />
+                            <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                          </svg>
+                        </span>
+                      ) : (
+                        <span className="mcard__ix">{String(i + 1).padStart(2, '0')}</span>
+                      )}
+                      {TIER === 'free' && free && <span className="mcard__badge">Бесплатно</span>}
+                      <div className="mcard__nm">{s.name}</div>
+                      <div className="mcard__meta">{s.nodes} метрик</div>
+                      {locked && <span className="mcard__cta">Открыть все карты →</span>}
+                    </div>
+                  )
+                })}
               </div>
             </section>
           )
