@@ -284,38 +284,47 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
       b.x1 = Math.max(b.x1, n.px + n.w); b.y1 = Math.max(b.y1, n.py + n.h)
       gb.set(n.group, b)
     }
-    // Выравниваем рамки только когда группы РЕАЛЬНО разделяются по оси
-    // (непересекающиеся проекции): колонки → общая высота, полосы → общая ширина.
-    // 2D-разброс (проекции пересекаются по обеим осям) оставляем плотными рамками,
-    // иначе выровненные фреймы наедут друг на друга и заголовки столкнутся.
-    const boxes = [...gb.values()]
-    const gX0 = Math.min(...boxes.map((b) => b.x0)), gX1 = Math.max(...boxes.map((b) => b.x1))
-    const gY0 = Math.min(...boxes.map((b) => b.y0)), gY1 = Math.max(...boxes.map((b) => b.y1))
-    const TOL = 40 // допустимое перекрытие проекций, px
-    const separable = (lo: (b: typeof boxes[0]) => number, hi: (b: typeof boxes[0]) => number) => {
-      const s = [...boxes].sort((a, b) => lo(a) - lo(b))
-      for (let i = 1; i < s.length; i++) if (lo(s[i]) < hi(s[i - 1]) - TOL) return false
-      return true
+    // Рамки НЕ растягиваем в общую таблицу (это плодило пустые хвосты и наложения
+    // соседних зон). Вместо этого каждая зона плотно обнимает свои карточки, а отступ
+    // с каждой стороны — адаптивный: половина зазора до ближайшей соседней зоны, но не
+    // больше GROUP_PAD. Так между зонами всегда остаётся просвет GAP, а сверху ещё и
+    // место под ярлык-заголовок (LABEL). Наложений и торчащих в чужую зону ярлыков нет.
+    const cores = [...gb.entries()].map(([title, b]) => ({ title, ...b }))
+    const GAP = 18   // гарантированный просвет между рамками соседних зон
+    const LABEL = 18 // доп. место над верхней гранью под ярлык-заголовок
+    const MINPAD = 4
+    // Ближайшее расстояние от грани зоны c до края другой зоны на той же стороне
+    // (учитываем только зоны, пересекающиеся с c по перпендикулярной оси).
+    const sidePad = (c: typeof cores[0], side: 'top' | 'bottom' | 'left' | 'right') => {
+      let best = Infinity
+      for (const o of cores) {
+        if (o === c) continue
+        const olapX = o.x0 < c.x1 && o.x1 > c.x0
+        const olapY = o.y0 < c.y1 && o.y1 > c.y0
+        if (side === 'bottom' && olapX && o.y0 >= c.y1) best = Math.min(best, o.y0 - c.y1)
+        else if (side === 'top' && olapX && o.y1 <= c.y0) best = Math.min(best, c.y0 - o.y1)
+        else if (side === 'right' && olapY && o.x0 >= c.x1) best = Math.min(best, o.x0 - c.x1)
+        else if (side === 'left' && olapY && o.x1 <= c.x0) best = Math.min(best, c.x0 - o.x1)
+      }
+      if (best === Infinity) return GROUP_PAD
+      // По вертикали резервируем ещё LABEL (ярлык нижней зоны живёт в этом зазоре).
+      const reserve = side === 'top' || side === 'bottom' ? GAP + LABEL : GAP
+      return Math.max(MINPAD, Math.min(GROUP_PAD, (best - reserve) / 2))
     }
-    const columns = boxes.length > 1 && separable((b) => b.x0, (b) => b.x1)
-    const rows = boxes.length > 1 && !columns && separable((b) => b.y0, (b) => b.y1)
-    const groupNodes: Node[] = [...gb.entries()].map(([title, b]) => {
-      const x0 = rows ? gX0 : b.x0
-      const x1 = rows ? gX1 : b.x1
-      const y0 = columns ? gY0 : b.y0
-      const y1 = columns ? gY1 : b.y1
-      const w = x1 - x0 + GROUP_PAD * 2
-      const h = y1 - y0 + GROUP_PAD * 2
+    const groupNodes: Node[] = cores.map((c) => {
+      const x0 = c.x0 - sidePad(c, 'left'), y0 = c.y0 - sidePad(c, 'top')
+      const x1 = c.x1 + sidePad(c, 'right'), y1 = c.y1 + sidePad(c, 'bottom')
+      const w = x1 - x0, h = y1 - y0
       return {
-        id: `grp:${title}`,
+        id: `grp:${c.title}`,
         type: 'group',
-        position: { x: x0 - GROUP_PAD, y: y0 - GROUP_PAD },
+        position: { x: x0, y: y0 },
         width: w, height: h,
         // pointer-events на самой обёртке ноды: иначе большая рамка подраздела
         // перехватывает клики по рёбрам, проходящим под ней (рёбра в слое ниже).
         style: { width: w, height: h, pointerEvents: 'none' },
         zIndex: 0,
-        data: { title },
+        data: { title: c.title },
         draggable: false, selectable: false, focusable: false,
       }
     })
