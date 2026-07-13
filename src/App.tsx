@@ -11,6 +11,12 @@ function sectionFromUrl(): string | null {
   return BASE.sections.some((s) => s.name === p) ? p : null
 }
 
+// Встраиваемый режим (?embed=1): без своей шапки/футера — их даёт хост-страница
+// (нативный блок Тильды). Приложение занимает весь контейнер.
+const EMBED =
+  typeof window !== 'undefined' &&
+  new URLSearchParams(window.location.search).get('embed') === '1'
+
 export default function App() {
   const [section, setSection] = useState<string | null>(() => sectionFromUrl())
 
@@ -22,8 +28,8 @@ export default function App() {
   }, [section])
 
   return (
-    <div className="site">
-      <Header onHome={() => setSection(null)} />
+    <div className={`site${EMBED ? ' site--embed' : ''}`}>
+      {!EMBED && <Header onHome={() => setSection(null)} />}
       <main className="site__main">
         {section ? (
           <MapView section={section} onBack={() => setSection(null)} />
@@ -31,7 +37,7 @@ export default function App() {
           <Catalog onOpen={(s) => setSection(s)} />
         )}
       </main>
-      {!section && <Footer />}
+      {!EMBED && !section && <Footer />}
     </div>
   )
 }
