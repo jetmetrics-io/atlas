@@ -104,8 +104,7 @@ function SearchBox({ nodes, onPick, onHelp }: { nodes: SearchNode[]; onPick: (id
     setQ(''); setOpen(false)
   }
   return (
-    <Panel position="top-left" className={`search${open ? ' is-open' : ''}`}>
-      <div className="search__row" data-tour="search">
+    <div className={`search${open ? ' is-open' : ''}`} data-tour="search">
       <button className="help__btn" onClick={onHelp} title="Как читать карту" aria-label="Как читать карту">?</button>
       {!open ? (
         <button className="search__btn" onClick={() => setOpen(true)} title="Поиск метрики" aria-label="Поиск метрики">
@@ -139,8 +138,7 @@ function SearchBox({ nodes, onPick, onHelp }: { nodes: SearchNode[]; onPick: (id
           {query.length >= 2 && matches.length === 0 && <div className="search__empty">Ничего не найдено</div>}
         </div>
       )}
-      </div>
-    </Panel>
+    </div>
   )
 }
 
@@ -623,22 +621,28 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
             onPaneClick={() => { setSelNode(null); setSelEdge(null); setActiveRole(null) }}
           >
             <Background color="#C4CCD4" gap={22} size={1.6} />
-            {/* Полосы-шапки нет — её края вынесены на холст. Верх-лево: назад + название. */}
-            <Panel position="top-left" className="maptop">
-              <button className="mapbar__backbtn" onClick={onBack} title="В каталог" aria-label="В каталог">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+            {/* Верх-лево — «вы здесь»: назад + название карты. Крошку-направление
+                показываем только когда она ОТЛИЧАЕТСЯ от имени карты (иначе дубль). */}
+            <Panel position="top-left" className="idbar">
+              <button className="idbar__back" onClick={onBack} title="В каталог" aria-label="В каталог">
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
               </button>
-              <div className="maptop__head">
-                <span className="maptop__fam">{fam?.title ?? 'Атлас'}</span>
-                <span className="maptop__title" data-tour="title">{section}</span>
+              <div className="idbar__id">
+                {fam && fam.title !== section && <span className="idbar__crumb">{fam.title}</span>}
+                <span className="idbar__title" data-tour="title">{section}</span>
               </div>
             </Panel>
-            {/* Верх-право: режим карты + тема. */}
-            <Panel position="top-right" className="maptr">
+            {/* Верх-право — инструменты: режим · поиск/помощь · тема. */}
+            <Panel position="top-right" className="tools">
               <div className="seg" data-tour="modes">
                 <button className={mode === 'spine' ? 'is-active' : ''} onClick={() => setMode('spine')}>Основное</button>
                 <button className={mode === 'full' ? 'is-active' : ''} onClick={() => setMode('full')}>Полностью</button>
               </div>
+              <SearchBox
+                nodes={map.nodes}
+                onPick={(id) => { setSelNode(id); setSelEdge(null) }}
+                onHelp={startTour}
+              />
               <ThemeToggle />
             </Panel>
             <MiniMap
@@ -649,11 +653,6 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
             />
             <ZoomControls home={viewport} />
             <FlowBridge apiRef={flowRef} />
-            <SearchBox
-              nodes={map.nodes}
-              onPick={(id) => { setSelNode(id); setSelEdge(null) }}
-              onHelp={startTour}
-            />
           </ReactFlow>
         </ReactFlowProvider>
         <Legend
