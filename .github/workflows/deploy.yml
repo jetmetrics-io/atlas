@@ -24,10 +24,20 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm run build
+      # Собираем обе версии в один артефакт:
+      #   free (3 карты) → корень /atlas/ (открытый адрес, идёт в /hub-atlas)
+      #   full (28 карт) → /atlas/pro-3c35f475c4/ (неугадываемый адрес, в закрытую /hub-atlas-pro)
+      - name: Build free (root) + full (secret path)
+        run: |
+          rm -rf site && mkdir -p site
+          npm run build:free
+          cp -r dist/. site/
+          npm run build:full
+          mkdir -p "site/pro-3c35f475c4"
+          cp -r dist/. "site/pro-3c35f475c4/"
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: site
   deploy:
     needs: build
     runs-on: ubuntu-latest

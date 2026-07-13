@@ -5,3 +5,6 @@ dist/
 
 # генерируемый файл сборки (см. scripts/gen-data.mjs)
 src/atlas/atlas_data.json
+
+# локальная сборка двух версий (эмуляция деплоя)
+site/
