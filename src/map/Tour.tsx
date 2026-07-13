@@ -9,10 +9,6 @@ export interface TourStep {
   before?: () => void
   // Доп. отступ выреза вокруг якоря.
   pad?: number
-  // Куда ставить карточку. 'auto' — рядом с якорем (под/над). 'bottom' — прижать к низу
-  // экрана по центру, освободив верх для якоря (когда якорь маленький и карточка иначе
-  // его перекрывает — напр. бейдж «i» на связи).
-  place?: 'auto' | 'bottom'
 }
 
 const prefersReducedMotion = () =>
@@ -56,31 +52,33 @@ export function Tour({ steps, onClose }: { steps: TourStep[]; onClose: (done: bo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [i])
 
-  // Позиционируем карточку: под вырезом, если влезает, иначе над; по центру экрана,
-  // если якоря нет. Клампим к вьюпорту.
+  // Позиционируем карточку СБОКУ от якоря, чтобы не перекрывать объясняемый элемент.
+  // Порядок предпочтения: справа → слева → снизу → сверху; берём первое, что влезает
+  // целиком. По центру экрана — если якоря нет.
   useLayoutEffect(() => {
     const vw = window.innerWidth, vh = window.innerHeight
-    const M = 14
+    const M = 14, gap = 14
     const cw = cardRef.current?.offsetWidth ?? 320
     // Высота карточки ограничена вьюпортом (внутри — прокрутка тела), чтобы кнопки
     // всегда были видны даже у длинного шага.
     const ch = Math.min(cardRef.current?.offsetHeight ?? 180, vh - 2 * M)
-    // Прижать к низу по центру — якорь остаётся открытым в верхней части экрана.
-    if (step.place === 'bottom') {
-      setCardPos({ left: (vw - cw) / 2, top: vh - ch - M })
-      return
-    }
     if (!rect) {
       setCardPos({ left: (vw - cw) / 2, top: (vh - ch) / 2 })
       return
     }
-    const below = rect.bottom + 12 + ch + M <= vh
-    let top = below ? rect.bottom + 12 : rect.top - 12 - ch
-    // Клампим так, чтобы карточка целиком помещалась в экран.
-    top = Math.min(Math.max(M, top), vh - ch - M)
-    let left = rect.left + rect.width / 2 - cw / 2
-    left = Math.min(Math.max(M, left), vw - cw - M)
-    setCardPos({ left, top })
+    const clampV = (t: number) => Math.min(Math.max(M, t), vh - ch - M)
+    const clampH = (l: number) => Math.min(Math.max(M, l), vw - cw - M)
+    const midV = clampV(rect.top + rect.height / 2 - ch / 2)
+    const midH = clampH(rect.left + rect.width / 2 - cw / 2)
+    const cands = [
+      { left: rect.right + gap, top: midV, fits: rect.right + gap + cw + M <= vw },   // справа
+      { left: rect.left - gap - cw, top: midV, fits: rect.left - gap - cw >= M },      // слева
+      { left: midH, top: rect.bottom + gap, fits: rect.bottom + gap + ch + M <= vh },  // снизу
+      { left: midH, top: rect.top - gap - ch, fits: rect.top - gap - ch >= M },        // сверху
+    ]
+    const pick = cands.find((c) => c.fits)
+    // Крайний случай (нигде не влезает без перекрытия) — прижимаем к низу по центру.
+    setCardPos(pick ? { left: pick.left, top: pick.top } : { left: midH, top: vh - ch - M })
   }, [rect, i])
 
   useEffect(() => {

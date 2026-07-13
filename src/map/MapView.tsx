@@ -572,9 +572,8 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
       title: 'Стрелки — это связи, и они кликабельны',
       body: <>Стрелка — <b>влияние</b> одной метрики на другую. Цвет = знак: зелёная «+» — прямая (растёт одна, растёт и другая), красная «−» — обратная. Пунктир — связь без влияния (просто наблюдение). Наведите на связь — появится «<b>i</b>». Нажмите — объясним простыми словами, почему прямая или обратная. Важно: связи взяты из методологии карт, <b>а не посчитаны на ваших данных</b>.</>,
       anchor: () => document.querySelector('.edge-info') ?? (keyNodeId ? document.querySelector(`.react-flow__node[data-id="${CSS.escape(keyNodeId)}"]`) : null),
-      before: () => { if (demoEdge) centerOnEdge(demoEdge, 150); setForceEdgeKey(demoEdgeKey) },
+      before: () => { if (demoEdge) centerOnEdge(demoEdge, 0); setForceEdgeKey(demoEdgeKey) },
       pad: 14,
-      place: 'bottom',
     },
     {
       title: 'Два вида карты',

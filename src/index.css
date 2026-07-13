@@ -21,7 +21,10 @@ button { font-family: inherit; cursor: pointer; }
    контент (родитель-iframe подстраивается по postMessage → одна полоса прокрутки).
    Карта — фиксированное «окно» приложения (свой pan/zoom внутри, страницу не тянет). */
 .site--embed { min-height: 0; }
-.site--embed .mapscreen { height: 800px; }
+/* Карта в embed — фиксированное окно-виджет. Высота подобрана так, чтобы весь
+   виджет (карта + легенда + миниатюра снизу) влезал во вьюпорт ВМЕСТЕ с шапкой
+   Тильды, не уезжая за нижний край экрана. Внутри — свои pan/zoom. */
+.site--embed .mapscreen { height: 680px; }
 
 /* В embed снимаем жёсткую привязку высоты к вьюпорту (html/body/#root=100%),
    иначе каталог измеряется короче реального и обрезается. Контент течёт
@@ -159,7 +162,8 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 .freebar__title { font-weight: var(--jm-w-semibold); font-size: var(--jm-body); color: var(--jm-ink); }
 
 /* ── Экран карты ── */
-.mapscreen { display: flex; flex-direction: column; height: calc(100vh - 64px); min-height: 0; }
+/* Шапки в приложении больше нет — карта занимает весь вьюпорт (не вычитаем её высоту). */
+.mapscreen { display: flex; flex-direction: column; height: 100vh; min-height: 0; }
 .mapbar { display: flex; align-items: center; gap: var(--jm-space-4); height: 74px; padding: 0 var(--jm-gutter); border-bottom: 1px solid var(--jm-line); background: var(--jm-surface); }
 .mapbar__backbtn { width: 34px; height: 34px; display: grid; place-items: center; flex: none; border: 1px solid var(--jm-line); border-radius: 9px; background: transparent; color: var(--jm-muted); transition: all var(--jm-dur) var(--jm-ease); }
 .mapbar__backbtn:hover { color: var(--jm-ink); border-color: var(--jm-green); }
@@ -224,8 +228,9 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 .search__empty { position: absolute; top: calc(100% + 6px); left: 0; right: 0; padding: 10px 12px; background: var(--jm-surface); border: 1px solid var(--jm-line); border-radius: 10px; box-shadow: var(--jm-e2); font-size: var(--jm-caption); color: var(--jm-faint); }
 
 /* ── переключатель темы (луна/солнце) ── */
-.themetoggle { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--jm-r-md); border: 1px solid var(--jm-line); background: transparent; color: var(--jm-muted); transition: all var(--jm-dur) var(--jm-ease); }
-.themetoggle:hover { color: var(--jm-ink); border-color: var(--jm-green); }
+/* Тумблер темы — в едином стиле с кнопками поиска/помощи на холсте карты. */
+.themetoggle { width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; background: var(--jm-surface); border: 1px solid var(--jm-line); border-radius: 10px; box-shadow: var(--jm-e2); color: var(--jm-muted); cursor: pointer; transition: background .12s, color .12s; }
+.themetoggle:hover { background: var(--jm-bg); color: var(--jm-ink); }
 .themetoggle:focus-visible { outline: none; box-shadow: var(--jm-ring); }
 
 /* Миниатюра карты: очертания заметны — мягкая тень + тонкий контур. */
