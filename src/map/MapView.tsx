@@ -314,20 +314,32 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
       // Половина зазора до соседа — обе зоны отступают поровну, между рамками остаётся GAP.
       return Math.max(MINPAD, Math.min(GROUP_PAD, (best - GAP) / 2))
     }
-    const groupNodes: Node[] = cores.map((c) => {
+    // Итоговые рамки зон (с адаптивными отступами).
+    const gboxes = cores.map((c) => {
       const x0 = c.x0 - sidePad(c, 'left'), y0 = c.y0 - sidePad(c, 'top')
       const x1 = c.x1 + sidePad(c, 'right'), y1 = c.y1 + sidePad(c, 'bottom')
-      const w = x1 - x0, h = y1 - y0
+      return { title: c.title, x0, y0, x1, y1, area: (x1 - x0) * (y1 - y0) }
+    })
+    // Заливку держит только бо́льшая из пересекающихся зон (в Miro группы бывают
+    // пространственно вложены — прямоугольные рамки тогда неизбежно совпадают). У
+    // меньшей заливку гасим, чтобы две полупрозрачные подложки не давали тёмное пятно;
+    // остаётся контур + ярлык, а фон под ней рисует бо́льшая зона.
+    const overlaps = (a: typeof gboxes[0], b: typeof gboxes[0]) =>
+      a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0
+    const groupNodes: Node[] = gboxes.map((g) => {
+      const fill = !gboxes.some((o) => o !== g && o.area > g.area && overlaps(g, o))
+      const w = g.x1 - g.x0, h = g.y1 - g.y0
       return {
-        id: `grp:${c.title}`,
+        id: `grp:${g.title}`,
         type: 'group',
-        position: { x: x0, y: y0 },
+        position: { x: g.x0, y: g.y0 },
         width: w, height: h,
         // pointer-events на самой обёртке ноды: иначе большая рамка подраздела
         // перехватывает клики по рёбрам, проходящим под ней (рёбра в слое ниже).
         style: { width: w, height: h, pointerEvents: 'none' },
-        zIndex: 0,
-        data: { title: c.title },
+        // Зона без заливки — поверх залитой (её контур должен читаться на общем фоне).
+        zIndex: fill ? 0 : 1,
+        data: { title: g.title, fill },
         draggable: false, selectable: false, focusable: false,
       }
     })
