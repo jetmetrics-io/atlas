@@ -6,8 +6,8 @@
    v1.0 · 2026-07-03
    ============================================================ */
 
-/* ---- Шрифты грузятся отдельно (см. assets/fonts.md):
-   <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"> */
+/* ---- Шрифты грузятся отдельно из самохостинга (см. assets/fonts.md):
+   <link rel="stylesheet" href="https://jetmetrics-io.github.io/layout/fonts.css"> */
 
 :root {
   /* ========== БРЕНД-ЯДРО ========== */
