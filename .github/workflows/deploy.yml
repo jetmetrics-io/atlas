@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy to GitHub Pages + Yandex bucket
 
 on:
   push:
@@ -17,6 +17,15 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Ключи сервисного аккаунта static-deploy (S3-совместимый доступ к бакету).
+    # Пока секретов нет — шаг заливки в бакет пропускается (см. if ниже), CI зелёный.
+    env:
+      YC_KEY_ID: ${{ secrets.YC_KEY_ID }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.YC_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_SECRET }}
+      AWS_DEFAULT_REGION: ru-central1
+      YC_ENDPOINT: https://storage.yandexcloud.net
+      YC_BUCKET: jetmetrics-static
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -38,6 +47,23 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
+      # Автосинк в бакет Яндекса. site/ → s3://jetmetrics-static/atlas/.
+      # Тот же расклад заголовков, что при ручной заливке 16.07:
+      #   js/css — max-age=31536000,immutable ; html — max-age=300 ; ACL=public-read.
+      # --delete чистит устаревшие объекты под atlas/ (весь префикс принадлежит этому деплою).
+      - name: Sync to Yandex Object Storage
+        if: ${{ env.YC_KEY_ID != '' }}
+        run: |
+          aws s3 sync site/ "s3://${YC_BUCKET}/atlas/" \
+            --endpoint-url "${YC_ENDPOINT}" \
+            --acl public-read --delete \
+            --exclude "*.html" \
+            --cache-control "max-age=31536000,immutable"
+          aws s3 sync site/ "s3://${YC_BUCKET}/atlas/" \
+            --endpoint-url "${YC_ENDPOINT}" \
+            --acl public-read \
+            --exclude "*" --include "*.html" \
+            --cache-control "max-age=300" --content-type "text/html; charset=utf-8"
   deploy:
     needs: build
     runs-on: ubuntu-latest
