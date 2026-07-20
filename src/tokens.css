@@ -7,7 +7,7 @@
    ============================================================ */
 
 /* ---- Шрифты грузятся отдельно из самохостинга (см. assets/fonts.md):
-   <link rel="stylesheet" href="https://jetmetrics-io.github.io/layout/fonts.css"> */
+   <link rel="stylesheet" href="https://jetmetrics-static.storage.yandexcloud.net/layout/fonts.css"> */
 
 :root {
   /* ========== БРЕНД-ЯДРО ========== */
