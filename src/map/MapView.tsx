@@ -519,7 +519,7 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
         id: `${e.source}__${e.target}__${i}`,
         source: e.source, target: e.target, type: 'metric',
         sourceHandle: loop ? 'st' : geo[i].sh, targetHandle: loop ? 'tt' : geo[i].th,
-        data: { sign: e.sign, kind: e.kind, active, dimmed, offset, lane: lane[i], loop, chan: geo[i].chan, sPort: sPort[i], tPort: tPort[i], forceInfo: forceEdgeKey === `${e.source}__${e.target}` },
+        data: { sign: e.sign, kind: e.kind, active, dimmed, offset, lane: lane[i], loop, chan: geo[i].chan, sPort: sPort[i], tPort: tPort[i], pts: (e as typeof e & { pts?: [number, number][] }).pts, forceInfo: forceEdgeKey === `${e.source}__${e.target}` },
         markerEnd: e.kind === 'influence'
           ? { type: MarkerType.ArrowClosed, color, width: 16, height: 16 }
           : undefined,

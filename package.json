@@ -10,7 +10,8 @@
     "build": "npm run build:full",
     "build:full": "npm run gen:full && tsc --noEmit && vite build",
     "build:free": "npm run gen:free && tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+  "deploy": "python3 scripts/deploy_storage.py"
   },
   "dependencies": {
     "@xyflow/react": "^12.3.5",

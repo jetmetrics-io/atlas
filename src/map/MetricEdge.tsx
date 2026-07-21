@@ -23,7 +23,28 @@ export interface MetricEdgeData {
   tPort?: number
   // Онбординг: принудительно показать иконку «i» на этой связи без наведения.
   forceInfo?: boolean
+  // Ломаная коннектора из Miro, уже уложенная в раскладку (координаты холста, концы
+  // притянуты к граням). Если есть — рисуем ПО НЕЙ, роутер не участвует.
+  pts?: [number, number][]
   [key: string]: unknown
+}
+
+// Точка на СЕРЕДИНЕ ломаной по длине пути (не средний узел — у прямой из 2 точек
+// средний узел = конец, и иконка «i» уезжает на стрелку). Идём по сегментам, пока
+// не накопим половину общей длины.
+function midOfPoly(pts: [number, number][]): [number, number] {
+  let total = 0
+  for (let i = 1; i < pts.length; i++) total += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1])
+  let half = total / 2
+  for (let i = 1; i < pts.length; i++) {
+    const seg = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1])
+    if (half <= seg) {
+      const t = seg === 0 ? 0 : half / seg
+      return [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * t, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * t]
+    }
+    half -= seg
+  }
+  return pts[Math.floor(pts.length / 2)]
 }
 
 // Ортогональная ломаная со скруглёнными углами по списку точек.
@@ -87,7 +108,13 @@ function MetricEdgeBase(props: EdgeProps) {
   const lane = d.lane ?? 0
   let path: string
   let lx: number, ly: number // точка для иконки «i» (середина связи)
-  if (d.loop) {
+  if (d.pts && d.pts.length >= 2) {
+    // Готовая ломаная из Miro (уложена в раскладку в buildMap) — рисуем прямо по ней,
+    // роутер/каналы/порты не участвуют. Стрелка сама встаёт на конце пути.
+    path = roundPoly(d.pts, 8)
+    const m = midOfPoly(d.pts) // строго середина по длине, чтобы «i» была ровно посередине связи
+    lx = m[0]; ly = m[1]
+  } else if (d.loop) {
     // Обратное (feedback) ребро встречной пары: огибаем сверху прямоугольной петлёй
     // (как в оригинале Miro), чтобы не рисовать вплотную к прямой стрелке пары.
     const LOOP = 44

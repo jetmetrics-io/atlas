@@ -3,6 +3,9 @@ dist/
 *.tsbuildinfo
 .DS_Store
 
+# ключи деплоя в Object Storage — НИКОГДА в репозиторий
+.deploy.env
+
 # генерируемый файл сборки (см. scripts/gen-data.mjs)
 src/atlas/atlas_data.json
 

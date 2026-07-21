@@ -23,6 +23,10 @@ export interface AtlasEdge {
   style: 'solid' | 'dashed'
   kind: 'influence' | 'associative'
   cross_section: boolean
+  // Ломаная коннектора В ИСХОДНЫХ координатах Miro (обход аффинных трансформов SVG,
+  // ориентирована source→target). Есть у 751/756 рёбер. buildMap укладывает её в
+  // текущую раскладку и отдаёт как `pts`; рёбра без неё идут в фолбэк-роутер.
+  points?: number[][]
 }
 
 export interface AtlasSection {
