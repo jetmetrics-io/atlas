@@ -60,13 +60,6 @@ export function EdgeCard({ edge, onClose, onNavigate }: {
             <span>{edge.kind === 'influence' ? 'Влияние (на первую можно нажать)' : 'Связь без влияния (только наблюдать)'}</span>
           </div>
         </div>
-        <div className="panel__section">
-          <div className="panel__label">Оговорка</div>
-          <div className="panel__text" style={{ color: 'var(--jm-muted)' }}>
-            Знак связи взят из ручной разметки атласа и не проверен на ваших данных. В части случаев он
-            переворачивается в зависимости от условий — это уточним отдельно.
-          </div>
-        </div>
       </div>
     </aside>
   )
