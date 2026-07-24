@@ -1,20 +1,35 @@
 // Загрузчик Базы + группировка карт по семействам + сборка одной карты
 // (нормализация авторских координат под React Flow).
-// ВАЖНО: импортируем atlas_data.json — генерируемый файл сборки (scripts/gen-data.mjs).
-// В free-сборке из него физически вырезаны узлы/связи закрытых карт.
-import raw from './atlas_data.json'
+// ВАЖНО: сборка ОДНА. Данные грузятся в рантайме с бакета (public/data/*.json), а не
+// вшиты в бандл. main.tsx определяет факт оплаты (email ∈ paid.json, см. site/access.ts),
+// грузит free- или full-данные и вызывает initAtlas ДО первого рендера. Гейт полной
+// версии — по оплате: бесплатник, зайдя по прямому адресу, получает только free-данные.
 import type { AtlasBase, AtlasNode, AtlasEdge, Family } from './types'
 
-export const BASE = raw as unknown as AtlasBase
+const EMPTY: AtlasBase = { meta: {}, sections: [], nodes: [], edges: [] }
 
-// Тир сборки и список бесплатных карт (проставляются генератором в meta).
-const _meta = BASE.meta as { tier?: string; freeSections?: string[] }
-export const TIER: 'free' | 'full' = _meta.tier === 'free' ? 'free' : 'full'
-const FREE_SET = new Set(_meta.freeSections ?? [])
+// Проставляются в initAtlas (main.tsx) до рендера. Все чтения BASE/PAID происходят
+// в рендере компонентов, т.е. уже после инициализации.
+export let BASE: AtlasBase = EMPTY
+export let PAID = false
+let FREE_SET = new Set<string>()
 
-/** Доступна ли карта в текущей сборке (в full — все; в free — только бесплатные). */
+/** Единственная точка инициализации: база (free|full) + факт оплаты. Зовётся из main.tsx. */
+export function initAtlas(base: AtlasBase, paid: boolean): void {
+  BASE = base
+  PAID = paid
+  const meta = base.meta as { freeSections?: string[] }
+  FREE_SET = new Set(meta.freeSections ?? [])
+}
+
+/** Карта из бесплатного набора (доступна без оплаты). */
 export function isSectionFree(name: string): boolean {
-  return TIER === 'full' || FREE_SET.has(name)
+  return FREE_SET.has(name)
+}
+
+/** Разблокирована ли карта для текущего пользователя (оплата открывает все 28). */
+export function isSectionUnlocked(name: string): boolean {
+  return PAID || FREE_SET.has(name)
 }
 
 const norm = (s: string) =>

@@ -2,23 +2,21 @@
 // Приложение встроено в Тильду через iframe; при клике по карте уводим ВЕРХНЕЕ окно
 // на отдельную страницу этой карты, а «назад» — обратно на страницу каталога.
 
-import { TIER } from '../atlas/atlas'
-
 export const EMBED =
   typeof window !== 'undefined' &&
   new URLSearchParams(window.location.search).get('embed') === '1'
 
 const SITE = 'https://джетметрикс.рф'
 
-// Каталог зависит от сборки: free-сборка встроена в открытую /hub-atlas, full — в
-// закрытую /hub-atlas-pro. «Назад» с карты ведёт в «свой» каталог (иначе платящий
-// участник с платной карты попал бы на free-каталог, где его карты под замком).
-export const CATALOG_PAGE = `${SITE}/${TIER === 'full' ? 'hub-atlas-pro' : 'hub-atlas'}`
+// Один адрес каталога Атласа: сборка одна, гейт — внутри приложения по факту оплаты.
+// «Назад» с любой карты ведёт сюда; что покажется (3 или 28 карт) решает уже сам Атлас.
+export const CATALOG_PAGE = `${SITE}/hub-atlas`
 export const BUY_URL = `${SITE}/atlas`
 
 // Все 28 карт → slug отдельной страницы Тильды. Имя карты (как в Базе) → slug.
-// Страницы бесплатных карт (finansy/lidogeneraciya/podderzhka) публичны и встраивают
-// free-сборку; остальные — под Tilda Members и встраивают full-сборку (секретный путь).
+// Все страницы встраивают ОДНУ сборку Атласа; бесплатные карты (finansy/lidogeneraciya/
+// podderzhka) — на публичных страницах, остальные — под Tilda Members. Что реально
+// откроется, решает гейт внутри приложения (оплата), а не адрес страницы.
 const MAP_PAGES: Record<string, string> = {
   'Финансы': 'finansy',
   'Лидогенерация': 'lidogeneraciya',

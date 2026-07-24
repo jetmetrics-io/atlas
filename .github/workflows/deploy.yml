@@ -33,37 +33,42 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      # Собираем обе версии в один артефакт:
-      #   free (3 карты) → корень /atlas/ (открытый адрес, идёт в /hub-atlas)
-      #   full (28 карт) → /atlas/pro-3c35f475c4/ (неугадываемый адрес, в закрытую /hub-atlas-pro)
-      - name: Build free (root) + full (secret path)
+      # ОДНА сборка (было: две — free/full по секретному адресу). Гейт полной версии —
+      # внутри приложения по факту оплаты (email → paid.json ∪ allowlist.json). Данные
+      # лежат в dist/data/*.json и грузятся приложением по fetch: full — только оплатившим.
+      - name: Build (одна сборка, гейт внутри приложения)
         run: |
           rm -rf site && mkdir -p site
-          npm run build:free
+          npm run build
           cp -r dist/. site/
-          npm run build:full
-          mkdir -p "site/pro-3c35f475c4"
-          cp -r dist/. "site/pro-3c35f475c4/"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
       # Автосинк в бакет Яндекса. site/ → s3://jetmetrics-static/atlas/.
-      # Тот же расклад заголовков, что при ручной заливке 16.07:
-      #   js/css — max-age=31536000,immutable ; html — max-age=300 ; ACL=public-read.
-      # --delete чистит устаревшие объекты под atlas/ (весь префикс принадлежит этому деплою).
+      #   js/css/шрифты — max-age=31536000,immutable ; html и data/*.json — max-age=300.
+      # --delete чистит устаревшие объекты под atlas/ (в т.ч. старый pro-3c35f475c4/,
+      # когда ставим секреты — это ЖДЁТ репойнта iframe'ов Марией, см. site-state/HANDOFF).
       - name: Sync to Yandex Object Storage
         if: ${{ env.YC_KEY_ID != '' }}
         run: |
+          # статика — иммутабельно на год (кроме html и json)
           aws s3 sync site/ "s3://${YC_BUCKET}/atlas/" \
             --endpoint-url "${YC_ENDPOINT}" \
             --acl public-read --delete \
-            --exclude "*.html" \
+            --exclude "*.html" --exclude "*.json" \
             --cache-control "max-age=31536000,immutable"
+          # html — короткий кэш
           aws s3 sync site/ "s3://${YC_BUCKET}/atlas/" \
             --endpoint-url "${YC_ENDPOINT}" \
             --acl public-read \
             --exclude "*" --include "*.html" \
             --cache-control "max-age=300" --content-type "text/html; charset=utf-8"
+          # данные (data/*.json) — короткий кэш, обновляются при изменении карт/бесплатного набора
+          aws s3 sync site/ "s3://${YC_BUCKET}/atlas/" \
+            --endpoint-url "${YC_ENDPOINT}" \
+            --acl public-read \
+            --exclude "*" --include "*.json" \
+            --cache-control "max-age=300" --content-type "application/json; charset=utf-8"
   deploy:
     needs: build
     runs-on: ubuntu-latest

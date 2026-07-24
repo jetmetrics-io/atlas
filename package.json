@@ -4,14 +4,11 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "gen:full": "node scripts/gen-data.mjs full",
-    "gen:free": "node scripts/gen-data.mjs free",
-    "dev": "npm run gen:full && vite",
-    "build": "npm run build:full",
-    "build:full": "npm run gen:full && tsc --noEmit && vite build",
-    "build:free": "npm run gen:free && tsc --noEmit && vite build",
+    "gen": "node scripts/gen-data.mjs",
+    "dev": "npm run gen && vite",
+    "build": "npm run gen && tsc --noEmit && vite build",
     "preview": "vite preview",
-  "deploy": "python3 scripts/deploy_storage.py"
+    "deploy": "python3 scripts/deploy_storage.py"
   },
   "dependencies": {
     "@xyflow/react": "^12.3.5",

@@ -2,6 +2,20 @@
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
+
+/* Бутстрап-лоадер: показывается, пока main.tsx решает доступ и грузит данные. */
+.boot {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 220px; height: 100%; color: var(--jm-faint);
+  font-family: var(--jm-font-sans); font-size: var(--jm-body-s);
+}
+.boot--err { padding: 24px; text-align: center; color: var(--jm-muted); }
+.boot__dot {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid var(--jm-line); border-top-color: var(--jm-green);
+  animation: boot-spin .7s linear infinite;
+}
+@keyframes boot-spin { to { transform: rotate(360deg); } }
 body {
   font-family: var(--jm-font-sans);
   color: var(--jm-text);

@@ -2,14 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { Footer } from './site/Footer'
 import { Catalog } from './site/Catalog'
 import { MapView } from './map/MapView'
-import { BASE, isSectionFree } from './atlas/atlas'
+import { BASE, isSectionUnlocked } from './atlas/atlas'
 import { EMBED, CATALOG_PAGE, goTop } from './site/nav'
 
 function sectionFromUrl(): string | null {
   const p = new URLSearchParams(window.location.search).get('map')
   if (!p) return null
-  // Открываем только карты, данные которых есть в этой сборке (в free — только бесплатные).
-  return BASE.sections.some((s) => s.name === p) && isSectionFree(p) ? p : null
+  // Открываем только карты, данные которых загружены (без оплаты — только бесплатные).
+  return BASE.sections.some((s) => s.name === p) && isSectionUnlocked(p) ? p : null
 }
 
 export default function App() {

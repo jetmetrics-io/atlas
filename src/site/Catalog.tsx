@@ -1,4 +1,4 @@
-import { FAMILIES, sectionsOfFamily, BASE, TIER, isSectionFree } from '../atlas/atlas'
+import { FAMILIES, sectionsOfFamily, BASE, PAID, isSectionFree } from '../atlas/atlas'
 import { EMBED, BUY_URL, goTop, mapPageUrl } from './nav'
 
 const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
@@ -53,9 +53,9 @@ export function Catalog({ onOpen }: { onOpen: (section: string) => void }) {
     [String(totalMetrics), 'метрик'],
   ]
 
-  // Бесплатные карты (только free-сборка) — для витрины сверху, чтобы первый экран
-  // не был сплошь «под замком».
-  const freeMaps: Sec[] = TIER === 'free'
+  // Бесплатные карты (когда пользователь без оплаты) — для витрины сверху, чтобы первый
+  // экран не был сплошь «под замком».
+  const freeMaps: Sec[] = !PAID
     ? BASE.sections.filter((s) => s.name && isSectionFree(s.name))
     : []
 
@@ -69,12 +69,12 @@ export function Catalog({ onOpen }: { onOpen: (section: string) => void }) {
     onOpen(name)
   }
 
-  // Одна карточка каталога. showIndex — моно-индекс в углу (только full-сборка).
+  // Одна карточка каталога. showIndex — моно-индекс в углу (только оплатившим).
   const card = (s: Sec, index?: number) => {
     const free = isSectionFree(s.name)
-    const locked = TIER === 'free' && !free
+    const locked = !PAID && !free
     const cls = 'mcard' +
-      (TIER === 'free' && free ? ' mcard--free' : '') +
+      (!PAID && free ? ' mcard--free' : '') +
       (locked ? ' mcard--locked' : '')
     return (
       <div key={s.slug} className={cls}
@@ -90,10 +90,10 @@ export function Catalog({ onOpen }: { onOpen: (section: string) => void }) {
             </svg>
             <span className="mcard__lock-txt">Открыть все карты</span>
           </span>
-        ) : TIER === 'full' && typeof index === 'number' ? (
+        ) : PAID && typeof index === 'number' ? (
           <span className="mcard__ix">{String(index + 1).padStart(2, '0')}</span>
         ) : null}
-        {TIER === 'free' && free && <span className="mcard__badge">Бесплатно</span>}
+        {!PAID && free && <span className="mcard__badge">Бесплатно</span>}
         <div className="mcard__nm">{s.name}</div>
         <div className="mcard__meta">{s.nodes} метрик</div>
       </div>
