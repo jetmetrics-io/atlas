@@ -10,6 +10,30 @@ const isWord = (c?: string) => !!c && /[\p{L}\p{N}]/u.test(c)
 
 // Найти в тексте упоминания других метрик карты и сделать их кликабельными.
 // targets должны идти от длинных названий к коротким (жадный матч по длине).
+// Явная ссылка на метрику: [[текст, как он стоит в предложении→id метрики]].
+// Нужна там, где метрика упомянута не своим именем — в косвенном падеже,
+// сокращённо или описательно, и автоматический linkify её не находит.
+// Разделитель — стрелка, а не вертикальная черта: контент хранится в MD-таблице,
+// где «|» разрезает ячейку.
+const EXPLICIT = /\[\[([^\]→]+)→([^\]]+)\]\]/g
+
+function withExplicit(text: string, targets: LinkTarget[], onNav: (id: string) => void): ReactNode[] {
+  if (!text.includes('[[')) return linkify(text, targets, onNav)
+  const out: ReactNode[] = []
+  let i = 0
+  let k = 0
+  let m: RegExpExecArray | null
+  EXPLICIT.lastIndex = 0
+  while ((m = EXPLICIT.exec(text))) {
+    if (m.index > i) out.push(...linkify(text.slice(i, m.index), targets, onNav))
+    const [, label, id] = m
+    out.push(<a key={`x${k++}`} className="metriclink" onClick={() => onNav(id)}>{label}</a>)
+    i = m.index + m[0].length
+  }
+  if (i < text.length) out.push(...linkify(text.slice(i), targets, onNav))
+  return out
+}
+
 function linkify(text: string, targets: LinkTarget[], onNav: (id: string) => void): ReactNode[] {
   if (!text || !targets.length) return [text]
   const out: ReactNode[] = []
@@ -73,11 +97,11 @@ function bold(text: string, targets: LinkTarget[], onNav: (id: string) => void):
   const re = /\*\*(.+?)\*\*/g
   let m: RegExpExecArray | null
   while ((m = re.exec(text))) {
-    if (m.index > i) out.push(...linkify(text.slice(i, m.index), targets, onNav))
+    if (m.index > i) out.push(...withExplicit(text.slice(i, m.index), targets, onNav))
     out.push(<b key={`b${k++}`}>{m[1]}</b>)
     i = m.index + m[0].length
   }
-  if (i < text.length) out.push(...linkify(text.slice(i), targets, onNav))
+  if (i < text.length) out.push(...withExplicit(text.slice(i), targets, onNav))
   return out
 }
 
@@ -104,7 +128,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
   useEffect(() => { setTab('essence'); setCopied(false) }, [node.id])
 
   const c = metricContent(node.id)
-  const L = (t: string) => linkify(t, siblings, onNavigate)
+  const L = (t: string) => withExplicit(t, siblings, onNavigate)
 
   // Поля контента с запасным вариантом из базы, пока файл не приехал.
   const description = c['Описание'] || node.description
