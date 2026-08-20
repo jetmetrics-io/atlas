@@ -331,8 +331,9 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 .panel__bullets li { position: relative; padding-left: 15px; margin-bottom: 8px; }
 .panel__bullets li:last-child { margin-bottom: 0; }
 .panel__bullets li::before { content: ''; position: absolute; left: 2px; top: 9px; width: 4px; height: 4px; border-radius: 50%; background: var(--jm-line); }
-/* Ключевые слова нюанса: подсвечиваем то, что решает, а не всю фразу. */
-.panel__bullets b { font-weight: var(--jm-w-semibold); color: var(--jm-ink); }
+/* Ключевое в нюансе: подсвечиваем зелёным, чтобы по выделенному читалась суть
+   правила, если бежать глазами. Цвет тот же, что у ссылок на метрики. */
+.panel__bullets b { font-weight: var(--jm-w-semibold); color: var(--jm-green-press); }
 
 /* ── Пример расчёта: моноширинный, строки как в исходном тексте ── */
 /* Пример расчёта: столбец шагов. Читается не за счёт пустых строк, а за счёт
