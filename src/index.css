@@ -306,6 +306,39 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 .metriclink { color: var(--jm-green); font-weight: var(--jm-w-semibold); cursor: pointer; border-bottom: 1px solid color-mix(in srgb, var(--jm-green) 38%, transparent); transition: background var(--jm-dur) var(--jm-ease), border-color var(--jm-dur) var(--jm-ease); border-radius: 3px; }
 .metriclink:hover { border-bottom-color: var(--jm-green); background: var(--jm-green-tint); box-shadow: 0 0 0 2px var(--jm-green-tint); }
 .panel__formula { font-family: var(--jm-font-mono); font-size: var(--jm-body-s); background: var(--jm-bg); border: 1px solid var(--jm-line-soft); border-radius: var(--jm-r-sm); padding: 10px 12px; color: var(--jm-ink); }
+.panel__formula > div + div { margin-top: 6px; }
+
+/* ── Вкладки карточки: Суть / Расчёт / Зачем ──
+   Шесть полей контента в панель 360px стопкой не помещаются. Суть держит то,
+   за чем приходят чаще всего, Расчёт — материал для того, кто садится считать,
+   Зачем — важность и границы применения. */
+.panel__tabs { display: flex; gap: 2px; padding: 0 var(--jm-space-6); border-bottom: 1px solid var(--jm-line); flex: none; }
+.panel__tab { border: none; background: none; cursor: pointer; padding: 11px 10px 9px; font-family: var(--jm-font-sans); font-size: var(--jm-body-s); font-weight: var(--jm-w-medium); color: var(--jm-muted); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color var(--jm-dur) var(--jm-ease); }
+.panel__tab:hover { color: var(--jm-ink); }
+.panel__tab[aria-selected="true"] { color: var(--jm-green-press); border-bottom-color: var(--jm-green); font-weight: var(--jm-w-semibold); }
+
+/* ── Ссылка на метрику: иконка в углу шапки, рядом с крестиком ── */
+.panel__copy { position: absolute; top: 14px; right: 48px; width: 28px; height: 28px; border-radius: 8px; border: none; background: transparent; color: var(--jm-faint); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; z-index: 1; transition: all var(--jm-dur) var(--jm-ease); }
+.panel__copy svg { width: 14px; height: 14px; }
+.panel__copy:hover { background: var(--jm-green-tint); color: var(--jm-green-press); }
+.panel__copy.is-done { color: var(--jm-green-press); background: var(--jm-green-tint); }
+.panel__copy::after { content: attr(data-tip); position: absolute; top: calc(100% + 7px); right: 0; white-space: nowrap; background: var(--jm-ink); color: var(--jm-surface); font-size: 11px; font-family: var(--jm-font-sans); padding: 4px 8px; border-radius: var(--jm-r-xs); opacity: 0; pointer-events: none; transition: opacity var(--jm-dur) var(--jm-ease); }
+.panel__copy:hover::after, .panel__copy.is-done::after { opacity: 1; }
+.panel__copy.is-done::after { background: var(--jm-green); }
+
+/* ── Нюансы списком: каждый пункт — отдельное правило ── */
+.panel__bullets { margin: 0; padding: 0; list-style: none; color: var(--jm-text); font-size: var(--jm-body-s); }
+.panel__bullets li { position: relative; padding-left: 15px; margin-bottom: 8px; }
+.panel__bullets li:last-child { margin-bottom: 0; }
+.panel__bullets li::before { content: ''; position: absolute; left: 2px; top: 9px; width: 4px; height: 4px; border-radius: 50%; background: var(--jm-line); }
+
+/* ── Пример расчёта: моноширинный, строки как в исходном тексте ── */
+.panel__example { font-family: var(--jm-font-mono); font-size: 0.8125rem; line-height: 1.55; color: var(--jm-text); }
+.panel__example > div { margin-bottom: 3px; overflow-wrap: anywhere; }
+.panel__example b { font-weight: 600; color: var(--jm-ink); }
+.panel__example > div:empty { height: 8px; }
+
+.panel__hint { font-size: var(--jm-caption); color: var(--jm-faint); }
 .chip { display: inline-flex; align-items: center; gap: 5px; font-size: var(--jm-caption); font-weight: var(--jm-w-medium); border-radius: var(--jm-r-pill); padding: 3px 10px; }
 .conn-row { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--jm-line-soft); font-size: var(--jm-body-s); }
 .conn-row:last-child { border-bottom: none; }

@@ -4,6 +4,7 @@ import '@xyflow/react/dist/style.css'
 import './index.css'
 import App from './App'
 import { initAtlas } from './atlas/atlas'
+import { loadContent } from './atlas/content'
 import { resolveEmail, isPaid } from './site/access'
 import type { AtlasBase } from './atlas/types'
 
@@ -27,6 +28,9 @@ async function boot() {
   //    full-данные грузим лишь при оплате — бесплатнику закрытые карты физически не приходят.
   const base = await loadData(paid ? 'atlas_full' : 'atlas_free')
   initAtlas(base, paid)
+  // 4. Контент карточек — параллельно, без await: карта рисуется сразу, тексты
+  //    подъезжают следом и панель перерисовывается сама (см. atlas/content.ts).
+  loadContent(paid, './')
   root.render(
     <React.StrictMode>
       <App />

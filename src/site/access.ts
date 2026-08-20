@@ -18,9 +18,11 @@
 // ответ paid.json. От обычного пользователя закрывает. Железный уровень (сервер проверяет
 // подписанный mauser.token) — отдельная задача, не здесь.
 
-const PAID_URL = 'https://jetmetrics-static.storage.yandexcloud.net/payment/paid.json'
+// На локальной сборке файлы оплаты недоступны из-за CORS — берём локальную копию.
+const LOCAL = typeof window !== 'undefined' && /^(localhost|127\.)/.test(window.location.hostname)
+const PAID_URL = LOCAL ? './payment/paid.json' : 'https://jetmetrics-static.storage.yandexcloud.net/payment/paid.json'
 // Ручной список мест командного тарифа (4 коллеги на аккаунт) — заводит команда сайта.
-const ALLOW_URL = 'https://jetmetrics-static.storage.yandexcloud.net/payment/allowlist.json'
+const ALLOW_URL = LOCAL ? './payment/allowlist.json' : 'https://jetmetrics-static.storage.yandexcloud.net/payment/allowlist.json'
 
 const norm = (s: unknown) => String(s ?? '').trim().toLowerCase()
 

@@ -12,6 +12,7 @@ import { dirname, resolve } from 'node:path'
 
 const __dir = dirname(fileURLToPath(import.meta.url))
 const SRC = resolve(__dir, '../src/atlas/atlas_base.json')
+const CONTENT_SRC = resolve(__dir, '../src/atlas/atlas_content.json')
 const OUT_DIR = resolve(__dir, '../public/data')
 
 // Бесплатные карты (табло: деньги / спрос / забота о клиенте). Универсальны,
@@ -19,6 +20,11 @@ const OUT_DIR = resolve(__dir, '../public/data')
 const FREE_SECTIONS = ['Финансы', 'Лидогенерация', 'Поддержка клиентов']
 
 const base = JSON.parse(readFileSync(SRC, 'utf8'))
+
+// Контент карточек (шесть полей на метрику) — отдельными файлами, грузятся по требованию
+// при открытии карточки, а не на старте: с ним общий файл вырос бы с 465 KB до ~2.5 MB
+// и карта появлялась бы заметно позже. Ключ — тот же id, что у узла.
+const content = JSON.parse(readFileSync(CONTENT_SRC, 'utf8'))
 
 // full — всё как есть, но с проставленным freeSections (для витрины/бейджей у оплатившего).
 const full = { ...base, meta: { ...base.meta, freeSections: FREE_SECTIONS } }
@@ -36,6 +42,11 @@ const free = {
   edges,
 }
 
+// Контент режется тем же гейтом, что и узлы: у бесплатного файла остаются
+// только метрики бесплатных карт. Внутри карты контент не урезается.
+const freeIds = new Set(nodes.map((n) => n.id))
+const contentFree = Object.fromEntries(Object.entries(content).filter(([id]) => freeIds.has(id)))
+
 mkdirSync(OUT_DIR, { recursive: true })
 const write = (name, obj) => {
   const s = JSON.stringify(obj)
@@ -44,3 +55,11 @@ const write = (name, obj) => {
 }
 write('atlas_full.json', full)
 write('atlas_free.json', free)
+
+const writeContent = (name, obj) => {
+  const s = JSON.stringify(obj)
+  writeFileSync(resolve(OUT_DIR, name), s)
+  console.log(`gen-data: ${name} — ${Object.keys(obj).length} метрик, ${(s.length / 1024).toFixed(0)} KB`)
+}
+writeContent('content_full.json', content)
+writeContent('content_free.json', contentFree)
