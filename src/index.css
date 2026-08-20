@@ -333,10 +333,22 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 .panel__bullets li::before { content: ''; position: absolute; left: 2px; top: 9px; width: 4px; height: 4px; border-radius: 50%; background: var(--jm-line); }
 
 /* ── Пример расчёта: моноширинный, строки как в исходном тексте ── */
-.panel__example { font-family: var(--jm-font-mono); font-size: 0.8125rem; line-height: 1.55; color: var(--jm-text); }
-.panel__example > div { margin-bottom: 3px; overflow-wrap: anywhere; }
+/* Пример расчёта: моноширинный столбец, разбитый на блоки. Пустые строки исходного
+   текста сохраняются как воздух между блоками, подзаголовки и итоговые строки
+   выделены — иначе шаги расчёта читаются сплошной стеной. */
+.panel__example { font-family: var(--jm-font-mono); font-size: 0.8125rem; line-height: 1.6; color: var(--jm-muted); }
+.panel__example > div { overflow-wrap: anywhere; padding: 1px 0; }
 .panel__example b { font-weight: 600; color: var(--jm-ink); }
-.panel__example > div:empty { height: 8px; }
+
+/* воздух между блоками расчёта */
+.panel__example-gap { height: 12px; }
+
+/* подзаголовок блока: «Замер по остатку:» */
+.panel__example-head { margin-top: 2px; margin-bottom: 3px; font-family: var(--jm-font-sans); font-size: var(--jm-caption); font-weight: var(--jm-w-semibold); color: var(--jm-ink); letter-spacing: 0; }
+
+/* строка с итогом: своя подложка, чтобы результат было видно сразу */
+.panel__example-result { margin-top: 6px; padding: 7px 10px; background: var(--jm-green-tint); border-radius: var(--jm-r-sm); color: var(--jm-text); }
+.panel__example-result b { color: var(--jm-green-press); font-size: 0.875rem; }
 
 .panel__hint { font-size: var(--jm-caption); color: var(--jm-faint); }
 .chip { display: inline-flex; align-items: center; gap: 5px; font-size: var(--jm-caption); font-weight: var(--jm-w-medium); border-radius: var(--jm-r-pill); padding: 3px 10px; }

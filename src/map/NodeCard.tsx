@@ -42,6 +42,24 @@ function linkify(text: string, targets: LinkTarget[], onNav: (id: string) => voi
 // Разделитель абзацев внутри поля контента — тот же, что в исходной таблице.
 const parts = (v?: string) => (v ?? '').split('<br>').map((x) => x.trim()).filter(Boolean)
 
+// Для примера расчёта пустые строки НЕ выбрасываем: ими автор разделяет блоки
+// (исходные данные / промежуточный счёт / итог), и без них пример читается стеной.
+// Лишние пустые по краям и подряд идущие схлопываются в одну.
+function exampleLines(v?: string): string[] {
+  const raw = (v ?? '').split('<br>').map((x) => x.trim())
+  const out: string[] = []
+  for (const line of raw) {
+    if (!line && (!out.length || !out[out.length - 1])) continue
+    out.push(line)
+  }
+  while (out.length && !out[out.length - 1]) out.pop()
+  return out
+}
+
+// Строка примера, которая заканчивается двоеточием и не содержит чисел, —
+// это подзаголовок блока («Замер по остатку:»), а не шаг расчёта.
+const isHeading = (s: string) => /:$/.test(s) && !/\d/.test(s)
+
 // Жирный текст в примере расчёта: **итог** → <b>
 function bold(text: string, targets: LinkTarget[], onNav: (id: string) => void): ReactNode[] {
   const out: ReactNode[] = []
@@ -87,7 +105,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
   const description = c['Описание'] || node.description
   const formula = c['Формула'] || node.formula
   const nuances = parts(c['Нюансы расчёта'])
-  const example = parts(c['Пример расчёта'])
+  const example = exampleLines(c['Пример расчёта'])
   const why = c['Важность']
   const whenNot = c['Когда не нужна']
   const hasCalc = nuances.length > 0 || example.length > 0
@@ -189,7 +207,16 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
               <div className="panel__section">
                 <div className="panel__label">Пример расчёта</div>
                 <div className="panel__example">
-                  {example.map((line, i) => <div key={i}>{bold(line, siblings, onNavigate)}</div>)}
+                  {example.map((line, i) => {
+                    if (!line) return <div key={i} className="panel__example-gap" />
+                    if (isHeading(line)) return <div key={i} className="panel__example-head">{line}</div>
+                    const isResult = line.includes('**')
+                    return (
+                      <div key={i} className={isResult ? 'panel__example-result' : undefined}>
+                        {bold(line, siblings, onNavigate)}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )}
