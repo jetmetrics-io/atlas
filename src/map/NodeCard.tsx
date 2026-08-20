@@ -204,7 +204,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
               <div className="panel__section">
                 <div className="panel__label">Нюансы расчёта</div>
                 <ul className="panel__bullets">
-                  {nuances.map((n, i) => <li key={i}>{L(n)}</li>)}
+                  {nuances.map((n, i) => <li key={i}>{bold(n, siblings, onNavigate)}</li>)}
                 </ul>
               </div>
             )}

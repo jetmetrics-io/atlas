@@ -331,13 +331,15 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 .panel__bullets li { position: relative; padding-left: 15px; margin-bottom: 8px; }
 .panel__bullets li:last-child { margin-bottom: 0; }
 .panel__bullets li::before { content: ''; position: absolute; left: 2px; top: 9px; width: 4px; height: 4px; border-radius: 50%; background: var(--jm-line); }
+/* Ключевые слова нюанса: подсвечиваем то, что решает, а не всю фразу. */
+.panel__bullets b { font-weight: var(--jm-w-semibold); color: var(--jm-ink); }
 
 /* ── Пример расчёта: моноширинный, строки как в исходном тексте ── */
 /* Пример расчёта: столбец шагов. Читается не за счёт пустых строк, а за счёт
    расстояния между строками — каждая строка это отдельный шаг, и ей нужен воздух.
    Итог выделяется самим числом, а не подложкой: цветная плашка вокруг моноширинной
    строки зажимает цифры и мешает больше, чем помогает. */
-.panel__example { font-family: var(--jm-font-mono); font-size: 0.8125rem; line-height: 1.5; color: var(--jm-muted); }
+.panel__example { font-family: var(--jm-font-mono); font-size: 0.8125rem; line-height: 1.5; color: var(--jm-text); }
 /* Числа с разрядами («4 620 000 ₽») не рвём переносом: неразрывные пробелы внутри
    ставит рендер, здесь остаётся не резать слова посреди символов. */
 .panel__example > div { overflow-wrap: break-word; padding: 4px 0; }
