@@ -5,13 +5,14 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { buildMap } from '../atlas/atlas'
-import { nodeById } from '../atlas/atlas'
+import { nodeById, BASE } from '../atlas/atlas'
 import { MetricNode } from './MetricNode'
 import { MetricEdge } from './MetricEdge'
 import { GroupNode } from './GroupNode'
 import { NodeCard } from './NodeCard'
 import { EdgeCard } from './EdgeCard'
 import { Tour, type TourStep } from './Tour'
+import { mapPageUrl } from '../site/nav'
 import { roleStyle, signColor } from '../atlas/style'
 import type { AtlasEdge } from '../atlas/types'
 
@@ -533,9 +534,22 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
   const flowRef = useRef<FlowApi | null>(null)
   // Перейти к метрике по клику на ссылку в описании: открыть карточку + центрировать.
   const focusNode = (id: string) => {
-    setSelNode(id); setSelEdge(null); setActiveRole(null)
     const n = map.nodes.find((x) => x.id === id)
-    if (n) flowRef.current?.setCenter(n.px + n.w / 2, n.py + n.h / 2, { zoom: 1, duration: 400 })
+    if (n) {
+      setSelNode(id); setSelEdge(null); setActiveRole(null)
+      flowRef.current?.setCenter(n.px + n.w / 2, n.py + n.h / 2, { zoom: 1, duration: 400 })
+      return
+    }
+    // Метрика с другой карты: открываем её страницу в новой вкладке, чтобы не
+    // терять то, что человек читает сейчас. Каждая карта живёт своей страницей
+    // на Тильде (site/nav.ts), поэтому ссылка ведёт туда, а не внутрь бакета.
+    const other = BASE.nodes.find((x) => x.id === id)
+    if (!other) return
+    const page = mapPageUrl(other.section)
+    const url = page
+      ? `${page}?node=${id}`
+      : `${window.location.pathname}?map=${encodeURIComponent(other.section)}&node=${id}`
+    window.open(url, '_blank', 'noopener')
   }
   // Центрировать карту на метрике (без открытия карточки) — для шагов тура.
   const centerOn = (id: string) => {

@@ -199,7 +199,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
             {description && (
               <div className="panel__section">
                 <div className="panel__label">Что это</div>
-                <div className="panel__text">{L(description)}</div>
+                <div className="panel__text">{parts(description).map((p, i) => <p key={i} className="panel__para">{L(p)}</p>)}</div>
               </div>
             )}
             {formula && (
@@ -257,13 +257,17 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
             {why && (
               <div className="panel__section">
                 <div className="panel__label">Важность</div>
-                <div className="panel__text">{L(why)}</div>
+                <div className="panel__text">
+                  {parts(why).map((p, i) => <p key={i} className="panel__para">{L(p)}</p>)}
+                </div>
               </div>
             )}
             {whenNot && (
               <div className="panel__section">
                 <div className="panel__label">Когда не нужна</div>
-                <div className="panel__text">{L(whenNot)}</div>
+                <div className="panel__text">
+                  {parts(whenNot).map((p, i) => <p key={i} className="panel__para">{L(p)}</p>)}
+                </div>
               </div>
             )}
           </>

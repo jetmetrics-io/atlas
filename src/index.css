@@ -303,6 +303,9 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 .panel__section { margin-bottom: var(--jm-space-5); }
 .panel__label { font-family: var(--jm-font-mono); font-size: var(--jm-label); text-transform: uppercase; letter-spacing: .06em; color: var(--jm-faint); font-weight: 600; margin-bottom: 5px; }
 .panel__text { color: var(--jm-text); font-size: var(--jm-body-s); }
+/* Абзац внутри поля: длинный текст «Важности» делится по смыслу, иначе читается стеной. */
+.panel__para { margin: 0 0 10px; }
+.panel__para:last-child { margin-bottom: 0; }
 .metriclink { color: var(--jm-green); font-weight: var(--jm-w-semibold); cursor: pointer; border-bottom: 1px solid color-mix(in srgb, var(--jm-green) 38%, transparent); transition: background var(--jm-dur) var(--jm-ease), border-color var(--jm-dur) var(--jm-ease); border-radius: 3px; }
 .metriclink:hover { border-bottom-color: var(--jm-green); background: var(--jm-green-tint); box-shadow: 0 0 0 2px var(--jm-green-tint); }
 .panel__formula { font-family: var(--jm-font-mono); font-size: var(--jm-body-s); background: var(--jm-bg); border: 1px solid var(--jm-line-soft); border-radius: var(--jm-r-sm); padding: 10px 12px; color: var(--jm-ink); }
@@ -331,9 +334,9 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 .panel__bullets li { position: relative; padding-left: 15px; margin-bottom: 8px; }
 .panel__bullets li:last-child { margin-bottom: 0; }
 .panel__bullets li::before { content: ''; position: absolute; left: 2px; top: 9px; width: 4px; height: 4px; border-radius: 50%; background: var(--jm-line); }
-/* Ключевое в нюансе: подсвечиваем зелёным, чтобы по выделенному читалась суть
-   правила, если бежать глазами. Цвет тот же, что у ссылок на метрики. */
-.panel__bullets b { font-weight: var(--jm-w-semibold); color: var(--jm-green-press); }
+/* Ключевое в тексте: чёрный жирный. Зелёный оставлен только ссылкам на метрики —
+   иначе в одном предложении два зелёных пятна с разным смыслом, и рябит. */
+.panel__bullets b, .panel__text b { font-weight: var(--jm-w-semibold); color: var(--jm-ink); }
 
 /* ── Пример расчёта: моноширинный, строки как в исходном тексте ── */
 /* Пример расчёта: столбец шагов. Читается не за счёт пустых строк, а за счёт
@@ -356,7 +359,7 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 /* строка с итогом: та же строка примера, только отделена линией и с акцентом
    на результате. Ни кегль, ни цвет остального текста не меняются — иначе итог
    читается как отдельный блок, а не как последний шаг расчёта. */
-.panel__example-result { margin-top: 10px; padding-top: 10px !important; border-top: 1px solid var(--jm-line-soft); }
+.panel__example-result { margin-top: 10px; }
 .panel__example-result b { color: var(--jm-green-press); }
 
 .panel__hint { font-size: var(--jm-caption); color: var(--jm-faint); }
