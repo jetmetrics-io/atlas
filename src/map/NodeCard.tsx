@@ -81,11 +81,11 @@ function bold(text: string, targets: LinkTarget[], onNav: (id: string) => void):
   return out
 }
 
-type Tab = 'suть' | 'raschet' | 'zachem'
+type Tab = 'essence' | 'calc' | 'why'
 const TABS: { key: Tab; label: string }[] = [
-  { key: 'suть', label: 'Суть' },
-  { key: 'raschet', label: 'Расчёт' },
-  { key: 'zachem', label: 'Зачем' },
+  { key: 'essence', label: 'Суть' },
+  { key: 'calc', label: 'Расчёт' },
+  { key: 'why', label: 'Зачем' },
 ]
 
 export function NodeCard({ node, siblings, onNavigate, onClose }: {
@@ -95,13 +95,13 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
   onClose: () => void
 }) {
   const rs = roleStyle(node.role)
-  const [tab, setTab] = useState<Tab>('suть')
+  const [tab, setTab] = useState<Tab>('essence')
   const [copied, setCopied] = useState(false)
   // Контент грузится отдельным файлом уже после карты: как только пришёл — перерисуемся.
   const [, force] = useState(0)
   useEffect(() => onContentReady(() => force((n) => n + 1)), [])
   // Новая метрика — снова открываем первую вкладку.
-  useEffect(() => { setTab('suть'); setCopied(false) }, [node.id])
+  useEffect(() => { setTab('essence'); setCopied(false) }, [node.id])
 
   const c = metricContent(node.id)
   const L = (t: string) => linkify(t, siblings, onNavigate)
@@ -152,7 +152,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
       {(hasCalc || hasWhy) && (
         <div className="panel__tabs" role="tablist">
           {TABS.map((t) => {
-            const disabled = (t.key === 'raschet' && !hasCalc) || (t.key === 'zachem' && !hasWhy)
+            const disabled = (t.key === 'calc' && !hasCalc) || (t.key === 'why' && !hasWhy)
             if (disabled) return null
             return (
               <button
@@ -170,7 +170,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
       )}
 
       <div className="panel__body">
-        {tab === 'suть' && (
+        {tab === 'essence' && (
           <>
             {description && (
               <div className="panel__section">
@@ -198,7 +198,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
           </>
         )}
 
-        {tab === 'raschet' && (
+        {tab === 'calc' && (
           <>
             {nuances.length > 0 && (
               <div className="panel__section">
@@ -228,7 +228,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
           </>
         )}
 
-        {tab === 'zachem' && (
+        {tab === 'why' && (
           <>
             {why && (
               <div className="panel__section">

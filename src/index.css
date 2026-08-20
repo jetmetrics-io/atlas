@@ -350,9 +350,11 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 .panel__example-head { margin-top: 12px; margin-bottom: 2px; padding: 0; font-family: var(--jm-font-sans); font-size: var(--jm-caption); font-weight: var(--jm-w-semibold); color: var(--jm-ink); letter-spacing: 0; }
 .panel__example-head:first-child { margin-top: 0; }
 
-/* строка с итогом: тонкая линия сверху и акцент на самом числе */
-.panel__example-result { margin-top: 10px; padding-top: 10px !important; border-top: 1px solid var(--jm-line); color: var(--jm-text); }
-.panel__example-result b { color: var(--jm-green-press); font-size: 0.9375rem; }
+/* строка с итогом: та же строка примера, только отделена линией и с акцентом
+   на результате. Ни кегль, ни цвет остального текста не меняются — иначе итог
+   читается как отдельный блок, а не как последний шаг расчёта. */
+.panel__example-result { margin-top: 10px; padding-top: 10px !important; border-top: 1px solid var(--jm-line-soft); }
+.panel__example-result b { color: var(--jm-green-press); }
 
 .panel__hint { font-size: var(--jm-caption); color: var(--jm-faint); }
 .chip { display: inline-flex; align-items: center; gap: 5px; font-size: var(--jm-caption); font-weight: var(--jm-w-medium); border-radius: var(--jm-r-pill); padding: 3px 10px; }
