@@ -60,6 +60,11 @@ function exampleLines(v?: string): string[] {
 // это подзаголовок блока («Замер по остатку:»), а не шаг расчёта.
 const isHeading = (s: string) => /:$/.test(s) && !/\d/.test(s)
 
+// Разряды числа и знак валюты держим вместе: «4 620 000 ₽» не должно переноситься
+// посреди разряда. Обычные пробелы внутри чисел заменяются неразрывными.
+const nbsp = (s: string) =>
+  s.replace(/(\d)[  ](?=\d)/g, '$1\u00A0').replace(/(\d)[  ](?=[₽%])/g, '$1\u00A0')
+
 // Жирный текст в примере расчёта: **итог** → <b>
 function bold(text: string, targets: LinkTarget[], onNav: (id: string) => void): ReactNode[] {
   const out: ReactNode[] = []
@@ -213,7 +218,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
                     const isResult = line.includes('**')
                     return (
                       <div key={i} className={isResult ? 'panel__example-result' : undefined}>
-                        {bold(line, siblings, onNavigate)}
+                        {bold(nbsp(line), siblings, onNavigate)}
                       </div>
                     )
                   })}
