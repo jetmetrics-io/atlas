@@ -66,6 +66,10 @@ function linkify(text: string, targets: LinkTarget[], onNav: (id: string) => voi
 // Разделитель абзацев внутри поля контента — тот же, что в исходной таблице.
 const parts = (v?: string) => (v ?? '').split('<br>').map((x) => x.trim()).filter(Boolean)
 
+// «Имя А; Имя Б» → ['Имя А', 'Имя Б']. Точка с запятой — разделитель в исходной
+// таблице; в карточке имена идут списком, каждое со своей строки.
+const names = (v?: string) => (v ?? '').split(';').map((x) => x.trim()).filter(Boolean)
+
 // Для примера расчёта пустые строки НЕ выбрасываем: ими автор разделяет блоки
 // (исходные данные / промежуточный счёт / итог), и без них пример читается стеной.
 // Лишние пустые по краям и подряд идущие схлопываются в одну.
@@ -137,6 +141,10 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
   const example = exampleLines(c['Пример расчёта'])
   const why = c['Важность']
   const whenNot = c['Когда не нужна']
+  // Другие имена метрики: русский синоним и английское название. Хранятся строкой,
+  // несколько имён разделены «;» — показываем списком, по имени на строку.
+  const synonyms = names(c['Синонимы'])
+  const english = names(c['EN'])
   const hasCalc = nuances.length > 0 || example.length > 0
   const hasWhy = !!(why || whenNot)
 
@@ -171,6 +179,26 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
           {rs.label}
         </span>
         <h2 className="panel__name">{node.name}</h2>
+        {(synonyms.length > 0 || english.length > 0) && (
+          <div className="panel__aka">
+            {synonyms.length > 0 && (
+              <>
+                <span className="panel__aka-tag">она же</span>
+                <span className="panel__aka-names">
+                  {synonyms.map((s, i) => <span key={i}>{s}</span>)}
+                </span>
+              </>
+            )}
+            {english.length > 0 && (
+              <>
+                <span className="panel__aka-tag">eng</span>
+                <span className="panel__aka-names">
+                  {english.map((s, i) => <span key={i}>{s}</span>)}
+                </span>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {(hasCalc || hasWhy) && (

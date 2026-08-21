@@ -299,6 +299,20 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 .panel__close:hover { background: var(--jm-line); color: var(--jm-ink); }
 .panel__role { display: inline-flex; align-items: center; gap: 6px; font-family: var(--jm-font-mono); font-size: var(--jm-label); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
 .panel__name { font-weight: var(--jm-w-bold); font-size: var(--jm-h2); color: var(--jm-ink); margin: 8px 0 0; line-height: var(--jm-lh-snug); }
+
+/* ── Другие имена метрики: русский синоним и английское название ──
+   Справочная мелочь, поэтому подана тихо: тот же кегль и цвет, что у подписей.
+   Метки одной ширины, так что имена выстраиваются в общую колонку. Оба имени
+   набраны основным шрифтом: латиница отличает английское сама, моноширинный
+   делал строку пестрее без пользы. */
+.panel__aka { margin-top: 8px; font-size: var(--jm-caption); color: var(--jm-muted); line-height: 1.55;
+  display: grid; grid-template-columns: auto 1fr; column-gap: 8px; row-gap: 5px; align-items: start; }
+.panel__aka-tag { font-family: var(--jm-font-mono); font-size: 9px; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--jm-faint); border: 1px solid var(--jm-line); border-radius: 3px;
+  /* ширину задаёт самая длинная метка, короткая центруется в той же коробке */
+  min-width: 52px; padding: 2px 0; text-align: center; line-height: 1.4; position: relative; top: 1px; }
+.panel__aka-names { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.panel__aka-names span { overflow-wrap: break-word; }
 .panel__body { padding: var(--jm-space-5) var(--jm-space-6); overflow-y: auto; }
 .panel__section { margin-bottom: var(--jm-space-5); }
 .panel__label { font-family: var(--jm-font-mono); font-size: var(--jm-label); text-transform: uppercase; letter-spacing: .06em; color: var(--jm-faint); font-weight: 600; margin-bottom: 5px; }
