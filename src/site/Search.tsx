@@ -187,9 +187,11 @@ export function Search({ onOpenMap, onOpenMetric, onBuy }: {
                   onMouseEnter={() => setCursor(maps.length + i)}
                   onClick={() => go(h)}>
                   <span className="asearch__nm">
-                    {mark(h.name)}
-                    {/* нашлось по второму имени — показываем, по какому именно */}
-                    {h.why && <span className="asearch__why">{mark(h.why)}</span>}
+                    {/* подсвечиваем там, где совпало: в самом названии либо во втором имени */}
+                    {h.why ? h.name : mark(h.name)}
+                    {/* второе имя — в скобках сразу за названием: отдельной строкой
+                        оно читается как склейка двух разных метрик */}
+                    {h.why && <span className="asearch__why"> ({mark(h.why)})</span>}
                   </span>
                   {/* карта метрики: 36 названий повторяются в разных картах */}
                   <span className="asearch__side">{h.section}{h.locked && ' · под замком'}</span>

@@ -464,8 +464,9 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 .asearch__row.is-locked { opacity: .62; }
 .asearch__nm { font-size: var(--jm-body-s); color: var(--jm-ink); min-width: 0; }
 .asearch__nm b { font-weight: var(--jm-w-semibold); color: var(--jm-green-press); }
-/* второе имя, по которому нашлось: иначе строка выглядит попавшей случайно */
-.asearch__why { display: block; font-size: var(--jm-caption); color: var(--jm-muted); }
+/* второе имя, по которому нашлось: в скобках сразу за названием — отдельной
+   строкой оно читается как склейка двух разных метрик */
+.asearch__why { color: var(--jm-muted); }
 .asearch__side { flex: none; font-size: var(--jm-caption); color: var(--jm-faint); white-space: nowrap; }
 .asearch__free { margin-left: 7px; color: var(--jm-green-press); }
 
