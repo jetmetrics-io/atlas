@@ -91,15 +91,37 @@ def upload(cl, dry):
     if not dist.exists():
         sys.exit(f"✖ Нет {dist} — сборка не выполнена.")
     files = sorted(p for p in dist.rglob("*") if p.is_file())
+    skipped = []
     for p in files:
         key = PREFIX + p.relative_to(dist).as_posix()
+
+        # ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+        # ┃  СПИСКИ ОПЛАТИВШИХ НЕ ВЫГРУЖАЕМ. НИКОГДА.                          ┃
+        # ┃                                                                    ┃
+        # ┃  Боевой payment/paid.json — это список живых покупателей, его      ┃
+        # ┃  ведёт сайт, и лежит он в КОРНЕ бакета. В dist/ же попадает        ┃
+        # ┃  локальная заглушка из public/payment/ с парой тестовых адресов:   ┃
+        # ┃  она нужна только для отладки на localhost.                        ┃
+        # ┃                                                                    ┃
+        # ┃  Сейчас пути расходятся (atlas/payment/ против payment/), поэтому  ┃
+        # ┃  заглушка боевой список не затирает. Но стоит однажды сменить      ┃
+        # ┃  PREFIX или переложить файлы — и деплой молча снесёт всех, кто     ┃
+        # ┃  купил Атлас, а узнаем мы об этом от людей, потерявших доступ.     ┃
+        # ┃  Поэтому не полагаемся на удачное расположение: не грузим вовсе.   ┃
+        # ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+        if "/payment/" in f"/{key}":
+            skipped.append(key)
+            continue
+
         ct = CT.get(p.suffix.lower(), "application/octet-stream")
         cc = cache_for(key)
         print(f"  {'DRY ' if dry else 'PUT '}{key}   [{ct.split(';')[0]}; {cc}]")
         if not dry:
             cl.put_object(Bucket=BUCKET, Key=key, Body=p.read_bytes(),
                           ACL="public-read", ContentType=ct, CacheControl=cc)
-    return len(files)
+    if skipped:
+        print(f"  — пропущено (списки оплативших, ведёт сайт): {', '.join(skipped)}")
+    return len(files) - len(skipped)
 
 def verify():
     url = f"{ENDPOINT}/{BUCKET}/{PREFIX}index.html"
@@ -111,8 +133,21 @@ def verify():
     except Exception as e:
         print(f"  ✖ {url} → {e}")
 
+def guard_prefix():
+    """Не дать залить сборку в корень бакета.
+
+    В корне живёт сайт джетметрикс.рф и payment/paid.json со списком покупателей.
+    Пустой или укороченный PREFIX означал бы, что сборка Атласа ляжет поверх них.
+    Проверка дешёвая, а цена ошибки — сайт и потерянные доступы.
+    """
+    if not PREFIX.endswith("/") or PREFIX.strip("/") == "":
+        sys.exit(f"✖ PREFIX={PREFIX!r} — сборка ушла бы в корень бакета, где лежит сайт "
+                 f"и список покупателей. Деплой остановлен.")
+
+
 def main():
     load_env()
+    guard_prefix()
     args = set(sys.argv[1:])
     dry = "--dry-run" in args
     no_build = "--no-build" in args

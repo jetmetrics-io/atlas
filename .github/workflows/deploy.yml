@@ -41,6 +41,13 @@ jobs:
           rm -rf site && mkdir -p site
           npm run build
           cp -r dist/. site/
+          # СПИСКИ ОПЛАТИВШИХ НЕ ПУБЛИКУЕМ. НИКОГДА.
+          # В public/payment/ лежит локальная ЗАГЛУШКА с тестовыми адресами — она нужна
+          # только для отладки на localhost. Боевой список покупателей ведёт сайт, он
+          # в КОРНЕ бакета. Синк ниже идёт с --delete: если пути когда-нибудь сойдутся,
+          # заглушка молча снесёт всех, кто купил Атлас. Убираем до любой публикации —
+          # и до Pages, и до бакета.
+          rm -rf site/payment
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
@@ -51,11 +58,16 @@ jobs:
       - name: Sync to Yandex Object Storage
         if: ${{ env.YC_KEY_ID != '' }}
         run: |
+          # страховка: заглушки не должно быть в выгрузке ни при каких правках выше
+          if [ -e site/payment ]; then
+            echo "✖ site/payment существует — синк остановлен, иначе можно снести список покупателей"
+            exit 1
+          fi
           # статика — иммутабельно на год (кроме html и json)
           aws s3 sync site/ "s3://${YC_BUCKET}/atlas/" \
             --endpoint-url "${YC_ENDPOINT}" \
             --acl public-read --delete \
-            --exclude "*.html" --exclude "*.json" \
+            --exclude "*.html" --exclude "*.json" --exclude "payment/*" \
             --cache-control "max-age=31536000,immutable"
           # html — короткий кэш
           aws s3 sync site/ "s3://${YC_BUCKET}/atlas/" \
@@ -67,7 +79,7 @@ jobs:
           aws s3 sync site/ "s3://${YC_BUCKET}/atlas/" \
             --endpoint-url "${YC_ENDPOINT}" \
             --acl public-read \
-            --exclude "*" --include "*.json" \
+            --exclude "*" --include "*.json" --exclude "payment/*" \
             --cache-control "max-age=300" --content-type "application/json; charset=utf-8"
   deploy:
     needs: build
