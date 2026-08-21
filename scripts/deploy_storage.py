@@ -17,7 +17,7 @@
   python3 scripts/deploy_storage.py --dry-run  # собрать и показать что зальётся, без заливки
   python3 scripts/deploy_storage.py --no-build # залить уже собранный dist/ (для отладки)
 """
-import os, sys, subprocess, pathlib, urllib.request
+import os, re, sys, subprocess, pathlib, urllib.request
 
 APP = pathlib.Path(__file__).resolve().parent.parent          # .../Map Library 2.0/app
 ENDPOINT = "https://storage.yandexcloud.net"
@@ -58,6 +58,30 @@ def cache_for(key):
         return "max-age=31536000, immutable"
     return "max-age=3600"
 
+def stamp_date():
+    """Проставить дату релиза в Базу: её показывает каталог («Обновлено 21 августа»).
+
+    Делается ИМЕННО здесь, а не в сборке: локальных сборок за день десятки, и дата
+    от них менялась бы впустую. Обновление для читателя — это выкладка, а её момент
+    один. Пишем только при реальном деплое (не dry-run, не --no-build), причём
+    прицельной заменой строки, а не json.dump: пересохранение развалило бы
+    форматирование файла на 745 узлов и дало нечитаемый диф.
+    """
+    from datetime import date
+    src = APP / "src/atlas/atlas_base.json"
+    raw = src.read_text(encoding="utf-8")
+    m = re.search(r'"updated":\s*"(\d{4}-\d{2}-\d{2})"', raw)
+    if not m:
+        print("  ! в atlas_base.json нет meta.updated — дата не проставлена")
+        return
+    today = date.today().isoformat()
+    if m.group(1) == today:
+        print(f"── дата релиза уже {today} ──")
+        return
+    src.write_text(raw[:m.start(1)] + today + raw[m.end(1):], encoding="utf-8")
+    print(f"── дата релиза: {m.group(1)} → {today} ──")
+
+
 def build():
     print("── npm run build ──")
     subprocess.run(["npm", "run", "build"], cwd=APP, check=True)
@@ -95,6 +119,9 @@ def main():
     cl = None if dry else client()          # dry-run не требует ключей
     print(f"=== ATLAS → {PREFIX} ===")
     if not no_build:
+        # дату ставим только при настоящей выкладке: dry-run ничего не публикует
+        if not dry:
+            stamp_date()
         build()
     total = upload(cl, dry)
     print(f"\n{'(dry-run) ' if dry else ''}Объектов: {total}")
