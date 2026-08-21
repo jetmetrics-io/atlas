@@ -1,5 +1,6 @@
 import { FAMILIES, sectionsOfFamily, BASE, PAID, isSectionFree } from '../atlas/atlas'
 import { EMBED, BUY_URL, goTop, mapPageUrl } from './nav'
+import { Search } from './Search'
 
 const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
   'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
@@ -40,7 +41,7 @@ const ICONS: Record<string, JSX.Element> = {
 
 type Sec = { name: string; slug: string; nodes: number }
 
-export function Catalog({ onOpen }: { onOpen: (section: string) => void }) {
+export function Catalog({ onOpen }: { onOpen: (section: string, nodeId?: string) => void }) {
   const meta = BASE.meta as { updated?: string }
   const families = FAMILIES.filter((f) => sectionsOfFamily(f).length > 0)
   const totalMaps = families.reduce((a, f) => a + sectionsOfFamily(f).length, 0)
@@ -61,12 +62,13 @@ export function Catalog({ onOpen }: { onOpen: (section: string) => void }) {
 
   // Клик по карте: закрытая → покупка; в embed открытая ведёт на СВОЮ страницу Тильды
   // (если она заведена), иначе — открываем карту внутри приложения.
-  const openCard = (name: string) => {
+  const openCard = (name: string, nodeId?: string) => {
     if (EMBED) {
       const page = mapPageUrl(name)
-      if (page) { goTop(page); return }
+      // из поиска метрика открывается сразу раскрытой: страница карты + ?node=
+      if (page) { goTop(nodeId ? `${page}?node=${nodeId}` : page); return }
     }
-    onOpen(name)
+    onOpen(name, nodeId)
   }
 
   // Одна карточка каталога. showIndex — моно-индекс в углу (только оплатившим).
@@ -109,6 +111,11 @@ export function Catalog({ onOpen }: { onOpen: (section: string) => void }) {
             <h1>Карты метрик <span className="ac">по направлениям</span></h1>
             <p>Выберите направление. Внутри карта показателей: что на что влияет, прямо или обратно,
               и на какие рычаги вы реально можете нажать.</p>
+            <Search
+              onOpenMap={(s) => openCard(s)}
+              onOpenMetric={(s, id) => openCard(s, id)}
+              onBuy={() => goTop(BUY_URL)}
+            />
           </div>
 
           <aside className="statspanel">

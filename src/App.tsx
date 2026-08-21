@@ -21,7 +21,9 @@ export default function App() {
   useEffect(() => {
     const url = new URL(window.location.href)
     if (section) url.searchParams.set('map', section)
-    else url.searchParams.delete('map')
+    // Вернулись в каталог — снимаем и метрику: иначе следующая открытая карта
+    // подхватит ?node= от прошлой и раскроет чужую карточку.
+    else { url.searchParams.delete('map'); url.searchParams.delete('node') }
     window.history.replaceState(null, '', url.toString())
   }, [section])
 
@@ -61,7 +63,15 @@ export default function App() {
             }}
           />
         ) : (
-          <Catalog onOpen={(s) => setSection(s)} />
+          <Catalog onOpen={(s, nodeId) => {
+            // Метрика из поиска: адрес правим ДО монтирования карты — MapView
+            // читает ?node= один раз, при первом рендере.
+            const url = new URL(window.location.href)
+            if (nodeId) url.searchParams.set('node', nodeId)
+            else url.searchParams.delete('node')
+            window.history.replaceState(null, '', url.toString())
+            setSection(s)
+          }} />
         )}
       </main>
       {!EMBED && !section && <Footer />}
