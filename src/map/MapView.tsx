@@ -15,6 +15,10 @@ import { Tour, type TourStep } from './Tour'
 import { metricUrl } from '../site/nav'
 import { roleStyle, signColor } from '../atlas/style'
 import type { AtlasEdge } from '../atlas/types'
+import { DashPicker } from '../dash/DashPicker'
+import { DashSheet } from '../dash/DashSheet'
+import { BLUEPRINTS, QUESTIONS, litNodesOf } from '../dash/blueprints'
+import '../dash/dash.css'
 
 const nodeTypes = { metric: MetricNode, group: GroupNode }
 const edgeTypes = { metric: MetricEdge }
@@ -161,8 +165,9 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
     (typeof location !== 'undefined' && new URLSearchParams(location.search).get('mode') === 'spine')
       ? 'spine' : 'full')
   const [hoverId, setHoverId] = useState<string | null>(null)
-  const [selNode, setSelNode] = useState<string | null>(() =>
-    (typeof location !== 'undefined' && new URLSearchParams(location.search).get('node')) || null)
+  // ?node=<id> — прямая ссылка на метрику: карточка открыта сразу (ей делятся снаружи).
+  const nodeFromUrl = (typeof location !== 'undefined' && new URLSearchParams(location.search).get('node')) || null
+  const [selNode, setSelNode] = useState<string | null>(nodeFromUrl)
   const [selEdge, setSelEdge] = useState<AtlasEdge | null>(null)
   // Подсветка всех метрик одной роли (клик по роли в легенде). Взаимоисключается
   // с выбором узла/связи: включил роль — снял выделение, и наоборот.
@@ -171,6 +176,18 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
   const [tourOn, setTourOn] = useState(false)
   // Связь, у которой на время шага тура принудительно показана иконка «i».
   const [forceEdgeKey, setForceEdgeKey] = useState<string | null>(null)
+
+  // ── Дашборды из карты ──
+  // Выбранный вопрос → пошаговая сборка листа на карте → сам лист.
+  // ?dash=<id> — прямая ссылка на лист (ей делятся), ?dash=<id>&gen=0 — сразу лист без сборки.
+  const dashParam = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null
+  const dashFromUrl = dashParam?.get('dash') ?? null
+  const [pickerOn, setPickerOn] = useState(false)
+  const [bpId, setBpId] = useState<string | null>(() => (dashFromUrl && BLUEPRINTS[dashFromUrl] ? dashFromUrl : null))
+  const [genStep, setGenStep] = useState(() => (dashFromUrl && BLUEPRINTS[dashFromUrl] ? 0 : -1)) // -1 = сборка не идёт
+  const [sheetOn, setSheetOn] = useState(() => dashParam?.get('gen') === '0')
+  // Метрика, на плитку которой навели в листе — подсвечиваем её на карте.
+  const [dashHover, setDashHover] = useState<string | null>(null)
 
   const map = useMemo(() => buildMap(section), [section])
 
@@ -188,6 +205,22 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
     for (const n of map.nodes) if (c[n.role] !== undefined) c[n.role]++
     return c
   }, [map])
+
+  const blueprint = bpId ? BLUEPRINTS[bpId] : null
+
+  // Метрики, отобранные на лист к текущему шагу сборки (или все, когда лист открыт).
+  const dashLit = useMemo(() => {
+    if (!blueprint) return null
+    if (sheetOn) return new Set(litNodesOf(blueprint))
+    if (genStep < 0) return null
+    const s = new Set<string>()
+    blueprint.steps.slice(0, genStep + 1).forEach((st) => st.lit?.forEach((id) => s.add(id)))
+    return s
+  }, [blueprint, genStep, sheetOn])
+
+  // Гасим неотобранное только после шага «отсекаю не связанное» — до него карта целая.
+  const dashDim = !!blueprint && (sheetOn ||
+    (genStep >= 0 && blueprint.steps.slice(0, genStep + 1).some((st) => st.dim)))
 
   // Детерминированный стартовый вьюпорт: подгонка по ШИРИНЕ на читаемом зуме,
   // якорь сверху (высокие карты скроллятся вниз, узлы остаются крупными).
@@ -271,10 +304,12 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
         key: n.key,
         selected: selNode === n.id,
         hovered: hoverId === n.id,
-        // Роль-подсветка главнее окрестности: активна роль → метрики этой роли ярко,
-        // остальные приглушены; иначе — обычная логика окрестности фокуса.
-        highlight: activeRole ? n.role === activeRole : false,
-        dimmed: activeRole ? n.role !== activeRole : (focus ? !neigh.has(n.id) : false),
+        // Сборка дашборда главнее всего: пока она идёт (или открыт лист), карта
+        // показывает отобранное. Дальше роль-подсветка, дальше окрестность фокуса.
+        highlight: dashLit ? (dashLit.has(n.id) || dashHover === n.id)
+          : activeRole ? n.role === activeRole : false,
+        dimmed: dashLit ? (dashDim && !dashLit.has(n.id))
+          : activeRole ? n.role !== activeRole : (focus ? !neigh.has(n.id) : false),
       },
       draggable: false, selectable: true,
     }))
@@ -530,7 +565,7 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
       }
     })
     return { rfNodes, rfEdges }
-  }, [map, mode, hoverId, selNode, activeRole, forceEdgeKey])
+  }, [map, mode, hoverId, selNode, activeRole, forceEdgeKey, dashLit, dashDim, dashHover])
 
   const selNodeObj = selNode ? nodeById(selNode) : null
 
@@ -553,6 +588,21 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
     if (!to) return
     window.open(metricUrl(to.section, to.id), '_blank', 'noopener')
   }
+  // Прямая ссылка на метрику: подвести к ней камеру, иначе на высокой карте она уедет
+  // за нижний край и человек увидит карточку, но не найдёт саму метрику. Сдвиг вправо —
+  // на полширины панели (360px), чтобы метрика не пряталась под открытой карточкой.
+  useEffect(() => {
+    if (!nodeFromUrl) return
+    const n = map.nodes.find((x) => x.id === nodeFromUrl)
+    if (!n) return
+    const t = setTimeout(
+      () => flowRef.current?.setCenter(n.px + n.w / 2 + 180, n.py + n.h / 2, { zoom: 1, duration: 0 }),
+      60,
+    )
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Центрировать карту на метрике (без открытия карточки) — для шагов тура.
   const centerOn = (id: string) => {
     const n = map.nodes.find((x) => x.id === id)
@@ -573,11 +623,64 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
   const markTourDone = () => { try { localStorage.setItem('jm-tour-done', '1') } catch (e) { /* приватный режим */ } }
   const closeTour = () => { setTourOn(false); setForceEdgeKey(null) ; markTourDone() }
   const startTour = () => { setForceEdgeKey(null); setTourOn(true) }
+
+  // Сборка листа: шаги идут по карте, а не в спиннере. Каждая строка — реальное
+  // действие движка (найти вершину, взять входящие рёбра, отсечь несвязанное).
+  useEffect(() => {
+    if (!blueprint || genStep < 0 || sheetOn) return
+    if (genStep >= blueprint.steps.length - 1) {
+      const t = setTimeout(() => setSheetOn(true), 700)
+      return () => clearTimeout(t)
+    }
+    const t = setTimeout(() => setGenStep((s) => s + 1), 520)
+    return () => clearTimeout(t)
+  }, [blueprint, genStep, sheetOn])
+
+  // На шаге поиска вершины подводим карту к ней — видно, откуда лист растёт.
+  // Когда лист открыт, он занимает правую часть экрана: сдвигаем карту так, чтобы
+  // вершина оказалась в оставшейся слева полосе, а не под листом.
+  const centerForDash = (id: string) => {
+    const n = map.nodes.find((x) => x.id === id)
+    if (!n) return
+    const zoom = 0.9
+    const cw = typeof window !== 'undefined' ? window.innerWidth : 1440
+    const sheetW = sheetOn ? Math.min(cw * 0.62, 900) : 0
+    flowRef.current?.setCenter(
+      n.px + n.w / 2 + sheetW / 2 / zoom,
+      n.py + n.h / 2,
+      { zoom, duration: 420 },
+    )
+  }
+  useEffect(() => {
+    if (!blueprint) return
+    if (genStep !== 1 && !sheetOn) return
+    const t = setTimeout(() => centerForDash(blueprint.vertex.id), sheetOn ? 120 : 60)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [blueprint, genStep, sheetOn])
+
+  const startBlueprint = (id: string) => {
+    setPickerOn(false)
+    setSelNode(null); setSelEdge(null); setActiveRole(null); setTourOn(false)
+    setBpId(id); setGenStep(0); setSheetOn(false)
+  }
+  const closeBlueprint = () => {
+    setBpId(null); setGenStep(-1); setSheetOn(false); setDashHover(null)
+  }
+  const dashQuestions = QUESTIONS[section] ?? []
+  // Дашборды из карты — прототип, на опубликованном Атласе публике не показываем:
+  // там вход только по ?dash=1 (прямая ссылка ?dash=<id> на готовый лист работает всегда).
+  // Локально флаг не нужен: на своей машине кнопка есть по умолчанию, иначе про неё
+  // забываешь и открываешь карту без дашбордов.
+  const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)
+  const dashOn = local || dashParam?.get('dash') != null
   // Первый визит: тур запускается сам (один раз, помнится через localStorage).
   useEffect(() => {
     let done = false
     try { done = localStorage.getItem('jm-tour-done') === '1' } catch (e) { done = false }
-    if (done || !keyNodeId) return
+    // Если карту открыли по прямой ссылке — на дашборд или на метрику, — тур не лезет
+    // поверх: человек пришёл за конкретной вещью, а не знакомиться с картой.
+    if (done || !keyNodeId || bpId || nodeFromUrl) return
     const t = setTimeout(() => setTourOn(true), 700)
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -634,7 +737,7 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
   )
 
   return (
-    <div className="mapscreen">
+    <div className={`mapscreen${sheetOn ? ' is-dash' : ''}`}>
       <div className="mapcanvas">
         <ReactFlowProvider>
           <ReactFlow
@@ -679,6 +782,34 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
                 />
               </div>
             </Panel>
+            {/* Верх-центр — вход в дашборды и лог сборки. */}
+            {dashQuestions.length > 0 && dashOn && (
+              <Panel position="top-center" className="dashpanel">
+                {genStep < 0 && !sheetOn && (
+                  <button className="dashbtn" onClick={() => setPickerOn(true)}>
+                    <svg width="15" height="15" viewBox="0 0 20 20" aria-hidden="true" fill="none"
+                      stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2.6" y="3.2" width="14.8" height="13.6" rx="2.4" />
+                      <path d="M6.4 13.2v-3M10 13.2V7.4M13.6 13.2v-1.8" />
+                    </svg>
+                    Дашборды по этой карте
+                    <span className="dashbtn__cnt">{dashQuestions.length}</span>
+                  </button>
+                )}
+                {blueprint && genStep >= 0 && !sheetOn && (
+                  <div className="dashgen">
+                    <h3>Собираю лист</h3>
+                    {blueprint.steps.slice(0, genStep + 1).map((s) => (
+                      <div className="dashgen__l" key={s.t}>
+                        <span className="dashgen__s">✓</span>
+                        <span>{s.t}</span>
+                        <span className="dashgen__r">{s.r}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Panel>
+            )}
             <MiniMap
               pannable zoomable
               nodeColor={(n) => n.type === 'group' ? 'transparent' : roleStyle((n.data as { role: string }).role).color}
@@ -697,6 +828,12 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
         {selNodeObj && <NodeCard node={selNodeObj} siblings={siblings} onNavigate={focusNode} onClose={() => setSelNode(null)} />}
         {selEdge && <EdgeCard edge={selEdge} onClose={() => setSelEdge(null)} onNavigate={focusNode} />}
         {tourOn && keyNodeId && <Tour steps={tourSteps} onClose={() => closeTour()} />}
+        {pickerOn && (
+          <DashPicker section={section} onPick={startBlueprint} onClose={() => setPickerOn(false)} />
+        )}
+        {blueprint && sheetOn && (
+          <DashSheet bp={blueprint} onClose={closeBlueprint} onHoverNode={setDashHover} />
+        )}
       </div>
     </div>
   )

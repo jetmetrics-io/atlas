@@ -1,0 +1,338 @@
+/* ── Цвет мелкого текста ───────────────────────────────────────────────────
+   Фирменные --jm-faint (#98A0A6) и красный #DC4048 на белом дают контраст
+   2,65:1 и 4,31:1 — ниже порога WCAG AA 4,5:1 для обычного текста. На подписях
+   осей и дельтах это 10px, то есть ровно тот случай, где порог и нужен.
+   Затемнённые версии проходят на всех подложках дашборда: белой, розовой
+   строке разреза и зелёной плитке. Фирменные токены остаются как есть —
+   они шире дашборда, менять их в одиночку нельзя.
+   ────────────────────────────────────────────────────────────────────────── */
+.dsheet {
+  --d-faint: #6A7074;   /* подписи осей, база, шапки таблиц — 5,02:1 на белом */
+  --d-bad:   #C83A42;   /* дельта в минус — 5,07:1 */
+  --d-good:  #0B7E65;   /* дельта в плюс  — 5,02:1 */
+}
+/* ── Кегли ──────────────────────────────────────────────────────────────────
+   Четыре размера на весь дашборд, больше не бывает. Кеглей было шестнадцать:
+   8,5 / 9 / 9,5 / 10 / 10,5 / 11 / 11,5 / 12 / 12,5 / 14 / 14,5 / 17 / 18 / 19 / 24 / 32.
+   Разница в полпикселя не читается как иерархия — она читается как неряшливость,
+   и человек перестаёт понимать, что здесь главное.
+
+   30px — главная метрика дашборда, ровно одна на экран
+   18px — числа плиток и заголовок дашборда
+   12px — весь текст: таблицы, подписи метрик, кнопки, пояснения
+   10px — служебное: надзаголовки, дельты в таблицах, база, подписи осей
+   ────────────────────────────────────────────────────────────────────────── */
+/* ── Дашборды из карты: кнопка, пикер, сборка, лист ─────────────────────────
+   Опирается на tokens.css бренд-системы (переменные --jm-*). Светлая тема.
+   Мокап листа намеренно нецветной: цвет тратится только на роль метрики,
+   всё остальное — оттенки серого, иначе лист читается как витрина, а не как инструмент. */
+
+:root {
+  --dm-line: #C9D0D4;   /* линия графика по умолчанию */
+  --dm-soft: #E6EAEC;   /* заливки и коридор нормы */
+}
+
+/* Кнопка на карте */
+.dashbtn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--jm-green); color: #fff; border: 0; border-radius: 11px;
+  padding: 9px 14px; font-family: var(--jm-font-sans); font-size: 12px; font-weight: 600;
+  cursor: pointer; white-space: nowrap;
+  box-shadow: 0 1px 0 rgba(8,11,13,.06), 0 6px 18px -8px rgba(14,156,125,.7);
+  transition: background .15s, transform .1s;
+}
+.dashbtn:hover { background: var(--jm-green-press); }
+.dashbtn:active { transform: translateY(1px); }
+.dashbtn__cnt {
+  font-family: var(--jm-font-mono); font-size: 12px;
+  background: rgba(255,255,255,.22); border-radius: 99px; padding: 2px 7px;
+}
+
+/* Пикер вопросов */
+.dashscrim {
+  position: fixed; inset: 0; background: rgba(8,11,13,.42); backdrop-filter: blur(2px);
+  display: flex; align-items: center; justify-content: center; z-index: 80; padding: 24px;
+}
+.dashpicker {
+  position: relative; background: var(--jm-surface); border-radius: 18px;
+  max-width: 780px; width: 100%; overflow: hidden;
+  box-shadow: 0 30px 70px -20px rgba(8,11,13,.4);
+}
+.dashpicker__x {
+  position: absolute; top: 12px; right: 14px; background: none; border: 0;
+  font-size: 18px; line-height: 1; color: var(--d-faint); cursor: pointer;
+}
+.dashpicker header {
+  padding: 20px 24px 14px; border-bottom: 1px solid var(--jm-line-soft);
+  display: flex; align-items: baseline; gap: 16px;
+}
+.dashpicker header h2 { margin: 0; font-size: 18px; font-weight: 700; flex: 1 1 auto; }
+.dashpicker__list { padding: 8px; }
+.dashq {
+  display: flex; gap: 12px; align-items: center; width: 100%; text-align: left;
+  background: none; border: 0; border-radius: 12px; padding: 12px 14px; cursor: pointer;
+  font-family: var(--jm-font-sans); font-size: 12px; color: var(--jm-text); transition: background .12s;
+}
+.dashq:hover { background: var(--jm-bg); }
+.dashq__ic {
+  flex: 0 0 auto; width: 30px; height: 30px; border-radius: 9px;
+  display: grid; place-items: center; align-self: flex-start; margin-top: 1px;
+}
+.dashq--diag .dashq__ic { background: var(--jm-green-tint); color: var(--jm-green-deep); }
+.dashq--ops .dashq__ic { background: var(--jm-blue-tint); color: #2A62B8; }
+.dashq--probe .dashq__ic { background: var(--jm-yellow-tint); color: var(--jm-yellow-text); }
+.dashq__txt { flex: 1 1 auto; }
+.dashq__txt b { font-weight: 600; display: block; }
+.dashq__txt small { display: block; color: var(--jm-muted); font-size: 12px; margin-top: 2px; font-weight: 400; }
+/* Тип листа: слово плюс расшифровка. Иконка одна не объясняет ничего. */
+.dashq__type {
+  flex: 0 0 190px; text-align: right; align-self: flex-start; margin-top: 1px;
+  border-left: 1px solid var(--jm-line-soft); padding-left: 12px;
+}
+.dashq__type i {
+  display: block; font-style: normal; font-size: 12px; font-weight: 600; color: var(--jm-text);
+}
+.dashq__type em {
+  display: block; font-style: normal; font-size: 12px; line-height: 1.3;
+  color: var(--d-faint); margin-top: 2px;
+}
+
+/* Панель сборки — над картой, карта видна */
+.dashgen {
+  width: 340px; background: rgba(255,255,255,.97); border: 1px solid var(--jm-line);
+  border-radius: 13px; padding: 14px 15px; box-shadow: 0 14px 40px -14px rgba(8,11,13,.3);
+}
+.dashgen h3 {
+  margin: 0 0 10px; font-size: 12px; font-family: var(--jm-font-mono);
+  letter-spacing: .06em; text-transform: uppercase; color: var(--jm-muted); font-weight: 500;
+}
+.dashgen__l {
+  display: flex; gap: 9px; align-items: baseline; font-size: 12px; padding: 4px 0;
+  animation: dashgen-in .3s ease both;
+}
+@keyframes dashgen-in { from { opacity: 0; transform: translateY(3px) } to { opacity: 1; transform: none } }
+.dashgen__s { flex: 0 0 auto; width: 13px; color: var(--jm-green); font-weight: 700; }
+.dashgen__r { margin-left: auto; font-family: var(--jm-font-mono); font-size: 10px; color: var(--jm-muted); white-space: nowrap; }
+
+/* Лист — справа, карта остаётся слева */
+.dsheet {
+  position: absolute; top: 0; right: 0; bottom: 0; width: min(62%, 940px);
+  background: var(--jm-bg); border-left: 1px solid var(--jm-line);
+  box-shadow: -24px 0 60px -30px rgba(8,11,13,.35);
+  display: flex; flex-direction: column; z-index: 40;
+  animation: dsheet-in .28s cubic-bezier(.22,.7,.3,1) both;
+}
+@keyframes dsheet-in { from { transform: translateX(24px); opacity: 0 } to { transform: none; opacity: 1 } }
+.dsheet__head {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
+  padding: 13px 18px 12px; background: var(--jm-surface); border-bottom: 1px solid var(--jm-line);
+}
+.dsheet__headl { min-width: 0; }
+.dsheet__head h2 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
+.dsheet__meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.dsheet__headr { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+.dsheet__demo {
+  font-size: 12px; color: var(--jm-muted); background: var(--jm-bg);
+  border: 1px solid var(--jm-line); border-radius: 7px; padding: 4px 8px; max-width: 180px; line-height: 1.25;
+}
+.dsheet__x { background: none; border: 0; font-size: 18px; line-height: 1; color: var(--d-faint); cursor: pointer; }
+.dsheet__x:hover { color: var(--jm-text); }
+.dsheet__body { overflow: auto; padding: 14px 18px 20px; }
+
+/* Чипы шапки: подпись словами, объяснение — по значку */
+.dchip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; color: var(--jm-muted); border: 1px solid var(--jm-line);
+  border-radius: 99px; padding: 3px 8px 3px 10px; background: var(--jm-bg);
+}
+.dchip b { font-weight: 600; color: var(--jm-text); }
+.dchip--type {
+  background: var(--jm-green-tint); border-color: #BFE6DA; color: var(--jm-green-deep); font-weight: 600;
+  padding-left: 8px;
+}
+.dchip__i, .dtile__i, .dcut__i {
+  display: inline-grid; place-items: center; background: none; border: 0; padding: 0;
+  color: var(--d-faint); cursor: help; line-height: 0;
+}
+.dchip__i:hover, .dtile__i:hover, .dcut__i:hover { color: var(--jm-green); }
+
+/* ── Мокап дашборда ────────────────────────────────────────────────────────
+   Десять блоков, три формы. Цвет тратится только на состояние метрики,
+   всё остальное — оттенки серого: лист читается как инструмент, а не витрина. */
+.dmock {
+  width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 8px;
+  background: var(--jm-surface); border: 1px solid var(--jm-line);
+  border-radius: 14px; padding: 11px 12px 12px;
+}
+.dmock__bar {
+  flex: 0 0 auto; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding-bottom: 9px; border-bottom: 1px solid var(--jm-line-soft);
+}
+.dmock__barlab {
+  font-size: 10px; color: var(--d-faint); margin-right: 2px;
+}
+
+/* Панель — единственный кирпич листа: и метрика, и таблица, и столбики */
+.dpan {
+  min-width: 0; display: flex; flex-direction: column;
+  border: 1px solid var(--jm-line-soft); border-radius: 10px; padding: 7px 9px;
+}
+.dpan > h3 {
+  margin: 0 0 2px; font-size: 12px; font-weight: 600;
+  display: flex; align-items: baseline; gap: 7px;
+}
+.dpan__nm { flex: 0 1 auto; min-width: 0; }
+.dpan > h3 em {
+  font-style: normal; font-weight: 400; font-size: 10px; color: var(--d-faint);
+  flex: 1 1 auto; min-width: 0;
+}
+.dpan > h3 .dtile__i { margin-left: auto; align-self: center; }
+
+.drow { display: flex; gap: 8px; }
+.drow > * { flex: 1 1 0; min-width: 0; }
+.drow > .dpan--grow { flex: 1.25 1 0; }
+.dgrid { display: grid; gap: 8px; }
+.dgrid--3 { grid-template-columns: repeat(3, 1fr); }
+.dgrid--4 { grid-template-columns: repeat(4, 1fr); }
+
+.dchart { margin-top: 3px; }
+.dsvg { display: block; width: 100%; height: auto; }
+.dmono { font-family: var(--jm-font-mono); }
+
+/* Число метрики и изменение в процентах к началу периода */
+.dmval { display: flex; align-items: baseline; gap: 7px; margin-top: 1px; }
+.dmval b { font-size: 18px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.dd { font-size: 10px; font-weight: 600; }
+.dd.is-bad { color: var(--d-bad); }
+.dd.is-good { color: var(--d-good); }
+.dd.is-flat { color: var(--d-faint); }
+
+/* Вершина: число слева, динамика справа. Ключевая помечена словом, а не цветом */
+.dkey { display: flex; align-items: center; gap: 16px; }
+.dkey__v { flex: 0 0 150px; }
+.dkey__tag {
+  display: block; font-family: var(--jm-font-mono); font-size: 10px;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--d-faint);
+}
+.dkey__v b {
+  display: block; font-size: 30px; font-weight: 700; letter-spacing: -.03em;
+  line-height: 1.05; font-variant-numeric: tabular-nums;
+}
+.dkey__v .dd { font-size: 12px; }
+.dkey__c { flex: 1 1 auto; min-width: 0; }
+
+/* Разрез по типу обращения: числа выровнены под своими заголовками */
+.dtab { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.dtab th {
+  text-align: right; font-weight: 500; color: var(--d-faint); font-size: 10px;
+  letter-spacing: .04em; text-transform: uppercase; padding: 3px 6px;
+  border-bottom: 1px solid var(--jm-line);
+}
+.dtab th:first-child, .dtab td:first-child { text-align: left; }
+.dtab th:last-child { text-align: center; padding-right: 0; }
+.dtab td { padding: 5px 6px; border-bottom: 1px solid var(--jm-line-soft); text-align: right; }
+.dtab tr:last-child td { border-bottom: 0; }
+.dtab tr.is-worst td { background: #FEF6F6; }
+.dtab td.is-bad { color: var(--d-bad); font-weight: 600; }
+.dtab td.is-good { color: var(--d-good); font-weight: 600; }
+.dtab td.is-flat { color: var(--jm-muted); font-weight: 600; }
+.dtab .dtab__sp { width: 66px; padding-right: 0; }
+.dtab td.dtab__sp svg { display: block; margin-left: auto; }
+
+/* Разрез: три пары «значение + изменение» в одной строке. Дельта живёт внутри ячейки —
+   отдельными колонками три пары не влезают без потери базы или спарклайна. */
+.dtab--cut { table-layout: fixed; }
+.dtab--cut th { padding: 2px 6px; }
+.dtab--cut td { padding: 3px 6px; }
+.dtab--cut .dtab__lbl { font-size: 12px; line-height: 1.2; }
+.dtab__v { font-weight: 600; }
+.dtab__d { display: inline-block; margin-left: 5px; font-size: 10px; font-weight: 600; }
+.dtab__d.is-bad { color: var(--d-bad); }
+.dtab__d.is-good { color: var(--d-good); }
+.dtab__d.is-flat { color: var(--d-faint); }
+.dtab__base { color: var(--d-faint); font-size: 10px; }
+
+/* Переключатель метрики для разрезов */
+.dpick {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 5px 9px; border: 1px dashed var(--jm-line); border-radius: 10px; background: var(--jm-bg);
+  margin-top: 2px;
+}
+.dpick__lab { font-size: 10px; color: var(--d-faint); margin-right: 2px; }
+.dpick .dcut { background: var(--jm-surface); }
+
+/* Разрезы = фильтры наверху дашборда */
+.dcut {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; border: 1px solid var(--jm-line); background: var(--jm-bg);
+  border-radius: 8px; padding: 3px 7px 3px 9px; color: var(--jm-muted);
+}
+.dcut.is-first { border-color: #BFE6DA; color: var(--jm-green-deep); background: var(--jm-green-tint); font-weight: 600; }
+.dcut i { font-family: var(--jm-font-mono); font-size: 10px; color: var(--d-faint); font-style: normal; }
+.dcut.is-first i { color: var(--jm-green-press); }
+
+/* Разбор под мокапом */
+.dtwo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.dpanel { border: 1px solid var(--jm-line); border-radius: 12px; padding: 11px 13px; background: var(--jm-surface); }
+.dpanel h3 { margin: 0 0 6px; font-size: 12px; font-weight: 700; }
+.dpanel ul { margin: 0; padding: 0; list-style: none; }
+.dpanel li { font-size: 12px; padding: 5px 0; border-top: 1px solid var(--jm-line-soft); line-height: 1.35; }
+.dpanel li:first-child { border-top: 0; }
+.dpanel li b { font-weight: 600; display: block; }
+.dpanel li span { color: var(--jm-muted); }
+
+/* Подсказка «почему» */
+.dtip {
+  position: fixed; z-index: 95; width: 330px; background: var(--jm-ink); color: #fff;
+  border-radius: 12px; padding: 12px 13px; font-size: 12px; line-height: 1.45;
+  box-shadow: 0 20px 50px -14px rgba(8,11,13,.6); pointer-events: none;
+}
+.dtip h4 { margin: 0 0 8px; font-size: 12px; font-weight: 700; }
+.dtip__row { margin-top: 8px; color: rgba(255,255,255,.92); }
+.dtip__k {
+  font-family: var(--jm-font-mono); font-size: 10px; letter-spacing: .07em; text-transform: uppercase;
+  color: rgba(255,255,255,.5); margin-bottom: 2px;
+}
+.dtip__rule {
+  margin-top: 9px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.14);
+  font-family: var(--jm-font-mono); font-size: 10px; color: rgba(255,255,255,.45);
+}
+
+/* Пока открыт лист, легенда карты не нужна — она мешает и дублирует */
+.mapscreen.is-dash .legend { display: none; }
+
+/* Д6.3b — вторая ступень ухудшения: заливка плитки при изменении больше 15%.
+   Шрифт дельты один не различает «просело» и «обвалилось», когда покраснела половина
+   листа. Заливка говорит, где начинать. Порог и ступени — в своде, § 18. */
+.dpan--strong.is-bad { background: #FEF6F6; border-color: #F3D2D4; }
+.dpan--strong.is-good { background: var(--jm-green-tint); border-color: #BFE6DA; }
+
+/* Ячейка ниже порога доверия (100 анкет). Приглушаем только оценку и её изменение:
+   объём и время считаются по всем обращениям, они полноценные. Строку не прячем —
+   спрятанная строка ломает сумму, а сумма и есть проверка на сходимость (Д11.5). */
+.dtab--cut tr.is-weak td:nth-child(2) { opacity: .64; }
+.dtab__base i { font-style: normal; color: var(--d-faint); }
+
+/* Ширины первой колонки и колонки тренда заданы явно: при table-layout: fixed ширину
+   задаёт только шапка, и без этого спарклайн в 60px вылезал за правый край таблицы. */
+.dtab--cut .dtab__c1 { width: 23%; }
+
+/* График: подписи осей — HTML в css-полях вокруг svg, а не текст внутри него.
+   Внутри svg с viewBox текст тянется вместе с картинкой: один и тот же кегль
+   рисуется по-разному в блоках разной ширины (R6.5). Поле под подписи задано
+   в пикселях: в процентах от ширины оно схлопывалось в узкой плитке, и «6 300»
+   вылезало за край карточки. Штрихи не тянутся тоже — держит vector-effect. */
+.dchart { position: relative; padding: 0 0 13px 34px; }
+.dchart__box { position: relative; width: 100%; }
+.dchart b {
+  position: absolute; font-weight: 400; font-size: 10px; line-height: 1;
+  color: var(--d-faint); pointer-events: none; white-space: nowrap;
+}
+.dchart__y { right: 100%; margin-right: 5px; transform: translateY(-50%); }
+.dchart__x { left: 34px; bottom: 0; }
+.dchart__r { right: 2px; transform: translateY(-140%); }
+
+/* Проблемная строка помечена не только подложкой: в оттенках серого и при
+   дальтонизме розовая заливка почти исчезает, а линейка у края — нет.
+   Правило «статус дублируется не только цветом» из R6.4. */
+.dtab--cut tr.is-worst .dtab__c1 { box-shadow: inset 2px 0 0 var(--d-bad); }
