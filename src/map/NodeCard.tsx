@@ -1,4 +1,5 @@
-import { type ReactNode, useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { trackMetric } from '../site/analytics'
 import type { AtlasNode } from '../atlas/types'
 import { roleStyle } from '../atlas/style'
 import { metricContent, contentReady, onContentReady } from '../atlas/content'
@@ -123,13 +124,31 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
   onClose: () => void
 }) {
   const rs = roleStyle(node.role)
-  const [tab, setTab] = useState<Tab>('essence')
+  // Вкладка по умолчанию — первая в TABS, а не 'essence' строкой: тогда перестановка
+  // или добавление вкладки не требует правок здесь.
+  const [tab, setTab] = useState<Tab>(TABS[0].key)
   const [copied, setCopied] = useState(false)
   // Контент грузится отдельным файлом уже после карты: как только пришёл — перерисуемся.
   const [, force] = useState(0)
   useEffect(() => onContentReady(() => force((n) => n + 1)), [])
   // Новая метрика — снова открываем первую вкладку.
-  useEffect(() => { setTab('essence'); setCopied(false) }, [node.id])
+  // Здесь же считаем открытие метрики и показ первой вкладки.
+  // React.StrictMode в деве прогоняет эффект дважды — без этой отсечки открытие
+  // метрики считалось бы за два. В проде StrictMode так не делает, но зависеть от
+  // режима сборки в аналитике нельзя: удвоение чисел заметили бы не сразу.
+  const tracked = useRef<string | null>(null)
+  useEffect(() => {
+    setTab(TABS[0].key)
+    setCopied(false)
+    if (tracked.current !== node.id) {
+      tracked.current = node.id
+      // Два события: сам факт открытия и показ первой вкладки — она показывается
+      // без клика, но это такой же показ, как и любой другой.
+      trackMetric('metric_open', node, TABS[0].key, TABS[0].label)
+      trackMetric('metric_view', node, TABS[0].key, TABS[0].label)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [node.id])
 
   const c = metricContent(node.id)
   const L = (t: string) => withExplicit(t, siblings, onNavigate)
@@ -212,7 +231,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
                 role="tab"
                 className="panel__tab"
                 aria-selected={tab === t.key}
-                onClick={() => setTab(t.key)}
+                onClick={() => { setTab(t.key); trackMetric('metric_view', node, t.key, t.label) }}
               >
                 {t.label}
               </button>
