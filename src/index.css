@@ -533,7 +533,11 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
   background:
     radial-gradient(circle at 1px 1px, #DBE1E7 1px, transparent 0) 0 0/22px 22px,
     var(--jm-bg); }
-.jm-embed .tree { height: 82vh; }
+/* В embed дерево занимает окошко целиком, как и карта: высоту iframe под экран
+   подгоняет страница-хост, и 100vh здесь = ровно видимая часть. Прежние 82vh
+   остались с поры, когда дерево жило на странице с контентом вокруг: на своей
+   странице они оставляли пустую полосу снизу, а панель висела выше края. */
+.jm-embed .tree { height: 100vh; }
 
 .tree__canvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
 /* Тянуть можно за любое пустое место экрана, не только за прямоугольник холста */
