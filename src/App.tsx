@@ -7,9 +7,20 @@ import { BASE, isSectionUnlocked } from './atlas/atlas'
 import { EMBED, CATALOG_PAGE, goTop, openTree } from './site/nav'
 
 // Дерево открывается тем же приложением, что и карты: ?tree=<slug>.
-function treeFromUrl(): string | null {
-  const t = new URLSearchParams(window.location.search).get('tree')
-  return t && treeExists(t) ? t : null
+//
+// Девять деревьев — один разбор чистой прибыли, и подчинённое дерево читается только
+// вместе с ней: слева приглушённый первый уровень, чипы «1 / 2 уровень», ключевая
+// метрика наверху под переключателем моделей. Поэтому `?tree=<подчинённое>` открывает
+// НЕ его корнем, а дерево-родителя с провалом внутрь. Так ведут себя разом все входы:
+// кнопка «Дерево этой метрики», присланная ссылка, поиск в каталоге и ссылка на метрику
+// соседнего дерева. Раньше правильный вид давал только чип «+N» внутри дерева.
+function treeFromUrl(): { slug: string; drill: string | null } | null {
+  const want = new URLSearchParams(window.location.search).get('tree')
+  if (!want || !treeExists(want)) return null
+  const t = (BASE.trees ?? []).find((x) => x.slug === want)
+  // Родитель есть — открываем его, а имя подчинённого отдаём как начальный провал:
+  // `drill` внутри дерева адресуется именем узла, и оно совпадает с именем дерева.
+  return t?.parent ? { slug: t.parent, drill: t.name } : { slug: want, drill: null }
 }
 
 function sectionFromUrl(): string | null {
@@ -21,17 +32,24 @@ function sectionFromUrl(): string | null {
 
 export default function App() {
   const [section, setSection] = useState<string | null>(() => sectionFromUrl())
-  const [tree, setTree] = useState<string | null>(() => treeFromUrl())
+  const target0 = treeFromUrl()
+  const [tree, setTree] = useState<string | null>(() => target0?.slug ?? null)
+  // Провал, заданный адресом: применяется один раз при открытии дерева.
+  const [drillTo, setDrillTo] = useState<string | null>(() => target0?.drill ?? null)
+  // В адресе держим ЗАПРОШЕННОЕ дерево, а не корень: иначе скопированная ссылка
+  // теряет, во что провалились, и открывает разбор с верхнего уровня.
+  const [urlTree, setUrlTree] = useState<string | null>(
+    () => new URLSearchParams(window.location.search).get('tree') ?? null)
   // Открыто ли приложение сразу на карте (её отдельная страница Тильды) — тогда «назад»
   // ведёт на страницу каталога, а не сворачивает SPA.
   const openedOnMap = useRef(sectionFromUrl() !== null)
 
   useEffect(() => {
     const url = new URL(window.location.href)
-    if (tree) url.searchParams.set('tree', tree)
+    if (tree) url.searchParams.set('tree', urlTree ?? tree)
     else { url.searchParams.delete('tree'); if (!section) url.searchParams.delete('node') }
     window.history.replaceState(null, '', url.toString())
-  }, [tree, section])
+  }, [tree, section, urlTree])
 
   useEffect(() => {
     const url = new URL(window.location.href)
@@ -69,17 +87,7 @@ export default function App() {
     <div className={`site${EMBED ? ' site--embed' : ''}`}>
       <main className="site__main">
         {tree ? (
-          <TreeView slug={tree} onBack={() => setTree(null)}
-            onOpenTree={(slug, nodeId) => {
-              // Переход между деревьями одного разбора — на месте. Адрес правим ДО
-              // смены дерева: TreeView читает ?node= при первом рендере.
-              const url = new URL(window.location.href)
-              url.searchParams.set('tree', slug)
-              url.searchParams.set('node', nodeId)
-              window.history.replaceState(null, '', url.toString())
-              setTree(slug)
-              window.scrollTo(0, 0)
-            }} />
+          <TreeView slug={tree} onBack={() => setTree(null)} initialDrill={drillTo} />
         ) : section ? (
           <MapView
             section={section}
@@ -102,6 +110,8 @@ export default function App() {
             if (nodeId) url.searchParams.set('node', nodeId)
             else url.searchParams.delete('node')
             window.history.replaceState(null, '', url.toString())
+            setDrillTo(null)
+            setUrlTree(slug)
             setTree(slug)
             window.scrollTo(0, 0)
           }} onOpen={(s, nodeId) => {

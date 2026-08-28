@@ -169,11 +169,14 @@ function Stage({
   )
 }
 
-export function TreeView({ slug, onBack, onOpenTree }:
-  { slug: string; onBack: () => void; onOpenTree?: (slug: string, nodeId: string) => void }) {
+export function TreeView({ slug, onBack, initialDrill }:
+  { slug: string; onBack: () => void; initialDrill?: string | null }) {
   const tree: Tree | undefined = useMemo(() => treeBySlug(slug), [slug])
   const [profile, setProfile] = useState<Profile>(readProfile)
   const [drill, setDrill] = useState<string | null>(null)
+  // Метрику из адреса запоминаем при первом рендере: App синхронизирует адрес
+  // и стирает ?node= раньше, чем эффекты успевают его прочитать.
+  const wantNode = useRef(new URLSearchParams(window.location.search).get('node'))
   const [card, setCard] = useState<string | null>(null)
   // Каретка клавиатуры: имя выбранной метрики. Отдельно от открытой карточки —
   // по дереву ходят стрелками, карточку открывают пробелом.
@@ -213,10 +216,18 @@ export function TreeView({ slug, onBack, onOpenTree }:
     return () => window.removeEventListener('resize', tick)
   }, [])
 
+  // Провал, заданный адресом: `?tree=<подчинённое>` открывает родителя с провалом
+  // внутрь. Ставим до разбора ?node=, иначе метрика подчинённого дерева не найдётся.
+  useEffect(() => {
+    if (!tree || !initialDrill) return
+    if (nodeByName(tree, initialDrill)) setDrill(initialDrill)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tree, initialDrill])
+
   // Прямая ссылка на метрику: ?tree=<slug>&node=<id>
   useEffect(() => {
     if (!tree) return
-    const id = new URLSearchParams(window.location.search).get('node')
+    const id = wantNode.current
     const n = id ? tree.nodes.get(id) : undefined
     if (!n) return
     if (n.parent && n.parent !== tree.root) {
@@ -228,6 +239,7 @@ export function TreeView({ slug, onBack, onOpenTree }:
     setSel(n.name)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tree])
+
 
   // Раскладка, по которой ходит каретка: при провале это второе дерево.
   const stageRef = useRef<TreeLayout | null>(null)
@@ -292,6 +304,17 @@ export function TreeView({ slug, onBack, onOpenTree }:
     const info = n ? childTree(tree, n.id) : undefined
     return info ? treeBySlug(info.slug) ?? null : null
   }, [tree, drill])
+
+  // Метрика из ?node= может жить не в дереве-родителе, а в том, куда провалились:
+  // ссылка вида `?tree=sebestoimost-prodazh&node=sebestoimost-prodazh/...` открывает
+  // прибыль с провалом в себестоимость, и карточку надо искать уже там.
+  useEffect(() => {
+    if (!sub || card) return
+    const id = wantNode.current
+    const n = id ? sub.nodes.get(id) : undefined
+    if (n) { setCard(n.name); setSel(n.name) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sub])
 
   // сколько места занять под переключатель: строка чипов на каждые три модели
   const keyExtra = useMemo(() => {
