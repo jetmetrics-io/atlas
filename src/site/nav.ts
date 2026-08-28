@@ -48,9 +48,13 @@ export function artifactPageUrl(name: string): string | null {
 
 /** Открыть дерево: на сайте — его страница Тильды, локально — свой же адрес с ?tree=.
  *  Внутри iframe уводим ВЕРХНЕЕ окно, иначе дерево откроется внутри рамки карты. */
-export function openTree(slug: string, nodeId?: string) {
+/** Открыть дерево. `newTab` — когда уходим из другого артефакта (с карты): там дерево
+ *  это отдельная сущность, и терять карту, с которой пришли, читатель не должен.
+ *  Внутри самого разбора переход идёт на месте: девять деревьев там читаются как одно. */
+export function openTree(slug: string, nodeId?: string, newTab = false) {
   const page = artifactPageUrl((BASE.trees ?? []).find((t) => t.slug === slug)?.name ?? '')
   const node = nodeId ? `&node=${encodeURIComponent(nodeId)}` : ''
+  if (page && newTab) { window.open(page + node, '_blank', 'noopener'); return }
   if (EMBED && page) { goTop(page + node); return }
   window.location.href = `${window.location.pathname}?tree=${slug}${node}`
 }

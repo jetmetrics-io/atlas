@@ -2,7 +2,7 @@ import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { trackMetric } from '../site/analytics'
 import type { AtlasNode } from '../atlas/types'
 import { roleStyle } from '../atlas/style'
-import { treeOfMetric } from '../atlas/atlas'
+import { treeOfMetric, BASE } from '../atlas/atlas'
 import { metricContent, contentReady, onContentReady } from '../atlas/content'
 import { metricUrl, openTree } from '../site/nav'
 
@@ -170,6 +170,9 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
   const dims = c['Разрезы'] ?? []
   // Метрика, которую разбирает своё дерево: из карточки в него ведёт кнопка.
   const tree = treeOfMetric(node)
+  // С карты дерево открывается новой вкладкой: это другой артефакт, и карта,
+  // с которой пришли, должна остаться. Внутри разбора переход идёт на месте.
+  const fromMap = !(BASE.trees ?? []).some((t) => t.name === node.section)
   const hasCalc = nuances.length > 0 || example.length > 0
   const hasWhy = !!(why || whenNot)
   const hasDims = dims.length > 0
@@ -282,7 +285,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
             )}
             {tree && (
               <div className="panel__section">
-                <button className="panel__tree" onClick={() => openTree(tree.slug)}>
+                <button className="panel__tree" onClick={() => openTree(tree.slug, undefined, fromMap)}>
                   <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor"
                     strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M8 2.5v3M8 5.5h-4v2M8 5.5h4v2" />
