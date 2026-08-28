@@ -39,10 +39,11 @@ export function artifactPageUrl(name: string): string | null {
 
 /** Открыть дерево: на сайте — его страница Тильды, локально — свой же адрес с ?tree=.
  *  Внутри iframe уводим ВЕРХНЕЕ окно, иначе дерево откроется внутри рамки карты. */
-export function openTree(slug: string) {
+export function openTree(slug: string, nodeId?: string) {
   const page = artifactPageUrl((BASE.trees ?? []).find((t) => t.slug === slug)?.name ?? '')
-  if (EMBED && page) { goTop(page); return }
-  window.location.href = `${window.location.pathname}?tree=${slug}`
+  const node = nodeId ? `&node=${encodeURIComponent(nodeId)}` : ''
+  if (EMBED && page) { goTop(page + node); return }
+  window.location.href = `${window.location.pathname}?tree=${slug}${node}`
 }
 
 /** Адрес метрики в её артефакте: страница артефакта + ?node=. У дерева адрес

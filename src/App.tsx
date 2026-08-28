@@ -4,7 +4,7 @@ import { Catalog } from './site/Catalog'
 import { MapView } from './map/MapView'
 import { TreeView, treeExists } from './tree/TreeView'
 import { BASE, isSectionUnlocked } from './atlas/atlas'
-import { EMBED, CATALOG_PAGE, goTop } from './site/nav'
+import { EMBED, CATALOG_PAGE, goTop, openTree } from './site/nav'
 
 // Дерево открывается тем же приложением, что и карты: ?tree=<slug>.
 function treeFromUrl(): string | null {
@@ -81,6 +81,12 @@ export default function App() {
           />
         ) : (
           <Catalog onOpenTree={(slug, nodeId) => {
+            // В embed уводим ВЕРХНЕЕ окно на страницу дерева, а не подменяем вид
+            // внутри рамки каталога. Иначе адрес страницы не меняется (ссылку не дать,
+            // назад не вернуться), а высота остаётся каталожной: iframe там растёт под
+            // контент, дерево просит 100vh, и получается круг — высота застревает
+            // на случайном значении. На своей странице высоту задаёт хост.
+            if (EMBED) { openTree(slug, nodeId); return }
             // адрес правим ДО монтирования: TreeView читает ?node= при первом рендере
             const url = new URL(window.location.href)
             if (nodeId) url.searchParams.set('node', nodeId)

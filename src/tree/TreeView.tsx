@@ -35,6 +35,29 @@ const TOP_NARROW = 150, NARROW = 760
 // Заголовки колонок — те же роли, что стоят на карточках: ступень и есть роль
 // метрики в дереве.
 // Колонка называется во множественном числе, роль на карточке — в единственном.
+// Значок ступени рисуется контуром в цвете самой ступени: мишень у ключевой,
+// плитки у компонентов, стрелка вверх у драйверов. Подписи без значка читались
+// как служебная строка, а не как шапка колонок.
+const TIER_ICON: Record<string, JSX.Element> = {
+  key: (
+    <svg viewBox="0 0 14 14" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <circle cx="7" cy="7" r="5.4" /><circle cx="7" cy="7" r="1.6" fill="currentColor" stroke="none" />
+    </svg>
+  ),
+  component: (
+    <svg viewBox="0 0 14 14" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <rect x="1.4" y="1.4" width="4.6" height="4.6" rx="1" /><rect x="8" y="1.4" width="4.6" height="4.6" rx="1" />
+      <rect x="1.4" y="8" width="4.6" height="4.6" rx="1" /><rect x="8" y="8" width="4.6" height="4.6" rx="1" />
+    </svg>
+  ),
+  driver: (
+    <svg viewBox="0 0 14 14" width="13" height="13" fill="none" stroke="currentColor"
+         strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2.6 11.4 11.4 2.6" /><path d="M5.4 2.6h6v6" />
+    </svg>
+  ),
+}
+
 const TIER = [
   { key: 'key', label: 'Ключевая метрика' },
   { key: 'component', label: 'Компоненты' },
@@ -416,7 +439,7 @@ export function TreeView({ slug, onBack }: { slug: string; onBack: () => void })
                 <span key={t} className="thead" style={{
                   left: tx + (lay.cols[t] + off) * z, width: lay.w * z,
                   color: TIER[t].text, borderColor: TIER[t].color,
-                }}>{TIER[t].label}</span>
+                }}><i className="thead__i">{TIER_ICON[TIER[t].key]}</i>{TIER[t].label}</span>
               ))}
             </div>
           ))}
