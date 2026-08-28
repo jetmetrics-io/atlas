@@ -614,7 +614,8 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 .tmodels button:hover { color: var(--jm-ink); border-color: var(--jm-ink); }
 .tmodels button.is-on { border-color: var(--jm-ink); color: var(--jm-ink); font-weight: 600; }
 
-.tree__lvls { position: absolute; top: 14px; left: 20px; z-index: 6; display: flex; gap: 10px; }
+/* Ступени опущены вниз-влево: верх-слева отдан возврату в каталог, общему с картами. */
+.tree__lvls { position: absolute; bottom: 20px; left: 20px; z-index: 6; display: flex; gap: 10px; }
 .tlvl { display: inline-flex; align-items: center; gap: 7px; height: 26px; padding: 0 12px 0 4px;
   background: var(--jm-surface); border: 1px solid var(--jm-line); border-radius: 999px;
   box-shadow: var(--jm-e1); font-size: 12.5px; color: var(--jm-muted); }
@@ -632,7 +633,9 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 .thead { position: absolute; font-family: var(--jm-font-mono); font-size: 10.5px; font-weight: 600;
   letter-spacing: .07em; text-transform: uppercase; padding-bottom: 8px; border-bottom: 2px solid; }
 
-.tree__crumbs { position: absolute; left: 20px; bottom: 20px; z-index: 6; display: inline-flex;
+/* Возврат в каталог стоит в одном месте на всех артефактах: верх-слева. На картах
+   там же живёт .crumbs, и переучиваться при переходе карта↔дерево не приходится. */
+.tree__crumbs { position: absolute; left: 20px; top: 14px; z-index: 7; display: inline-flex;
   align-items: center; gap: 7px; height: 34px; padding: 0 14px; background: var(--jm-surface);
   border: 1px solid var(--jm-line); border-radius: 999px; box-shadow: var(--jm-e1);
   font-size: 13px; color: var(--jm-muted); }
@@ -669,9 +672,9 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
     flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; }
   .tree__bar label { flex: none; }
   .tree__bar select { max-width: 116px; }
-  .tree__lvls { top: 12px; left: 16px; }
+  .tree__lvls { bottom: 12px; left: 12px; }
   .tree__heads { top: 104px; }
-  .tree__crumbs { left: 12px; bottom: 12px; font-size: 12px; }
+  .tree__crumbs { left: 12px; top: 12px; font-size: 12px; }
 }
 
 .tree__zoom { position: absolute; right: 18px; bottom: 18px; z-index: 6; display: flex;
