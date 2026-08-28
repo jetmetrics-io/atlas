@@ -69,7 +69,17 @@ export default function App() {
     <div className={`site${EMBED ? ' site--embed' : ''}`}>
       <main className="site__main">
         {tree ? (
-          <TreeView slug={tree} onBack={() => setTree(null)} />
+          <TreeView slug={tree} onBack={() => setTree(null)}
+            onOpenTree={(slug, nodeId) => {
+              // Переход между деревьями одного разбора — на месте. Адрес правим ДО
+              // смены дерева: TreeView читает ?node= при первом рендере.
+              const url = new URL(window.location.href)
+              url.searchParams.set('tree', slug)
+              url.searchParams.set('node', nodeId)
+              window.history.replaceState(null, '', url.toString())
+              setTree(slug)
+              window.scrollTo(0, 0)
+            }} />
         ) : section ? (
           <MapView
             section={section}

@@ -169,7 +169,8 @@ function Stage({
   )
 }
 
-export function TreeView({ slug, onBack }: { slug: string; onBack: () => void }) {
+export function TreeView({ slug, onBack, onOpenTree }:
+  { slug: string; onBack: () => void; onOpenTree?: (slug: string, nodeId: string) => void }) {
   const tree: Tree | undefined = useMemo(() => treeBySlug(slug), [slug])
   const [profile, setProfile] = useState<Profile>(readProfile)
   const [drill, setDrill] = useState<string | null>(null)
@@ -497,12 +498,18 @@ export function TreeView({ slug, onBack }: { slug: string; onBack: () => void })
           siblings={[]}
           onClose={() => setCard(null)}
           onNavigate={(id) => {
-            // Правило ссылок: остаёмся в своём дереве, если метрика есть в нём;
-            // иначе уходим в соседний артефакт — карту или другое дерево (atlas.ts).
+            // Правило ссылок: остаёмся в своём дереве, если метрика есть в нём.
             const to = resolveMetricLink(id, tree.info.name)
             const here = to?.same ? tree.nodes.get(to.id) : undefined
             if (here) { setCard(here.name); return }
-            if (to) window.open(metricUrl(to.section, to.id), '_blank', 'noopener')
+            if (!to) return
+            // Девять деревьев — один разбор чистой прибыли, и читатель это так и видит.
+            // Поэтому переход в соседнее дерево происходит на месте, с раскрытой метрикой,
+            // а не новой вкладкой: вкладка теряла и дерево, и метрику, потому что страница
+            // у всех деревьев одна и открывала верхнее по умолчанию.
+            const sib = (BASE.trees ?? []).find((x) => x.name === to.section)
+            if (sib && onOpenTree) { onOpenTree(sib.slug, to.id); return }
+            window.open(metricUrl(to.section, to.id), '_blank', 'noopener')
           }}
         />
       )}
