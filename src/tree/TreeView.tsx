@@ -225,6 +225,7 @@ export function TreeView({ slug, onBack, onOpenTree }:
       else if (canDrill(tree, n.parent, profile)) setDrill(par.name)
     }
     setCard(n.name)
+    setSel(n.name)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tree])
 
@@ -501,7 +502,10 @@ export function TreeView({ slug, onBack, onOpenTree }:
             // Правило ссылок: остаёмся в своём дереве, если метрика есть в нём.
             const to = resolveMetricLink(id, tree.info.name)
             const here = to?.same ? tree.nodes.get(to.id) : undefined
-            if (here) { setCard(here.name); return }
+            // Каретку двигаем вместе с карточкой: подсветка складывается из двух
+            // состояний, и если сдвинуть только карточку, обведёнными окажутся сразу
+            // две метрики — та, с которой ушли, и та, куда пришли.
+            if (here) { setCard(here.name); setSel(here.name); return }
             if (!to) return
             // Девять деревьев — один разбор чистой прибыли, и читатель это так и видит.
             // Поэтому переход в соседнее дерево происходит на месте, с раскрытой метрикой,
