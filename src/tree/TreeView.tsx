@@ -507,12 +507,6 @@ export function TreeView({ slug, onBack, onOpenTree }:
             // две метрики — та, с которой ушли, и та, куда пришли.
             if (here) { setCard(here.name); setSel(here.name); return }
             if (!to) return
-            // Девять деревьев — один разбор чистой прибыли, и читатель это так и видит.
-            // Поэтому переход в соседнее дерево происходит на месте, с раскрытой метрикой,
-            // а не новой вкладкой: вкладка теряла и дерево, и метрику, потому что страница
-            // у всех деревьев одна и открывала верхнее по умолчанию.
-            const sib = (BASE.trees ?? []).find((x) => x.name === to.section)
-            if (sib && onOpenTree) { onOpenTree(sib.slug, to.id); return }
             window.open(metricUrl(to.section, to.id), '_blank', 'noopener')
           }}
         />
