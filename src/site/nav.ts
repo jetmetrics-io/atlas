@@ -28,13 +28,22 @@ export function mapPageUrl(name: string): string | null {
   return slug ? `${SITE}/hub-atlas-${slug}` : null
 }
 
+/** Страница Тильды, на которой живут ВСЕ девять деревьев. Заведена одна: страница —
+ *  оболочка с iframe, а какое дерево открыть, решает параметр `?tree=`. Собирать адрес
+ *  как `/hub-atlas-<слаг дерева>` нельзя: у восьми деревьев такой страницы нет, и ссылка
+ *  на метрику соседнего дерева давала 404. Появятся отдельные страницы — список сюда. */
+const TREE_PAGES = new Set(['chistaya-pribyl'])
+const TREE_SHELL = 'chistaya-pribyl'
+
 /** Адрес страницы артефакта на сайте: у дерева она такая же, как у 28 карт,
  *  только внутри приложение открывается по ?tree=, а не по ?map=. */
 export function artifactPageUrl(name: string): string | null {
   const map = mapPageUrl(name)
   if (map) return map
   const tree = (BASE.trees ?? []).find((t) => t.name === name)
-  return tree ? `${SITE}/hub-atlas-${tree.slug}?tree=${tree.slug}` : null
+  if (!tree) return null
+  const page = TREE_PAGES.has(tree.slug) ? tree.slug : TREE_SHELL
+  return `${SITE}/hub-atlas-${page}?tree=${tree.slug}`
 }
 
 /** Открыть дерево: на сайте — его страница Тильды, локально — свой же адрес с ?tree=.
