@@ -658,7 +658,9 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 .tree__count { margin-left: 6px; padding-left: 10px; border-left: 1px solid var(--jm-line);
   font-family: var(--jm-font-mono); font-size: 11px; color: var(--jm-faint); }
 
-.tree__esc { position: absolute; right: 18px; bottom: 96px; z-index: 6; display: inline-flex;
+/* Возврат на верхний уровень — в шапке справа, напротив крошек. Раньше висел справа
+   на произвольной высоте и читался как случайно оставленная плашка. */
+.tree__esc { position: absolute; right: 18px; top: 16px; z-index: 7; display: inline-flex;
   align-items: center; gap: 8px; height: 30px; padding: 0 12px; background: var(--jm-surface);
   border: 1px solid var(--jm-line); border-radius: 999px; box-shadow: var(--jm-e1);
   font-size: 12.5px; color: var(--jm-muted); cursor: pointer; }
