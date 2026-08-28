@@ -1,4 +1,5 @@
-import { FAMILIES, sectionsOfFamily, BASE, PAID, isSectionFree } from '../atlas/atlas'
+import { useState } from 'react'
+import { families as allFamilies, sectionsOfFamily, treesOfFamily, BASE, PAID, isSectionFree } from '../atlas/atlas'
 import { EMBED, BUY_URL, goTop, mapPageUrl } from './nav'
 import { Search } from './Search'
 
@@ -39,30 +40,65 @@ const ICONS: Record<string, JSX.Element> = {
   ),
 }
 
-type Sec = { name: string; slug: string; nodes: number }
+type Sec = { name: string; slug: string; nodes: number; total?: number }
 
-export function Catalog({ onOpen }: { onOpen: (section: string, nodeId?: string) => void }) {
-  const meta = BASE.meta as { updated?: string }
-  const families = FAMILIES.filter((f) => sectionsOfFamily(f).length > 0)
+// Счёт витрины бесплатного: «3 карты + 1 дерево».
+function plural(n: number, one: string, few: string, many: string) {
+  const form = n % 10 === 1 && n % 100 !== 11 ? one
+    : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many
+  return `${n} ${form}`
+}
+
+// Тип подписан на плашке: карта и дерево читаются по-разному, и по одному имени
+// («Финансы» и «Чистая прибыль») их не различить.
+
+export function Catalog({ onOpen, onOpenTree }: {
+  onOpen: (section: string, nodeId?: string) => void
+  onOpenTree: (slug: string, nodeId?: string) => void
+}) {
+  const meta = BASE.meta as { updated?: string; metrics?: number }
+  const families = allFamilies().filter((f) => sectionsOfFamily(f).length > 0)
   const totalMaps = families.reduce((a, f) => a + sectionsOfFamily(f).length, 0)
-  const totalMetrics = families.reduce(
-    (a, f) => a + sectionsOfFamily(f).reduce((s, x) => s + x.nodes, 0), 0)
+  const trees = families.flatMap((f) => treesOfFamily(f))
+  // Метрики считаем сквозные: метрика, стоящая и на карте, и в дереве, — одна метрика
+  // Атласа. Число приходит из Базы (meta.metrics); складывать метрики артефактов нельзя,
+  // так получаются места, и общие записи считаются дважды.
+  const totalMetrics = meta.metrics ?? 0
+
+  // Фильтр каталога: карты и деревья читаются по-разному, и человек обычно приходит
+  // за чем-то одним. Витрину бесплатного фильтр разбирает вместе с группами.
+  const [kindFilter, setKindFilter] = useState<'all' | 'map' | 'tree'>('all')
+  const showMaps = kindFilter !== 'tree'
+  const showTrees = kindFilter !== 'map'
 
   const stats: [string, string][] = [
     [String(families.length), 'категорий'],
     [String(totalMaps), 'карт'],
+    [String(trees.length), trees.length === 1 ? 'дерево' : 'деревьев'],
     [String(totalMetrics), 'метрик'],
   ]
 
   // Бесплатные карты (когда пользователь без оплаты) — для витрины сверху, чтобы первый
   // экран не был сплошь «под замком».
-  const freeMaps: Sec[] = !PAID
+  const freeMaps: Sec[] = !PAID && showMaps
     ? BASE.sections.filter((s) => s.name && isSectionFree(s.name))
     : []
+  // Деревья открыты всем, поэтому стоят в той же витрине, что и бесплатные карты.
+  const freeTrees = !PAID && showTrees ? allFamilies().flatMap((f) => treesOfFamily(f)) : []
+  const freeTitle = [
+    freeMaps.length ? `${plural(freeMaps.length, 'карта', 'карты', 'карт')}` : '',
+    freeTrees.length ? `${plural(freeTrees.length, 'дерево', 'дерева', 'деревьев')}` : '',
+  ].filter(Boolean).join(' + ')
+  // Согласование под фильтр: одна плашка — «доступна»/«доступно», несколько — «доступны»
+  const freeVerb = freeMaps.length + freeTrees.length > 1 ? 'доступны'
+    : freeTrees.length ? 'доступно' : 'доступна'
 
   // Клик по карте: закрытая → покупка; в embed открытая ведёт на СВОЮ страницу Тильды
   // (если она заведена), иначе — открываем карту внутри приложения.
   const openCard = (name: string, nodeId?: string) => {
+    // Поиск отдаёт метрики и карт, и деревьев: у дерева свой вид, не карта.
+    const t = (BASE.trees ?? []).find((x) => x.name === name)
+    if (t) { onOpenTree(t.slug, nodeId); return }
     if (EMBED) {
       const page = mapPageUrl(name)
       // из поиска метрика открывается сразу раскрытой: страница карты + ?node=
@@ -72,15 +108,16 @@ export function Catalog({ onOpen }: { onOpen: (section: string, nodeId?: string)
   }
 
   // Одна карточка каталога. showIndex — моно-индекс в углу (только оплатившим).
-  const card = (s: Sec, index?: number) => {
-    const free = isSectionFree(s.name)
+  const card = (s: Sec, kind: 'map' | 'tree' = 'map') => {
+    const tree = kind === 'tree'
+    const free = tree || isSectionFree(s.name)
     const locked = !PAID && !free
     const cls = 'mcard' +
       (!PAID && free ? ' mcard--free' : '') +
       (locked ? ' mcard--locked' : '')
     return (
       <div key={s.slug} className={cls}
-        onClick={() => (locked ? goTop(BUY_URL) : openCard(s.name))}>
+        onClick={() => (locked ? goTop(BUY_URL) : tree ? onOpenTree(s.slug) : openCard(s.name))}>
         {locked ? (
           // Замок-чип: в покое — только иконка; на ховере раскрывается в «Открыть все карты».
           // Абсолютное позиционирование → раскрытие НЕ меняет высоту карточки.
@@ -92,12 +129,13 @@ export function Catalog({ onOpen }: { onOpen: (section: string, nodeId?: string)
             </svg>
             <span className="mcard__lock-txt">Открыть все карты</span>
           </span>
-        ) : PAID && typeof index === 'number' ? (
-          <span className="mcard__ix">{String(index + 1).padStart(2, '0')}</span>
         ) : null}
+        <span className="mcard__kind">{tree ? 'Дерево' : 'Карта'}</span>
         {!PAID && free && <span className="mcard__badge">Бесплатно</span>}
         <div className="mcard__nm">{s.name}</div>
-        <div className="mcard__meta">{s.nodes} метрик</div>
+        {/* У дерева на плашке весь разбор: чистая прибыль сама по себе — 12 метрик,
+            а за ней стоят девять деревьев, куда читатель проваливается. */}
+        <div className="mcard__meta">{(tree && s.total) || s.nodes} метрик</div>
       </div>
     )
   }
@@ -116,6 +154,19 @@ export function Catalog({ onOpen }: { onOpen: (section: string, nodeId?: string)
               onOpenMetric={(s, id) => openCard(s, id)}
               onBuy={() => goTop(BUY_URL)}
             />
+
+            <div className="kindbar" role="group" aria-label="Что показывать">
+              {([['all', 'Всё', totalMaps + trees.length],
+                 ['map', 'Карты', totalMaps],
+                 ['tree', 'Деревья', trees.length]] as const).map(([k, label, n]) => (
+                <button key={k} type="button"
+                  className={'kindbar__b' + (kindFilter === k ? ' is-on' : '')}
+                  aria-pressed={kindFilter === k}
+                  onClick={() => setKindFilter(k)}>
+                  {label}<span className="kindbar__n">{n}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           <aside className="statspanel">
@@ -133,23 +184,25 @@ export function Catalog({ onOpen }: { onOpen: (section: string, nodeId?: string)
           </aside>
         </div>
 
-        {freeMaps.length > 0 && (
+        {(freeMaps.length > 0 || freeTrees.length > 0) && (
           <section className="freebar">
             <div className="freebar__head">
               <span className="freebar__badge">Открыто бесплатно</span>
               <span className="freebar__title">
-                {freeMaps.length} {freeMaps.length === 1 ? 'карта' : 'карты'} доступны целиком — откройте и посмотрите, как это работает
+                {freeTitle} {freeVerb} целиком — откройте и посмотрите, как это работает
               </span>
             </div>
             <div className="mapgrid">
+              {freeTrees.map((t) => card(t, 'tree'))}
               {freeMaps.map((s) => card(s))}
             </div>
           </section>
         )}
 
-        {FAMILIES.map((fam) => {
-          const secs = sectionsOfFamily(fam)
-          if (!secs.length) return null
+        {families.map((fam) => {
+          const secs = showMaps ? sectionsOfFamily(fam) : []
+          const fTrees = showTrees ? treesOfFamily(fam) : []
+          if (!secs.length && !fTrees.length) return null
           return (
             <section className="family" key={fam.key}>
               <div className="family__head">
@@ -163,7 +216,8 @@ export function Catalog({ onOpen }: { onOpen: (section: string, nodeId?: string)
                 <span className="family__blurb">{fam.blurb}</span>
               </div>
               <div className="mapgrid">
-                {secs.map((s, i) => card(s, i))}
+                {fTrees.map((t) => card(t, 'tree'))}
+                {secs.map((s) => card(s))}
               </div>
             </section>
           )

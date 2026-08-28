@@ -5,14 +5,14 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { buildMap } from '../atlas/atlas'
-import { nodeById, BASE } from '../atlas/atlas'
+import { nodeById, BASE, resolveMetricLink } from '../atlas/atlas'
 import { MetricNode } from './MetricNode'
 import { MetricEdge } from './MetricEdge'
 import { GroupNode } from './GroupNode'
 import { NodeCard } from './NodeCard'
 import { EdgeCard } from './EdgeCard'
 import { Tour, type TourStep } from './Tour'
-import { mapPageUrl } from '../site/nav'
+import { metricUrl } from '../site/nav'
 import { roleStyle, signColor } from '../atlas/style'
 import type { AtlasEdge } from '../atlas/types'
 
@@ -95,9 +95,12 @@ function SearchBox({ nodes, onPick, onHelp }: { nodes: SearchNode[]; onPick: (id
   const { setCenter } = useReactFlow()
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
-  const query = q.trim().toLowerCase()
+  // «ё» и «е» не должны мешать, как и в общем поиске (site/Search.tsx): человек
+  // набирает «отмененных», а метрика названа «отменённых», и наоборот.
+  const norm = (t: string) => t.toLowerCase().replace(/ё/g, 'е')
+  const query = norm(q.trim())
   const matches = query.length >= 2
-    ? nodes.filter((n) => n.name.toLowerCase().includes(query)).slice(0, 7)
+    ? nodes.filter((n) => norm(n.name).includes(query)).slice(0, 7)
     : []
   const pick = (n: SearchNode) => {
     setCenter(n.px + n.w / 2, n.py + n.h / 2, { zoom: 1, duration: 400 })
@@ -534,22 +537,21 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
   const flowRef = useRef<FlowApi | null>(null)
   // Перейти к метрике по клику на ссылку в описании: открыть карточку + центрировать.
   const focusNode = (id: string) => {
-    const n = map.nodes.find((x) => x.id === id)
-    if (n) {
-      setSelNode(id); setSelEdge(null); setActiveRole(null)
-      flowRef.current?.setCenter(n.px + n.w / 2, n.py + n.h / 2, { zoom: 1, duration: 400 })
+    // Ссылка ведёт в свой артефакт, если метрика есть на этой карте: у одной метрики
+    // несколько мест, и уводить читателя на соседнюю карту незачем (atlas.ts).
+    const to = resolveMetricLink(id, section)
+    const local = to?.same ? map.nodes.find((x) => x.id === to.id) : null
+    if (local) {
+      setSelNode(local.id); setSelEdge(null); setActiveRole(null)
+      flowRef.current?.setCenter(local.px + local.w / 2, local.py + local.h / 2,
+        { zoom: 1, duration: 400 })
       return
     }
-    // Метрика с другой карты: открываем её страницу в новой вкладке, чтобы не
-    // терять то, что человек читает сейчас. Каждая карта живёт своей страницей
+    // Метрики на этой карте нет: открываем её артефакт в новой вкладке, чтобы не
+    // терять то, что человек читает сейчас. Карты и деревья живут своими страницами
     // на Тильде (site/nav.ts), поэтому ссылка ведёт туда, а не внутрь бакета.
-    const other = BASE.nodes.find((x) => x.id === id)
-    if (!other) return
-    const page = mapPageUrl(other.section)
-    const url = page
-      ? `${page}?node=${id}`
-      : `${window.location.pathname}?map=${encodeURIComponent(other.section)}&node=${id}`
-    window.open(url, '_blank', 'noopener')
+    if (!to) return
+    window.open(metricUrl(to.section, to.id), '_blank', 'noopener')
   }
   // Центрировать карту на метрике (без открытия карточки) — для шагов тура.
   const centerOn = (id: string) => {
@@ -657,9 +659,9 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
             onPaneClick={() => { setSelNode(null); setSelEdge(null); setActiveRole(null) }}
           >
             <Background color="#C4CCD4" gap={22} size={1.6} />
-            {/* Верх-лево — хлебная крошка: «Все карты» (назад в каталог) › текущая карта. */}
+            {/* Верх-лево — хлебная крошка: «Каталог» (карты и деревья вместе) › текущая карта. */}
             <Panel position="top-left" className="crumbs">
-              <button className="crumbs__back" onClick={onBack} title="Все карты" aria-label="Вернуться ко всем картам">Все карты</button>
+              <button className="crumbs__back" onClick={onBack} title="Каталог" aria-label="Вернуться в каталог">Каталог</button>
               <span className="crumbs__sep" aria-hidden>›</span>
               <span className="crumbs__cur" data-tour="title">{section}</span>
             </Panel>

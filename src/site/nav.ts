@@ -1,3 +1,5 @@
+import { BASE } from '../atlas/atlas'
+
 // Навигация между страницами Тильды (вариант «каждая карта — своя страница»).
 // Приложение встроено в Тильду через iframe; при клике по карте уводим ВЕРХНЕЕ окно
 // на отдельную страницу этой карты, а «назад» — обратно на страницу каталога.
@@ -13,46 +15,47 @@ const SITE = 'https://джетметрикс.рф'
 export const CATALOG_PAGE = `${SITE}/hub-atlas`
 export const BUY_URL = `${SITE}/atlas`
 
-// Все 28 карт → slug отдельной страницы Тильды. Имя карты (как в Базе) → slug.
+// Адрес страницы карты на Тильде собирается из slug'а карты в Базе: `hub-atlas-<slug>`.
 // Все страницы встраивают ОДНУ сборку Атласа; бесплатные карты (finansy/lidogeneraciya/
 // podderzhka) — на публичных страницах, остальные — под Tilda Members. Что реально
 // откроется, решает гейт внутри приложения (оплата), а не адрес страницы.
-const MAP_PAGES: Record<string, string> = {
-  'Финансы': 'finansy',
-  'Лидогенерация': 'lidogeneraciya',
-  'Поддержка клиентов': 'podderzhka',
-  'SaaS продукты': 'saas',
-  'Ассортимент': 'assortiment',
-  'Контент-маркетинг': 'kontent-marketing',
-  'Маркетплейсы': 'marketpleysy',
-  'CRM': 'crm',
-  'Онлайн-обучение': 'onlayn-obuchenie',
-  'Управление запасами': 'upravlenie-zapasami',
-  'Ритейл': 'riteyl',
-  'Медийная реклама': 'mediynaya-reklama',
-  'Заказы': 'zakazy',
-  'HR': 'hr',
-  'Программа лояльности': 'programma-loyalnosti',
-  'Поисковая реклама': 'poiskovaya-reklama',
-  'Обработка заказов': 'obrabotka-zakazov',
-  'B2B продажи': 'b2b-prodazhi',
-  'E-​mail маркетинг': 'email-marketing',
-  'Воронка электронной коммерции': 'voronka-ecommerce',
-  'Работа с инфлюенсерами': 'influensery',
-  'Возвраты товара': 'vozvraty',
-  'Доставка заказов': 'dostavka-zakazov',
-  'Сайт': 'sayt',
-  'Оформление заказа': 'oformlenie-zakaza',
-  'SEO': 'seo',
-  'Приложение': 'prilozhenie',
-  'Реферальная программа': 'referalnaya-programma',
+//
+// Раньше здесь лежал словарь «имя карты → slug страницы» на 28 строк, и он расходился
+// со slug'ами Базы у 17 карт. Связка шла по названию карты, поэтому переименование
+// молча ломало адрес. 26.08.2026 slug'и Базы приведены к адресам страниц, словарь убран.
+export function mapPageUrl(name: string): string | null {
+  const slug = BASE.sections.find((s) => s.name === name)?.slug
+  return slug ? `${SITE}/hub-atlas-${slug}` : null
 }
 
-// Адрес страницы карты на Тильде, либо null если отдельной страницы у карты нет
-// (тогда карта открывается внутри приложения, как раньше).
-export function mapPageUrl(name: string): string | null {
-  const slug = MAP_PAGES[name]
-  return slug ? `${SITE}/hub-atlas-${slug}` : null
+/** Адрес страницы артефакта на сайте: у дерева она такая же, как у 28 карт,
+ *  только внутри приложение открывается по ?tree=, а не по ?map=. */
+export function artifactPageUrl(name: string): string | null {
+  const map = mapPageUrl(name)
+  if (map) return map
+  const tree = (BASE.trees ?? []).find((t) => t.name === name)
+  return tree ? `${SITE}/hub-atlas-${tree.slug}?tree=${tree.slug}` : null
+}
+
+/** Открыть дерево: на сайте — его страница Тильды, локально — свой же адрес с ?tree=.
+ *  Внутри iframe уводим ВЕРХНЕЕ окно, иначе дерево откроется внутри рамки карты. */
+export function openTree(slug: string) {
+  const page = artifactPageUrl((BASE.trees ?? []).find((t) => t.slug === slug)?.name ?? '')
+  if (EMBED && page) { goTop(page); return }
+  window.location.href = `${window.location.pathname}?tree=${slug}`
+}
+
+/** Адрес метрики в её артефакте: страница артефакта + ?node=. У дерева адрес
+ *  уже несёт ?tree=, поэтому метрика присоединяется через «&». Без страницы на
+ *  сайте (локальная сборка) собираем внутренний адрес приложения. */
+export function metricUrl(section: string, nodeId: string): string {
+  const tree = (BASE.trees ?? []).find((t) => t.name === section)
+  const page = artifactPageUrl(section)
+  if (page) return `${page}${tree ? '&' : '?'}node=${nodeId}`
+  const local = tree
+    ? `?tree=${tree.slug}&node=${nodeId}`
+    : `?map=${encodeURIComponent(section)}&node=${nodeId}`
+  return `${window.location.pathname}${local}`
 }
 
 // Перевести ВЕРХНЕЕ окно (мы внутри iframe на Тильде) на другой адрес.

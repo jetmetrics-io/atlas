@@ -4,7 +4,7 @@
 // вшиты в бандл. main.tsx определяет факт оплаты (email ∈ paid.json, см. site/access.ts),
 // грузит free- или full-данные и вызывает initAtlas ДО первого рендера. Гейт полной
 // версии — по оплате: бесплатник, зайдя по прямому адресу, получает только free-данные.
-import type { AtlasBase, AtlasNode, AtlasEdge, Family } from './types'
+import type { AtlasBase, AtlasNode, AtlasEdge, Family, TreeInfo } from './types'
 
 const EMPTY: AtlasBase = { meta: {}, sections: [], nodes: [], edges: [] }
 
@@ -35,63 +35,73 @@ export function isSectionUnlocked(name: string): boolean {
 const norm = (s: string) =>
   (s || '').replace(/​/g, '').replace(/\s+/g, ' ').trim().toLowerCase()
 
-// ── Категории (8). Группировка по функции, выведена из фактических метрик карт.
-// accent = имя бренд-цвета (см. tokens.css). ──
-export const FAMILIES: Family[] = [
-  {
-    key: 'marketing', title: 'Маркетинг', accent: 'purple',
-    blurb: 'Каналы привлечения: реклама, контент, поиск, email.',
-    sections: ['контент-маркетинг', 'медийная реклама', 'поисковая реклама', 'seo',
-      'e-mail маркетинг', 'работа с инфлюенсерами'],
-  },
-  {
-    key: 'sales', title: 'Спрос и продажи', accent: 'blue',
-    blurb: 'Как лиды и сделки превращаются в выручку.',
-    sections: ['лидогенерация', 'b2b продажи', 'реферальная программа'],
-  },
-  {
-    key: 'product', title: 'Продукт', accent: 'green',
-    blurb: 'Активация, вовлечение и монетизация цифрового продукта.',
-    sections: ['saas продукты', 'приложение', 'сайт', 'онлайн-обучение'],
-  },
-  {
-    key: 'customers', title: 'Клиенты и удержание', accent: 'blue',
-    blurb: 'База клиентов, повторные покупки, лояльность, поддержка.',
-    sections: ['crm', 'программа лояльности', 'поддержка клиентов'],
-  },
-  {
-    key: 'ops', title: 'Операции и логистика', accent: 'coral',
-    blurb: 'Запасы, сборка, доставка, возвраты.',
-    sections: ['управление запасами', 'обработка заказов', 'доставка заказов', 'возвраты товара'],
-  },
-  {
-    key: 'finance', title: 'Финансы', accent: 'green',
-    blurb: 'Экономика бизнеса: от выручки до чистой прибыли.',
-    sections: ['финансы'],
-  },
-  {
-    key: 'people', title: 'Люди', accent: 'coral',
-    blurb: 'Найм, штат, текучесть, фонд оплаты труда.',
-    sections: ['hr'],
-  },
-  {
-    key: 'ecom', title: 'Электронная коммерция и ритейл', accent: 'yellow',
-    blurb: 'Товарная торговля: ассортимент, маркетплейсы, заказы, магазин.',
-    sections: ['ассортимент', 'маркетплейсы', 'ритейл', 'заказы',
-      'воронка электронной коммерции', 'оформление заказа'],
-  },
-]
+// ── Группы каталога. Раньше состав групп был зашит здесь; теперь он живёт в базе
+// (content/db/families.py → families в atlas_*.json), а приложение его только читает. ──
+export function families(): Family[] {
+  return BASE.families ?? []
+}
 
 export function familyOf(sectionName: string): Family | undefined {
   const n = norm(sectionName)
-  return FAMILIES.find((f) => f.sections.includes(n))
+  return families().find((f) => f.items.some((i) => norm(i.name) === n))
 }
 
-/** Карты семейства в порядке убывания числа метрик. */
+/** Карты группы в порядке убывания числа метрик. Деревья сюда не попадают:
+ * каталог показывает их отдельной карточкой. */
 export function sectionsOfFamily(fam: Family) {
+  const names = new Set(fam.items.filter((i) => i.type === 'map').map((i) => norm(i.name)))
   return BASE.sections
-    .filter((s) => norm(s.name) !== '' && familyOf(s.name)?.key === fam.key)
+    .filter((s) => norm(s.name) !== '' && names.has(norm(s.name)))
     .sort((a, b) => b.nodes - a.nodes)
+}
+
+/** Деревья группы, которые показываются в каталоге: только верхние. Дерево
+ *  выручки или себестоимости — часть разбора чистой прибыли, отдельной плашкой
+ *  оно каталог только засоряет; открывается провалом и находится поиском. */
+export function treesOfFamily(fam: Family) {
+  const nested = new Set((BASE.trees ?? []).filter((t) => t.parent).map((t) => t.name))
+  return fam.items.filter((i) => i.type === 'tree' && !nested.has(i.name))
+}
+
+/**
+ * Куда ведёт ссылка на метрику из текста карточки.
+ *
+ * Правило: читателя не выкидывает из артефакта, который он открыл. Если метрика,
+ * на которую ссылается текст, есть в этом же артефакте — ведём на её место здесь;
+ * если её здесь нет — ведём в соседний, тот, что записан в ссылке.
+ *
+ * `from` — имя текущего артефакта (карты или дерева). Возвращает место назначения
+ * и признак `same`: остаёмся внутри артефакта или уходим в соседний.
+ */
+export function resolveMetricLink(id: string, from: string):
+  { section: string; id: string; same: boolean } | undefined {
+  const target = BASE.nodes.find((n) => n.id === id)
+  if (!target) return undefined
+  if (target.section === from) return { section: from, id: target.id, same: true }
+  // Своё место той же метрики: сверяем по mid, а где его нет (старые данные) — по имени.
+  const local = BASE.nodes.find((n) => n.section === from &&
+    (target.mid != null && n.mid != null ? n.mid === target.mid : n.name === target.name))
+  return local
+    ? { section: from, id: local.id, same: true }
+    : { section: target.section, id: target.id, same: false }
+}
+
+/**
+ * Дерево, в котором эта метрика — ключевая. «Выручка» на карте Финансы разбирается
+ * отдельным деревом, и из карточки в него ведёт кнопка: сама карта на вопрос
+ * «из чего она складывается» не отвечает.
+ *
+ * Дерево, открытое прямо сейчас, не возвращается — читатель уже в нём.
+ */
+export function treeOfMetric(node: AtlasNode): TreeInfo | undefined {
+  return (BASE.trees ?? []).find((t) => {
+    if (t.name === node.section || !t.root) return false
+    const root = BASE.nodes.find((n) => n.id === t.root)
+    if (!root) return false
+    return root.mid != null && node.mid != null
+      ? root.mid === node.mid
+      : root.name === node.name
+  })
 }
 
 export interface MapView {

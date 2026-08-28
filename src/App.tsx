@@ -2,8 +2,15 @@ import { useEffect, useRef, useState } from 'react'
 import { Footer } from './site/Footer'
 import { Catalog } from './site/Catalog'
 import { MapView } from './map/MapView'
+import { TreeView, treeExists } from './tree/TreeView'
 import { BASE, isSectionUnlocked } from './atlas/atlas'
 import { EMBED, CATALOG_PAGE, goTop } from './site/nav'
+
+// Дерево открывается тем же приложением, что и карты: ?tree=<slug>.
+function treeFromUrl(): string | null {
+  const t = new URLSearchParams(window.location.search).get('tree')
+  return t && treeExists(t) ? t : null
+}
 
 function sectionFromUrl(): string | null {
   const p = new URLSearchParams(window.location.search).get('map')
@@ -14,9 +21,17 @@ function sectionFromUrl(): string | null {
 
 export default function App() {
   const [section, setSection] = useState<string | null>(() => sectionFromUrl())
+  const [tree, setTree] = useState<string | null>(() => treeFromUrl())
   // Открыто ли приложение сразу на карте (её отдельная страница Тильды) — тогда «назад»
   // ведёт на страницу каталога, а не сворачивает SPA.
   const openedOnMap = useRef(sectionFromUrl() !== null)
+
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    if (tree) url.searchParams.set('tree', tree)
+    else { url.searchParams.delete('tree'); if (!section) url.searchParams.delete('node') }
+    window.history.replaceState(null, '', url.toString())
+  }, [tree, section])
 
   useEffect(() => {
     const url = new URL(window.location.href)
@@ -53,7 +68,9 @@ export default function App() {
   return (
     <div className={`site${EMBED ? ' site--embed' : ''}`}>
       <main className="site__main">
-        {section ? (
+        {tree ? (
+          <TreeView slug={tree} onBack={() => setTree(null)} />
+        ) : section ? (
           <MapView
             section={section}
             onBack={() => {
@@ -63,7 +80,15 @@ export default function App() {
             }}
           />
         ) : (
-          <Catalog onOpen={(s, nodeId) => {
+          <Catalog onOpenTree={(slug, nodeId) => {
+            // адрес правим ДО монтирования: TreeView читает ?node= при первом рендере
+            const url = new URL(window.location.href)
+            if (nodeId) url.searchParams.set('node', nodeId)
+            else url.searchParams.delete('node')
+            window.history.replaceState(null, '', url.toString())
+            setTree(slug)
+            window.scrollTo(0, 0)
+          }} onOpen={(s, nodeId) => {
             // Метрика из поиска: адрес правим ДО монтирования карты — MapView
             // читает ?node= один раз, при первом рендере.
             const url = new URL(window.location.href)

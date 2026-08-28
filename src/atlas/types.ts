@@ -4,9 +4,14 @@ export type Role = 'action' | 'cost' | 'result' | 'diagnostic' | string
 
 export interface AtlasNode {
   id: string
+  /** id самой метрики: у одной метрики может быть несколько мест (карта и дерево),
+   *  и по mid они узнаются друг в друге. */
+  mid?: number
   name: string
   section: string
   role: Role
+  // Авторские координаты есть у карт; у деревьев их нет — там y хранит порядок
+  // ветки, а раскладку считает src/tree/layout.ts.
   x: number; y: number; w: number; h: number; cx: number; cy: number
   formula: string
   description: string
@@ -21,7 +26,7 @@ export interface AtlasEdge {
   target: string
   sign: '+' | '-'
   style: 'solid' | 'dashed'
-  kind: 'influence' | 'associative'
+  kind: 'influence' | 'associative' | 'similarity'
   cross_section: boolean
   // Ломаная коннектора В ИСХОДНЫХ координатах Miro (обход аффинных трансформов SVG,
   // ориентирована source→target). Есть у 751/756 рёбер. buildMap укладывает её в
@@ -35,18 +40,46 @@ export interface AtlasSection {
   nodes: number
 }
 
+// Дерево драйверов: артефакт рядом с картами, но без авторских координат —
+// раскладку считает src/tree/layout.ts от корня.
+export interface TreeInfo {
+  name: string
+  slug: string
+  nodes: number
+  /** Метрик во всём разборе: дерево вместе со всеми, что открываются провалом
+   *  из него. У дерева без детей совпадает с nodes. */
+  total?: number
+  root?: string
+  purpose?: string
+  /** Дерево, из которого в него проваливаются: ключевая метрика этого дерева
+   *  стоит там драйвером. У дерева верхнего уровня пусто. */
+  parent?: string | null
+}
+
 export interface AtlasBase {
   meta: Record<string, unknown>
+  families?: Family[]
+  trees?: TreeInfo[]
   sections: AtlasSection[]
   nodes: AtlasNode[]
   edges: AtlasEdge[]
 }
 
-// ── Отраслевые семейства для каталога (28 карт → 6 групп) ──
+// ── Группы каталога. Приходят из базы (families в atlas_*.json), в коде не заданы:
+// состав групп — свойство Атласа, а не приложения. В группе лежат и карты, и деревья. ──
+export interface FamilyItem {
+  name: string
+  slug: string
+  type: 'map' | 'tree'
+  access: 'free' | 'paid' | null
+  nodes: number       // метрик в самом артефакте
+  total?: number      // у дерева — метрик во всём разборе, вместе с провалами
+}
+
 export interface Family {
   key: string
   title: string
   blurb: string
-  accent: string      // токен-цвет семейства
-  sections: string[]  // нормализованные имена карт
+  accent: string      // токен-цвет группы
+  items: FamilyItem[]
 }

@@ -7,6 +7,9 @@
 // только они пришли. Гейт тот же, что у узлов: content_free.json несёт только
 // метрики бесплатных карт (режется в scripts/gen-data.mjs).
 
+/** Разрез метрики: в каком виде её разбирают, когда цифра сдвинулась. */
+export interface Dimension { name: string; note: string }
+
 export interface MetricContent {
   'Описание'?: string
   'Формула'?: string
@@ -16,6 +19,7 @@ export interface MetricContent {
   'Когда не нужна'?: string
   'EN'?: string
   'Синонимы'?: string
+  'Разрезы'?: Dimension[]
 }
 
 type ContentMap = Record<string, MetricContent>

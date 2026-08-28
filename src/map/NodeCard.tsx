@@ -2,8 +2,9 @@ import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { trackMetric } from '../site/analytics'
 import type { AtlasNode } from '../atlas/types'
 import { roleStyle } from '../atlas/style'
+import { treeOfMetric } from '../atlas/atlas'
 import { metricContent, contentReady, onContentReady } from '../atlas/content'
-import { mapPageUrl } from '../site/nav'
+import { metricUrl, openTree } from '../site/nav'
 
 export type LinkTarget = { name: string; id: string }
 
@@ -110,11 +111,13 @@ function bold(text: string, targets: LinkTarget[], onNav: (id: string) => void):
   return out
 }
 
-type Tab = 'essence' | 'calc' | 'why'
+type Tab = 'essence' | 'calc' | 'why' | 'dims'
+// «Анализ» — разрезы метрики; дальше сюда же лягут вопросы к ней.
 const TABS: { key: Tab; label: string }[] = [
   { key: 'essence', label: 'Суть' },
   { key: 'calc', label: 'Расчёт' },
   { key: 'why', label: 'Зачем' },
+  { key: 'dims', label: 'Анализ' },
 ]
 
 export function NodeCard({ node, siblings, onNavigate, onClose }: {
@@ -164,15 +167,20 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
   // несколько имён разделены «;» — показываем списком, по имени на строку.
   const synonyms = names(c['Синонимы'])
   const english = names(c['EN'])
+  const dims = c['Разрезы'] ?? []
+  // Метрика, которую разбирает своё дерево: из карточки в него ведёт кнопка.
+  const tree = treeOfMetric(node)
   const hasCalc = nuances.length > 0 || example.length > 0
   const hasWhy = !!(why || whenNot)
+  const hasDims = dims.length > 0
 
   // Ссылка на метрику: страница Тильды её карты + ?node=. Внутри iframe адрес самого
   // приложения ведёт на бакет, поэтому собираем публичный адрес, а не берём location.
   const copyLink = () => {
-    const page = mapPageUrl(node.section)
-    const url = page ? `${page}?node=${node.id}` : `${window.location.origin}${window.location.pathname}?map=${encodeURIComponent(node.section)}&node=${node.id}`
-    navigator.clipboard?.writeText(url).catch(() => {})
+    // У метрики дерева свой вид адреса: ?tree=, а не ?map= (site/nav.ts).
+    const url = metricUrl(node.section, node.id)
+    navigator.clipboard?.writeText(url.startsWith('http') ? url
+      : `${window.location.origin}${url}`).catch(() => {})
     setCopied(true)
     window.setTimeout(() => setCopied(false), 1800)
   }
@@ -191,6 +199,12 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
           <path d="M9.5 6.5a3 3 0 0 0-4.24 0L3.14 8.62a3 3 0 0 0 4.24 4.24l.7-.7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
       </button>
+
+      {node.mid != null && (
+        <span className="panel__mid" title="Номер метрики в Атласе">
+          №{String(node.mid).padStart(4, '0')}
+        </span>
+      )}
 
       <div className="panel__head">
         <span className="panel__role" style={{ color: rs.text }}>
@@ -220,10 +234,11 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
         )}
       </div>
 
-      {(hasCalc || hasWhy) && (
+      {(hasCalc || hasWhy || hasDims) && (
         <div className="panel__tabs" role="tablist">
           {TABS.map((t) => {
-            const disabled = (t.key === 'calc' && !hasCalc) || (t.key === 'why' && !hasWhy)
+            const disabled = (t.key === 'calc' && !hasCalc) || (t.key === 'why' && !hasWhy) ||
+              (t.key === 'dims' && !hasDims)
             if (disabled) return null
             return (
               <button
@@ -265,6 +280,20 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
                 <span className="chip" style={{ background: rs.tint, color: rs.text }}>{node.units}</span>
               </div>
             )}
+            {tree && (
+              <div className="panel__section">
+                <button className="panel__tree" onClick={() => openTree(tree.slug)}>
+                  <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor"
+                    strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M8 2.5v3M8 5.5h-4v2M8 5.5h4v2" />
+                    <rect x="2" y="7.5" width="4" height="3" rx="1" />
+                    <rect x="10" y="7.5" width="4" height="3" rx="1" />
+                  </svg>
+                  Дерево этой метрики
+                  <span className="panel__tree-n">{tree.nodes - 1}</span>
+                </button>
+              </div>
+            )}
             {!contentReady() && <div className="panel__hint">Загружаем подробности…</div>}
           </>
         )}
@@ -297,6 +326,17 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
               </div>
             )}
           </>
+        )}
+
+        {tab === 'dims' && (
+          <div className="panel__section">
+            <div className="panel__label">Разрезы</div>
+            <ul className="panel__bullets">
+              {dims.map((d, i) => (
+                <li key={i}><b>{d.name}</b>{d.note ? ` — ${d.note}` : ''}</li>
+              ))}
+            </ul>
+          </div>
         )}
 
         {tab === 'why' && (

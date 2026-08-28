@@ -13,7 +13,6 @@ import { dirname, resolve } from 'node:path'
 const __dir = dirname(fileURLToPath(import.meta.url))
 const SRC = resolve(__dir, '../src/atlas/atlas_base.json')
 const CONTENT_SRC = resolve(__dir, '../src/atlas/atlas_content.json')
-const FIXES_SRC = resolve(__dir, '../src/atlas/fixes.json')
 const OUT_DIR = resolve(__dir, '../public/data')
 
 // Бесплатные карты (табло: деньги / спрос / забота о клиенте). Универсальны,
@@ -22,33 +21,14 @@ const FREE_SECTIONS = ['Финансы', 'Лидогенерация', 'Подд
 
 const base = JSON.parse(readFileSync(SRC, 'utf8'))
 
-// Наши исправления к Базе (опечатки в названиях, непроставленные роли, неверные формулы).
-// Саму Базу не правим: она пересобирается из Miro и правки бы затёрлись — поэтому они
-// копятся здесь и накладываются при каждой сборке. Источник правды — content/fixes.json
-// в воркспейсе Атласа, сюда файл копируется.
-// ВАЖНО: до 21.08.2026 их применял только build.py (для рабочей таблицы контента), а
-// приложение читало Базу напрямую — и 57 полей в бою оставались неисправленными.
-const fixes = Object.fromEntries(
-  Object.entries(JSON.parse(readFileSync(FIXES_SRC, 'utf8'))).filter(([k]) => !k.startsWith('_')),
-)
-let fixedNodes = 0
-let fixedFields = 0
-for (const n of base.nodes) {
-  const fix = fixes[n.id]
-  if (!fix) continue
-  for (const [k, v] of Object.entries(fix)) {
-    if (k.startsWith('_')) continue
-    n[k] = v
-    fixedFields++
-  }
-  fixedNodes++
-}
-const unknown = Object.keys(fixes).filter((id) => !base.nodes.some((n) => n.id === id))
-if (unknown.length) {
-  // битый id молча ничего не исправит — а мы будем думать, что правка applied
-  console.warn(`gen-data: ⚠ правки на несуществующие метрики (${unknown.length}): ${unknown.join(', ')}`)
-}
-console.log(`gen-data: правок из fixes.json применено — ${fixedFields} полей у ${fixedNodes} метрик`)
+// Правки к Базе вносятся прямо в atlas_base.json. Слой fixes.json убран 26.08.2026:
+// 47 правок влиты в Базу, файл лежит в content/archive/. Слой был нужен, пока правки
+// нельзя было вносить в саму Базу: `build.py init` пересобирает рабочую таблицу и берёт
+// колонки «Метрика, Роль, Ед., Формула, Описание» из Базы заново, поэтому правка,
+// сделанная в таблице, при следующей пересборке возвращалась. Теперь правка идёт в Базу
+// и переживает init по определению. История правок: content/maps/issues.md.
+// (До 21.08.2026 слой применял только build.py, и 57 полей в бою оставались неисправленными —
+//  теперь такого расхождения быть не может: у Базы и таблицы один источник.)
 
 // Контент карточек (шесть полей на метрику) — отдельными файлами, грузятся по требованию
 // при открытии карточки, а не на старте: с ним общий файл вырос бы с 465 KB до ~2.5 MB

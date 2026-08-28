@@ -1,0 +1,383 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Развилка по моделям бизнеса — пять вариантов</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root{
+  color-scheme: light;
+  --ink:#080B0D; --text:#20262E; --muted:#6B7372; --faint:#98A0A6;
+  --line:#E4E8EC; --line-soft:#EEF1F3; --bg:#F6F8FA; --surface:#FFFFFF;
+  --green:#0E9C7D; --green-d:#0B7259; --green-t:#E7F6F1;
+  --coral:#FF5C60; --blue:#4991FF; --blue-d:#2D62BC; --yellow:#E0A800;
+  --sans:'Onest',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  --e1:0 1px 2px rgba(8,11,13,.05),0 4px 12px rgba(8,11,13,.05);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+  font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:56px 28px 96px}
+.hero__eyebrow{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);
+  font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--green-d)}
+.hero__eyebrow::before{content:'';width:26px;height:2px;background:var(--green);border-radius:2px}
+h1{margin:14px 0 10px;font-size:2.1rem;line-height:1.15;letter-spacing:-.02em;color:var(--ink);
+  font-weight:700;text-wrap:balance}
+.lead{max-width:66ch;color:var(--muted)}
+.lead b{color:var(--ink);font-weight:600}
+.facts{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.fact{background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  padding:10px 14px;font-size:13px;color:var(--muted)}
+.fact b{display:block;font-family:var(--mono);font-size:17px;color:var(--ink)}
+
+.v{margin-top:52px;background:var(--surface);border:1px solid var(--line);border-radius:16px;
+  box-shadow:var(--e1);overflow:hidden}
+.v__head{display:flex;align-items:flex-start;gap:16px;padding:22px 26px;border-bottom:1px solid var(--line-soft)}
+.v__n{flex:none;width:34px;height:34px;border-radius:10px;background:var(--ink);color:#fff;
+  display:grid;place-items:center;font-family:var(--mono);font-size:13px;font-weight:600}
+.v__t{font-size:1.15rem;font-weight:700;color:var(--ink);line-height:1.25}
+.v__d{margin-top:4px;color:var(--muted);font-size:14px;max-width:74ch}
+.v__body{padding:26px;background:
+  radial-gradient(circle at 1px 1px, #DBE1E7 1px, transparent 0) 0 0/22px 22px,var(--bg)}
+.v__note{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--line-soft)}
+.v__note div{padding:16px 26px;font-size:13.5px;color:var(--muted)}
+.v__note div+div{border-left:1px solid var(--line-soft)}
+.v__note b{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;
+  display:block;margin-bottom:5px}
+.plus b{color:var(--green-d)} .minus b{color:var(--coral)}
+
+/* ── общие детали макета дерева ── */
+.cols{display:flex;gap:34px;align-items:flex-start}
+.col{flex:1;min-width:0}
+.col__h{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10.5px;
+  font-weight:600;letter-spacing:.07em;text-transform:uppercase;padding-bottom:9px;
+  border-bottom:2px solid;margin-bottom:16px}
+.col__h.key{color:var(--green-d);border-color:var(--green)}
+.col__h.comp{color:var(--yellow);border-color:var(--yellow)}
+.col__h.drv{color:var(--blue-d);border-color:var(--blue)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:9px 11px 11px;
+  min-height:62px;display:flex;flex-direction:column;box-shadow:0 1px 1px rgba(8,11,13,.03)}
+.card+.card{margin-top:9px}
+.card__m{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.card__r{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:8.5px;
+  font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.dot{width:6px;height:6px;border-radius:2px;background:var(--green)}
+.dot.cost{background:var(--coral)} .dot.diag{background:var(--yellow)} .dot.act{background:var(--blue)}
+.card__u{font-family:var(--mono);font-size:9px;color:var(--faint)}
+.card__n{margin-top:7px;font-size:13px;font-weight:500;color:var(--ink);line-height:1.25}
+.card.key{border-color:var(--green);box-shadow:0 0 0 2px var(--green-t)}
+.card.muted{opacity:.42}
+.chip{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border-radius:999px;
+  border:1px solid var(--line);background:var(--surface);font-family:var(--mono);font-size:10px;
+  color:var(--muted);margin-top:8px;align-self:flex-start}
+
+/* 1 — карточки-развилки */
+.pick{background:transparent;border:1px dashed var(--line);border-radius:9px;padding:10px 12px 12px;
+  min-height:74px;display:flex;flex-direction:column;cursor:default}
+.pick+.pick{margin-top:9px}
+.pick:hover{border-color:var(--ink);background:var(--surface)}
+.pick__ax{font-family:var(--mono);font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.pick__n{margin-top:6px;font-size:13.5px;font-weight:600;color:var(--ink)}
+.pick__c{margin-top:auto;font-family:var(--mono);font-size:9.5px;color:var(--faint)}
+
+/* 2 — чипы на карточке ключевой */
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tab{padding:4px 10px;border:1px solid var(--line);border-radius:999px;font-size:11.5px;
+  color:var(--muted);background:var(--surface);cursor:default}
+.tab.on{border-color:var(--ink);color:var(--ink);font-weight:600}
+
+/* 3 — экран-вопрос */
+.ask{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;
+  box-shadow:var(--e1);max-width:430px}
+.ask__q{font-size:1.05rem;font-weight:700;color:var(--ink)}
+.ask__s{margin:5px 0 15px;font-size:13.5px;color:var(--muted)}
+.ask__o{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 13px;
+  border:1px solid var(--line);border-radius:10px;cursor:default;background:var(--surface)}
+.opt:hover{border-color:var(--ink)}
+.opt__n{font-size:13.5px;font-weight:500;color:var(--ink)}
+.opt__c{font-family:var(--mono);font-size:10px;color:var(--faint)}
+.ask__skip{margin-top:13px;font-size:12.5px;color:var(--faint)}
+
+/* 4 — группы с заголовками */
+.grp{margin-bottom:18px}
+.grp__h{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.grp__t{font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--muted);background:var(--surface);border:1px solid var(--line);
+  border-radius:5px;padding:3px 8px}
+.grp__l{flex:1;height:1px;background:var(--line)}
+
+/* 5 — вкладки над колонкой */
+.vtabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.vtab{padding:8px 12px 7px;font-size:12.5px;color:var(--muted);border-bottom:2px solid transparent;
+  margin-bottom:-1px;cursor:default}
+.vtab.on{color:var(--green-d);border-bottom-color:var(--green);font-weight:600}
+.vtab__c{font-family:var(--mono);font-size:9.5px;color:var(--faint);margin-left:5px}
+
+.foot{margin-top:56px;padding-top:22px;border-top:1px solid var(--line);color:var(--faint);font-size:13px}
+@media (max-width:860px){
+  .cols{flex-direction:column} .v__note{grid-template-columns:1fr}
+  .v__note div+div{border-left:0;border-top:1px solid var(--line-soft)}
+}
+</style>
+
+<div class="wrap">
+  <div class="hero__eyebrow">Дерево чистой прибыли</div>
+  <h1>Развилка по моделям бизнеса</h1>
+  <p class="lead">Под Выручкой в дереве лежат <b>двадцать метрик четырёх моделей сразу</b>: онлайн считает
+  сессии и заказы, розница — чеки и посетителей, B2B — лиды и сделки, подписка — платящих
+  пользователей и ARPU. Одному бизнесу нужна ровно четверть из них, остальное — шум.
+  Пять способов спросить модель и показать только своё.</p>
+
+  <div class="facts">
+    <div class="fact"><b>20</b> метрик под Выручкой</div>
+    <div class="fact"><b>4</b> модели продаж</div>
+    <div class="fact"><b>5</b> метрик в среднем на модель</div>
+    <div class="fact"><b>1</b> общая для всех — Возвраты</div>
+  </div>
+
+  <!-- ── 1 ───────────────────────────────────────────────────────────── -->
+  <section class="v">
+    <div class="v__head">
+      <div class="v__n">01</div>
+      <div>
+        <div class="v__t">Развилка на месте метрик</div>
+        <div class="v__d">Колонка компонентов занята карточками моделей, пока модель не выбрана.
+        Метрики появляются на их месте после клика. Общие для всех метрики стоят рядом сразу.</div>
+      </div>
+    </div>
+    <div class="v__body">
+      <div class="cols">
+        <div class="col" style="max-width:250px">
+          <div class="col__h key">⊙ Ключевая метрика</div>
+          <div class="card key">
+            <div class="card__m"><span class="card__r"><span class="dot"></span>Результат</span>
+              <span class="card__u">₽</span></div>
+            <div class="card__n">Выручка</div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="col__h comp">⊞ Компоненты</div>
+          <div class="pick"><div class="pick__ax">Канал продаж</div>
+            <div class="pick__n">Онлайн</div><div class="pick__c">5 метрик · сайт, маркетплейсы</div></div>
+          <div class="pick"><div class="pick__ax">Канал продаж</div>
+            <div class="pick__n">Офлайн</div><div class="pick__c">5 метрик · магазин, точка</div></div>
+          <div class="pick"><div class="pick__ax">Канал продаж</div>
+            <div class="pick__n">Отдел продаж</div><div class="pick__c">5 метрик · B2B, услуги</div></div>
+          <div class="pick"><div class="pick__ax">Канал продаж</div>
+            <div class="pick__n">Подписка</div><div class="pick__c">4 метрики · сервис, абонемент</div></div>
+          <div class="card" style="margin-top:14px">
+            <div class="card__m"><span class="card__r"><span class="dot cost"></span>Затраты</span>
+              <span class="card__u">₽</span></div>
+            <div class="card__n">Возвраты</div>
+            <span class="chip">общая для всех</span>
+          </div>
+        </div>
+        <div class="col">
+          <div class="col__h drv">↗ Драйверы</div>
+          <div style="color:var(--faint);font-size:13px;padding:14px 0">Появятся, когда выбрана модель</div>
+        </div>
+      </div>
+    </div>
+    <div class="v__note">
+      <div class="plus"><b>чем хорош</b>Развилка стоит ровно там, где человек ждёт метрики, — не заметить её нельзя.
+      Видно, сколько метрик за каждой моделью, и что Возвраты нужны всем.</div>
+      <div class="minus"><b>чем плох</b>Карточка выбора выглядит как метрика — ещё один вид узла на холсте.
+      На четырёх моделях колонка выглядит пустовато.</div>
+    </div>
+  </section>
+
+  <!-- ── 2 ───────────────────────────────────────────────────────────── -->
+  <section class="v">
+    <div class="v__head">
+      <div class="v__n">02</div>
+      <div>
+        <div class="v__t">Переключатель на карточке метрики</div>
+        <div class="v__d">Модель выбирается прямо на карточке Выручки, чипами. Дерево справа
+        перестраивается сразу, ничего не прячется и не появляется дополнительно.</div>
+      </div>
+    </div>
+    <div class="v__body">
+      <div class="cols">
+        <div class="col" style="max-width:250px">
+          <div class="col__h key">⊙ Ключевая метрика</div>
+          <div class="card key" style="min-height:auto">
+            <div class="card__m"><span class="card__r"><span class="dot"></span>Результат</span>
+              <span class="card__u">₽</span></div>
+            <div class="card__n">Выручка</div>
+            <div class="tabs">
+              <span class="tab on">Онлайн</span><span class="tab">Офлайн</span>
+              <span class="tab">Отдел продаж</span><span class="tab">Подписка</span>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="col__h comp">⊞ Компоненты</div>
+          <div class="card"><div class="card__m"><span class="card__r"><span class="dot"></span>Результат</span><span class="card__u">#</span></div><div class="card__n">Визиты сайта</div></div>
+          <div class="card"><div class="card__m"><span class="card__r"><span class="dot diag"></span>Диагностика</span><span class="card__u">%</span></div><div class="card__n">Конверсия в заказ</div></div>
+          <div class="card"><div class="card__m"><span class="card__r"><span class="dot act"></span>Действие</span><span class="card__u">₽</span></div><div class="card__n">Средний чек (AOV)</div></div>
+          <div class="card"><div class="card__m"><span class="card__r"><span class="dot"></span>Результат</span><span class="card__u">#</span></div><div class="card__n">Оплаченные заказы</div></div>
+          <div class="card"><div class="card__m"><span class="card__r"><span class="dot diag"></span>Диагностика</span><span class="card__u">%</span></div><div class="card__n">% отменённых заказов</div></div>
+          <div class="card"><div class="card__m"><span class="card__r"><span class="dot cost"></span>Затраты</span><span class="card__u">₽</span></div><div class="card__n">Возвраты</div></div>
+        </div>
+        <div class="col">
+          <div class="col__h drv">↗ Драйверы</div>
+          <div class="card" style="margin-top:118px"><div class="card__m"><span class="card__r"><span class="dot"></span>Результат</span><span class="card__u">#</span></div><div class="card__n">Среднее количество товаров в заказе</div></div>
+          <div class="card"><div class="card__m"><span class="card__r"><span class="dot diag"></span>Диагностика</span><span class="card__u">%</span></div><div class="card__n">% заказов с промокодом</div></div>
+          <div class="card"><div class="card__m"><span class="card__r"><span class="dot act"></span>Действие</span><span class="card__u">%</span></div><div class="card__n">Средний % скидки</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="v__note">
+      <div class="plus"><b>чем хорош</b>Ни одного лишнего экрана: дерево сразу показано целиком, переключение
+      мгновенное. Выбор привязан к метрике, которую он и разбирает.</div>
+      <div class="minus"><b>чем плох</b>Карточка метрики перестаёт быть просто карточкой — на ней появляется
+      управление. Придётся решать, что показывать по умолчанию.</div>
+    </div>
+  </section>
+
+  <!-- ── 3 ───────────────────────────────────────────────────────────── -->
+  <section class="v">
+    <div class="v__head">
+      <div class="v__n">03</div>
+      <div>
+        <div class="v__t">Вопрос перед разбором</div>
+        <div class="v__d">При первом заходе в ветку дерево уходит на второй план и задаётся один вопрос.
+        Ответ запоминается: дальше человек его больше не видит, пока сам не поменяет в шапке.</div>
+      </div>
+    </div>
+    <div class="v__body">
+      <div class="cols">
+        <div class="col" style="max-width:250px">
+          <div class="col__h key">⊙ Ключевая метрика</div>
+          <div class="card key muted">
+            <div class="card__m"><span class="card__r"><span class="dot"></span>Результат</span><span class="card__u">₽</span></div>
+            <div class="card__n">Выручка</div>
+          </div>
+        </div>
+        <div class="col" style="flex:2">
+          <div class="col__h comp" style="opacity:.42">⊞ Компоненты</div>
+          <div class="ask">
+            <div class="ask__q">Как вы продаёте?</div>
+            <div class="ask__s">Выручка складывается по-разному в рознице, онлайне, B2B и подписке.
+              Ответьте один раз — дерево оставит только ваши метрики.</div>
+            <div class="ask__o">
+              <div class="opt"><span class="opt__n">Онлайн — интернет-магазин, маркетплейсы</span><span class="opt__c">5</span></div>
+              <div class="opt"><span class="opt__n">Офлайн — магазин, салон, точка</span><span class="opt__c">5</span></div>
+              <div class="opt"><span class="opt__n">Через отдел продаж — B2B, проекты</span><span class="opt__c">5</span></div>
+              <div class="opt"><span class="opt__n">По подписке — сервис, абонемент</span><span class="opt__c">4</span></div>
+            </div>
+            <div class="ask__skip">Показать все двадцать метрик сразу →</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="v__note">
+      <div class="plus"><b>чем хорош</b>Спрашивает словами, а не значком: понятно и тому, кто впервые видит дерево.
+      Ответ один на всю сессию, дальше не мешает.</div>
+      <div class="minus"><b>чем плох</b>Перекрывает дерево до первого ответа — а человек мог зайти просто посмотреть.
+      Нужен выход «показать всё», иначе экран читается как форма.</div>
+    </div>
+  </section>
+
+  <!-- ── 4 ───────────────────────────────────────────────────────────── -->
+  <section class="v">
+    <div class="v__head">
+      <div class="v__n">04</div>
+      <div>
+        <div class="v__t">Все модели сразу, разделены заголовками</div>
+        <div class="v__d">Никто ничего не выбирает: колонка разбита подписями моделей, метрики
+        лежат группами. Свою группу человек находит глазами.</div>
+      </div>
+    </div>
+    <div class="v__body">
+      <div class="cols">
+        <div class="col" style="max-width:250px">
+          <div class="col__h key">⊙ Ключевая метрика</div>
+          <div class="card key">
+            <div class="card__m"><span class="card__r"><span class="dot"></span>Результат</span><span class="card__u">₽</span></div>
+            <div class="card__n">Выручка</div>
+          </div>
+        </div>
+        <div class="col" style="flex:2">
+          <div class="col__h comp">⊞ Компоненты</div>
+          <div class="grp">
+            <div class="grp__h"><span class="grp__t">Если продаёте онлайн</span><span class="grp__l"></span></div>
+            <div class="card"><div class="card__m"><span class="card__r"><span class="dot"></span>Результат</span><span class="card__u">#</span></div><div class="card__n">Визиты сайта</div></div>
+            <div class="card"><div class="card__m"><span class="card__r"><span class="dot diag"></span>Диагностика</span><span class="card__u">%</span></div><div class="card__n">Конверсия в заказ</div></div>
+            <div class="card"><div class="card__m"><span class="card__r"><span class="dot act"></span>Действие</span><span class="card__u">₽</span></div><div class="card__n">Средний чек (AOV)</div></div>
+          </div>
+          <div class="grp">
+            <div class="grp__h"><span class="grp__t">Если продаёте офлайн</span><span class="grp__l"></span></div>
+            <div class="card"><div class="card__m"><span class="card__r"><span class="dot"></span>Результат</span><span class="card__u">#</span></div><div class="card__n">Посетители</div></div>
+            <div class="card"><div class="card__m"><span class="card__r"><span class="dot"></span>Результат</span><span class="card__u">#</span></div><div class="card__n">Количество чеков</div></div>
+            <div class="card"><div class="card__m"><span class="card__r"><span class="dot act"></span>Действие</span><span class="card__u">₽</span></div><div class="card__n">Средний чек</div></div>
+          </div>
+          <div class="grp">
+            <div class="grp__h"><span class="grp__t">Общее для всех</span><span class="grp__l"></span></div>
+            <div class="card"><div class="card__m"><span class="card__r"><span class="dot cost"></span>Затраты</span><span class="card__u">₽</span></div><div class="card__n">Возвраты</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="v__note">
+      <div class="plus"><b>чем хорош</b>Ничего не спрятано и ничего не надо нажимать. Видно, что дерево
+      покрывает четыре модели, — это само по себе аргумент за продукт.</div>
+      <div class="minus"><b>чем плох</b>Колонка вырастает вчетверо: двадцать карточек и четыре заголовка
+      в один экран не помещаются. Своё приходится искать среди чужого.</div>
+    </div>
+  </section>
+
+  <!-- ── 5 ───────────────────────────────────────────────────────────── -->
+  <section class="v">
+    <div class="v__head">
+      <div class="v__n">05</div>
+      <div>
+        <div class="v__t">Вкладки над колонкой</div>
+        <div class="v__d">Модели стоят вкладками над колонкой компонентов, у каждой в подписи
+        число метрик. Открыта одна, остальные в один клик.</div>
+      </div>
+    </div>
+    <div class="v__body">
+      <div class="cols">
+        <div class="col" style="max-width:250px">
+          <div class="col__h key">⊙ Ключевая метрика</div>
+          <div class="card key">
+            <div class="card__m"><span class="card__r"><span class="dot"></span>Результат</span><span class="card__u">₽</span></div>
+            <div class="card__n">Выручка</div>
+          </div>
+        </div>
+        <div class="col" style="flex:2">
+          <div class="col__h comp">⊞ Компоненты</div>
+          <div class="vtabs">
+            <span class="vtab on">Онлайн<span class="vtab__c">5</span></span>
+            <span class="vtab">Офлайн<span class="vtab__c">5</span></span>
+            <span class="vtab">Отдел продаж<span class="vtab__c">5</span></span>
+            <span class="vtab">Подписка<span class="vtab__c">4</span></span>
+            <span class="vtab">Все<span class="vtab__c">20</span></span>
+          </div>
+          <div class="card"><div class="card__m"><span class="card__r"><span class="dot"></span>Результат</span><span class="card__u">#</span></div><div class="card__n">Визиты сайта</div></div>
+          <div class="card"><div class="card__m"><span class="card__r"><span class="dot diag"></span>Диагностика</span><span class="card__u">%</span></div><div class="card__n">Конверсия в заказ</div></div>
+          <div class="card"><div class="card__m"><span class="card__r"><span class="dot act"></span>Действие</span><span class="card__u">₽</span></div><div class="card__n">Средний чек (AOV)</div></div>
+          <div class="card"><div class="card__m"><span class="card__r"><span class="dot"></span>Результат</span><span class="card__u">#</span></div><div class="card__n">Оплаченные заказы</div></div>
+          <div class="card"><div class="card__m"><span class="card__r"><span class="dot cost"></span>Затраты</span><span class="card__u">₽</span></div><div class="card__n">Возвраты</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="v__note">
+      <div class="plus"><b>чем хорош</b>Знакомый жест: вкладки читаются без объяснений. Числа в подписях
+      показывают объём каждой модели, а «Все» оставляет путь к полной картине.</div>
+      <div class="minus"><b>чем плох</b>Вкладки живут над одной колонкой, но меняют и следующую —
+      связь не всегда очевидна. На узком экране пять вкладок в строку не встают.</div>
+    </div>
+  </section>
+
+  <div class="foot">
+    Метрики и группы — из базы Атласа, ветка «Выручка» дерева чистой прибыли.
+    Оси, по которым дерево ветвится: канал продаж (4 модели), что продаёте (перепродажа,
+    производство, услуги — под Себестоимостью), система налогов (ОСНО, УСН, патент или АУСН —
+    под Налогами). Выбранный вариант должен работать на всех трёх.
+  </div>
+</div>
