@@ -19,6 +19,9 @@ export interface MetricContent {
   'Когда не нужна'?: string
   'EN'?: string
   'Синонимы'?: string
+  // Суть: тег направления и фраза, объясняющая, почему знак именно такой
+  'Суть'?: string
+  'Суть · пояснение'?: string
   'Разрезы'?: Dimension[]
 }
 

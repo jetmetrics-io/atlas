@@ -341,6 +341,35 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 .panel__aka-names span { overflow-wrap: break-word; }
 .panel__body { padding: var(--jm-space-5) var(--jm-space-6); overflow-y: auto; }
 .panel__section { margin-bottom: var(--jm-space-5); }
+/* ── Суть метрики: тег рядом с единицей, объяснение по «?» ── */
+.panel__tags { display: flex; flex-wrap: wrap; gap: var(--jm-space-2); align-items: center; position: relative; }
+.chip--unit { background: var(--jm-bg); color: var(--jm-muted); }
+.sign { display: inline-flex; align-items: center; gap: 6px; font-size: var(--jm-caption);
+  font-weight: var(--jm-w-semibold); padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+.sign--up  { background: var(--jm-green-tint); color: var(--jm-green); }
+.sign--down{ background: var(--jm-coral-tint); color: var(--jm-coral-text); }
+.sign--bal { background: var(--jm-yellow-tint); color: var(--jm-yellow-text); }
+.sign svg { flex: none; }
+/* без position: relative — иначе подсказка цепляется за сам знак вопроса
+   шириной в 15 пикселей, а ей нужна ширина строки тегов */
+.tip { display: inline-flex; align-items: center; margin-left: 2px; }
+.tip__q { width: 15px; height: 15px; border-radius: 50%; border: 1px solid currentColor; opacity: .55;
+  font-family: var(--jm-font-mono); font-size: 10px; font-weight: var(--jm-w-semibold); line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center; cursor: help;
+  background: none; color: inherit; padding: 0; flex: none; }
+.tip__q:hover, .tip__q:focus-visible { opacity: 1; }
+/* Подсказка занимает всю ширину строки тегов, а не привязана к знаку вопроса:
+   панель узкая, и пузырь по ширине текста вылезал за её край и обрезался.
+   Хвостик справа — чип сути всегда последний в ряду, знак вопроса у его правого края. */
+.tip__pop { position: absolute; left: 0; right: 0; bottom: calc(100% + 10px);
+  background: #12171C; color: #E9EEF2;
+  font-family: var(--jm-font-sans); font-size: 12.5px; line-height: 1.5; font-weight: 400;
+  letter-spacing: 0; white-space: normal; text-align: left; text-transform: none;
+  padding: 10px 13px; border-radius: 9px; z-index: 30; pointer-events: none;
+  box-shadow: 0 10px 28px rgba(8, 11, 13, .26), 0 2px 6px rgba(8, 11, 13, .14); }
+.tip__pop::after { content: ""; position: absolute; top: 100%; right: 14px;
+  border: 6px solid transparent; border-top-color: #12171C; }
+
 .panel__label { font-family: var(--jm-font-mono); font-size: var(--jm-label); text-transform: uppercase; letter-spacing: .06em; color: var(--jm-faint); font-weight: 600; margin-bottom: 5px; }
 .panel__text { color: var(--jm-text); font-size: var(--jm-body-s); }
 /* Абзац внутри поля: длинный текст «Важности» делится по смыслу, иначе читается стеной. */

@@ -120,6 +120,44 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'dims', label: 'Анализ' },
 ]
 
+// ── Суть метрики ───────────────────────────────────────────────────────────────
+// Тег направления виден всегда, фраза-объяснение открывается по «?»: наведением
+// на десктопе, нажатием на тач-устройствах (там hover не существует как жест).
+const ESSENCE_KIND: Record<string, 'up' | 'down' | 'bal'> = {
+  'больше-лучше': 'up', 'меньше-лучше': 'down', 'баланс': 'bal',
+}
+
+function EssenceChip({ essence, note }: { essence: string; note?: string }) {
+  const [open, setOpen] = useState(false)
+  const kind = ESSENCE_KIND[essence] || 'bal'
+  const icon = kind === 'bal'
+    ? <svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true">
+        <path d="M1 5h10M3.4 2.4 1 5l2.4 2.6M8.6 2.4 11 5l-2.4 2.6" stroke="currentColor"
+          strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    : <svg width="9" height="10" viewBox="0 0 9 10" aria-hidden="true"
+        style={kind === 'down' ? { transform: 'rotate(180deg)' } : undefined}>
+        <path d="M4.5 0.5 8 5H5.8v4.5H3.2V5H1z" fill="currentColor" />
+      </svg>
+  return (
+    <span className={`sign sign--${kind}`}>
+      {icon}
+      {essence}
+      {note && (
+        <span className="tip" onMouseLeave={() => setOpen(false)}>
+          <button type="button" className="tip__q" aria-label="Почему знак такой"
+            aria-expanded={open}
+            onMouseEnter={() => setOpen(true)}
+            onFocus={() => setOpen(true)}
+            onBlur={() => setOpen(false)}
+            onClick={e => { e.stopPropagation(); setOpen(v => !v) }}>?</button>
+          <span className="tip__pop" role="tooltip" hidden={!open}>{note}</span>
+        </span>
+      )}
+    </span>
+  )
+}
+
 export function NodeCard({ node, siblings, onNavigate, onClose }: {
   node: AtlasNode
   siblings: LinkTarget[]
@@ -163,6 +201,10 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
   const example = exampleLines(c['Пример расчёта'])
   const why = c['Важность']
   const whenNot = c['Когда не нужна']
+  // Суть: тег направления стоит рядом с единицей, объяснение открывается по знаку
+  // вопроса. Постоянно виден знак, фраза вызывается наведением — решено 04.09.2026.
+  const essence = c['Суть']
+  const essenceNote = c['Суть · пояснение']
   // Другие имена метрики: русский синоним и английское название. Хранятся строкой,
   // несколько имён разделены «;» — показываем списком, по имени на строку.
   const synonyms = names(c['Синонимы'])
@@ -277,10 +319,13 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
                 </div>
               </div>
             )}
-            {node.units && (
+            {(node.units || essence) && (
               <div className="panel__section">
-                <div className="panel__label">Единицы</div>
-                <span className="chip" style={{ background: rs.tint, color: rs.text }}>{node.units}</span>
+                <div className="panel__label">{essence ? 'Единицы и суть' : 'Единицы'}</div>
+                <div className="panel__tags">
+                  {node.units && <span className="chip chip--unit">{node.units}</span>}
+                  {essence && <EssenceChip essence={essence} note={essenceNote} />}
+                </div>
               </div>
             )}
             {tree && (
