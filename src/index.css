@@ -143,10 +143,14 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 .family__blurb { color: var(--jm-faint); font-size: var(--jm-body-s); margin-left: 2px; }
 .mapgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: var(--jm-space-4); }
 
-/* Минимал-карточка: моно-индекс в углу + крупное имя + акцент-точка отрасли */
+/* Минимал-карточка: моно-индекс в углу + крупное имя + акцент-точка отрасли.
+   Верхний padding 46px держит место под абсолютный верхний ряд — бейдж «Бесплатно»,
+   замок, метку типа. Имя прижато книзу (margin-top:auto), поэтому у коротких имён
+   запас не виден; у имени в три строки он не даёт тексту залезть под бейдж
+   (так наезжала «Выручка с повторных клиентов», 21.09.2026). */
 .mcard {
   position: relative; background: var(--jm-surface); border: 1px solid var(--jm-line);
-  border-radius: var(--jm-r-lg); padding: 24px 22px 20px; min-height: 152px;
+  border-radius: var(--jm-r-lg); padding: 46px 22px 20px; min-height: 152px;
   display: flex; flex-direction: column; cursor: pointer;
   transition: border-color var(--jm-dur) var(--jm-ease), transform var(--jm-dur) var(--jm-ease), box-shadow var(--jm-dur) var(--jm-ease);
 }
