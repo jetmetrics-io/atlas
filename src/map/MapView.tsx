@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ReactFlow, ReactFlowProvider, Background, MiniMap, Panel, useReactFlow,
+  useUpdateNodeInternals, useOnViewportChange,
   MarkerType, type Node, type Edge, type Viewport,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
@@ -78,6 +79,39 @@ function Legend({ counts, activeRole, onToggleRole }: {
       <div className="legend__row"><span className="legend__line" style={{ borderTop: '2px dashed #98A0A6' }} />Пунктир, связь без влияния</div>
     </div>
   )
+}
+
+// ── Починка связей после анимированного перелёта камеры ────────────────────
+// В Firefox после ЛЮБОГО перелёта с анимацией (setCenter/zoomIn/setViewport
+// с duration) React Flow теряет привязки хэндлов у карточек и перестаёт рисовать
+// связи вовсе: в DOM остаются только узлы, ни одной линии. Сами связи не
+// возвращаются ни от прокрутки, ни от зума — карта так и стоит голой, пока
+// страницу не перезагрузишь. В Chromium этого нет.
+//
+// Проверено бисекцией: с duration: 0 тот же перелёт связи не ломает, с duration: 420
+// ломает каждый раз. Значит дело в d3-переходе, а не в самом изменении масштаба.
+//
+// Лечим точечно: просим React Flow пересчитать внутренности узлов. Это возвращает
+// привязки хэндлов, и связи отрисовываются заново.
+// Слушаем любое движение камеры, а не только наш перелёт к вершине: анимация есть
+// и у кнопок зума, и у сброса масштаба, и у перехода из поиска.
+// Браузер не определяем: пересчёт в Chromium ничего не ломает и стоит копейки,
+// а разбирать движки по строке агента — способ однажды промахнуться мимо нового.
+function EdgeRepair({ ids }: { ids: string[] }) {
+  const update = useUpdateNodeInternals()
+  const last = useRef(0)
+  // По ходу перелёта — не чаще раза в 100 мс: связи не пропадают на все 400 мс полёта,
+  // а пересчёт 31 карточки на каждый кадр карту бы затормозил.
+  useOnViewportChange({
+    onChange: () => {
+      const t = performance.now()
+      if (t - last.current < 100) return
+      last.current = t
+      update(ids)
+    },
+    onEnd: () => { last.current = 0; update(ids) },
+  })
+  return null
 }
 
 // Зум-контролы рядом с миниатюрой: +, −, сброс к стартовому масштабу.
@@ -567,6 +601,10 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
     return { rfNodes, rfEdges }
   }, [map, mode, hoverId, selNode, activeRole, forceEdgeKey, dashLit, dashDim, dashHover])
 
+  // Список id для EdgeRepair. Меняется вместе с rfNodes, то есть и на наведение мышью,
+  // — это ничего не стоит: EdgeRepair ничего не рисует, он только перевешивает колбэк.
+  const nodeIds = useMemo(() => rfNodes.map((n) => n.id), [rfNodes])
+
   const selNodeObj = selNode ? nodeById(selNode) : null
 
   const flowRef = useRef<FlowApi | null>(null)
@@ -818,6 +856,7 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
             />
             <ZoomControls home={viewport} />
             <FlowBridge apiRef={flowRef} />
+            <EdgeRepair ids={nodeIds} />
           </ReactFlow>
         </ReactFlowProvider>
         <Legend
