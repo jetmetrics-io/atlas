@@ -202,8 +202,8 @@ Actions): `YC_KEY_ID` и `YC_SECRET`. Пока их нет, кнопка соб�
 | `npm run deploy` | проверка, слепок, сборка, выкладка |
 | `python3 scripts/check_dump.py <папка>` | проверить готовую выгрузку |
 
-`npm run gen:tree-static` и `npm run gen:legacy` — старые пути, конвейера
-не касаются.
+`npm run gen:legacy` — старый путь, конвейера не касается. `gen:tree-static`
+убран 22.09: он звал `../content/db/build_tree.py`, то есть файл вне репозитория.
 
 ### Черновики дашбордов
 
