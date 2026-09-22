@@ -4,6 +4,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      vylozhit_v_boy:
+        description: 'Выложить в бой (бакет Яндекса). Пустое — только собрать и проверить'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -62,8 +67,25 @@ jobs:
       #   js/css/шрифты — max-age=31536000,immutable ; html и data/*.json — max-age=300.
       # --delete чистит устаревшие объекты под atlas/ (в т.ч. старый pro-3c35f475c4/,
       # когда ставим секреты — это ЖДЁТ репойнта iframe'ов Марией, см. site-state/HANDOFF).
+      # ⛔ Слепок боя ДО заливки — иначе откатываться будет нечем.
+      # Ручной npm run deploy делает это сам; у CI своего слепка не было,
+      # поэтому автозаливка на каждый пуш была бы слабее ручного деплоя.
+      - name: Слепок боя для отката
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.vylozhit_v_boy && env.YC_KEY_ID != '' }}
+        run: python3 scripts/atlas_pull.py --save .rollback --data site/data
+      - uses: actions/upload-artifact@v4
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.vylozhit_v_boy && env.YC_KEY_ID != '' }}
+        with:
+          name: rollback-${{ github.sha }}
+          path: .rollback/
+          retention-days: 30
+
+      # ⛔ Выкладка НЕ идёт по пушу. Пуш собирает и проверяет — это гейт качества.
+      # Выкладка — осознанное действие: Actions → Run workflow → галочка.
+      # Иначе любой промежуточный коммит уезжает в бой молча: 22.09 такой коммит
+      # был (упал на типах через две минуты), и при автозаливке он бы уехал.
       - name: Sync to Yandex Object Storage
-        if: ${{ env.YC_KEY_ID != '' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.vylozhit_v_boy && env.YC_KEY_ID != '' }}
         run: |
           # страховка: заглушки не должно быть в выгрузке ни при каких правках выше
           if [ -e site/payment ]; then

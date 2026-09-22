@@ -138,9 +138,13 @@ def main():
         print("   разницы нет: бой и локальная выгрузка совпадают")
     if trevogi:
         print()
-        for t in trevogi:
-            print("   " + t)
-    return 2 if trevogi else 0
+        for s in trevogi:
+            print("   " + s)
+    # Беда в самом бою — повод выложить, а не повод упасть: выкладка её и чинит.
+    # Ненулевой код только из-за того, что не так в НАШЕЙ выгрузке (так же
+    # рассуждает deploy_storage.py, логика у них общая).
+    nashi = [s for s in trevogi if not s.startswith("⚠️ бой:")]
+    return 2 if nashi else 0
 
 
 if __name__ == "__main__":
