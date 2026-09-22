@@ -4,14 +4,18 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "gen": "python3 ../content/db/build_app.py",
+    "gen": "python3 scripts/build_app.py",
     "dev": "npm run gen && vite",
     "build": "npm run gen && tsc --noEmit && vite build",
     "preview": "vite preview",
     "deploy": "python3 scripts/deploy_storage.py",
     "gen:legacy": "node scripts/gen-data.mjs",
     "look": "npm run build && vite preview --port 4173 --open",
-    "gen:tree-static": "python3 ../content/db/build_tree.py"
+    "gen:tree-static": "python3 ../content/db/build_tree.py",
+    "db": "python3 scripts/db.py restore",
+    "db:dump": "python3 scripts/db.py dump",
+    "db:check": "python3 scripts/db.py check",
+    "pull": "python3 scripts/atlas_pull.py"
   },
   "dependencies": {
     "@xyflow/react": "^12.3.5",

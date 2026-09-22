@@ -32,6 +32,12 @@ jobs:
         with:
           node-version: 20
           cache: npm
+      # Сборка выгрузки — на питоне: db/atlas.sql → db/atlas.db → public/data/*.json.
+      # До 22.09.2026 сборщик лежал вне репозитория (../content/db/build_app.py),
+      # и CI падал на нём каждый пуш начиная с 28.08 — 18 раз подряд, незамеченным.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - run: npm ci
       # ОДНА сборка (было: две — free/full по секретному адресу). Гейт полной версии —
       # внутри приложения по факту оплаты (email → paid.json ∪ allowlist.json). Данные
@@ -48,6 +54,7 @@ jobs:
           # заглушка молча снесёт всех, кто купил Атлас. Убираем до любой публикации —
           # и до Pages, и до бакета.
           rm -rf site/payment
+          python3 scripts/check_dump.py site/data
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
