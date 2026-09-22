@@ -16,7 +16,9 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
-    "types": []
+    // vite/client даёт типы import.meta.glob — им подключаются необязательные
+    // черновики дашбордов из соседнего репозитория (src/dash/drafts.ts)
+    "types": ["vite/client"]
   },
   "include": ["src"]
 }
