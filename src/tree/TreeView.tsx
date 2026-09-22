@@ -29,6 +29,8 @@ const metrics = (n: number) => {
 const PROFILE_KEY = 'jm-tree-profile'
 // Внизу висят крошки и подсказки: без запаса последняя карточка упирается в них.
 const TOP = 122, PAD = 24, BOTTOM = 76
+// Ширина карточки метрики (.panel в index.css): на неё резервируем место справа.
+const PANEL_W = 420
 // на узком экране профиль встаёт отдельной строкой и сдвигает всё вниз
 const TOP_NARROW = 150, NARROW = 760
 
@@ -108,8 +110,25 @@ function Card({
         </span>
       </span>
       <span className="tnode__name">{n.name}</span>
+      <Srez label={n.label} />
       {models}
     </div>
+  )
+}
+
+/** Срез метрики: отдельная строка под именем — «показана не вся метрика,
+ *  а одно значение разреза». Значок и подпись ставятся только вместе:
+ *  значок без подписи пропадает в печати, подпись без значка читается
+ *  как часть названия (решение Дмитрия 16.09.2026, вариант 04). */
+function Srez({ label }: { label?: string }) {
+  if (!label) return null
+  return (
+    <span className="tnode__srez" title={label}>
+      <svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor" aria-hidden="true">
+        <path d="M1.5 2.2h13a.6.6 0 0 1 .46 1L10 9.1V14a.6.6 0 0 1-.9.52l-2.4-1.4a.6.6 0 0 1-.3-.52V9.1L1.04 3.2a.6.6 0 0 1 .46-1z" />
+      </svg>
+      <span>{label}</span>
+    </span>
   )
 }
 
@@ -230,10 +249,14 @@ export function TreeView({ slug, onBack, initialDrill }:
     const id = wantNode.current
     const n = id ? tree.nodes.get(id) : undefined
     if (!n) return
+    // Проваливаемся, только если у родителя ЕСТЬ отдельное дерево второго уровня.
+    // canDrill() отвечает лишь «есть ли дети», а у компонента плоского дерева дети —
+    // это его же драйверы: по прямой ссылке на драйвер весь холст гас и в крошках
+    // появлялся второй уровень, которого нет (Dmitry 11.09.2026).
     if (n.parent && n.parent !== tree.root) {
       const par = tree.nodes.get(n.parent)!
       if (par.parent && par.parent !== tree.root) setDrill(par.name)
-      else if (canDrill(tree, n.parent, profile)) setDrill(par.name)
+      else if (childTree(tree, n.parent) && canDrill(tree, n.parent, profile)) setDrill(par.name)
     }
     setCard(n.name)
     setSel(n.name)
@@ -392,10 +415,17 @@ export function TreeView({ slug, onBack, initialDrill }:
   // Масштаб считаем по первому дереву и при провале НЕ пересчитываем: высокое
   // дерево второго уровня ужало бы разом оба до нечитаемого.
   const top = box.w <= NARROW ? TOP_NARROW : TOP
+  // Дерево БЕЗ ПРОВАЛОВ: ни у одной его метрики нет своего разбора. Тогда незачем
+  // и чип «1 уровень» (второго не будет), и «⏎ раскрыть» в подсказке — нажимать
+  // нечего. А место справа держим под карточку метрики: такое дерево влезает в
+  // экран целиком, панорамировать его некуда, и панель накрывает правую колонку —
+  // те самые драйверы, ради которых карточку и открыли (Dmitry 11.09.2026).
+  const flat = !(BASE.trees ?? []).some((t) => t.parent === tree.info.slug)
+  const useW = flat && box.w - PANEL_W >= 600 ? box.w - PANEL_W : box.w
   // Вписываем дерево в экран, но не мельче читаемого: у выручки одиннадцать
   // компонентов, и по высоте она всё равно не поместится — её листают.
   const fit = Math.max(0.78,
-    Math.min(1, (box.h - top - PAD - BOTTOM) / A.h, (box.w - 2 * PAD) / A.w))
+    Math.min(1, (box.h - top - PAD - BOTTOM) / A.h, (useW - 2 * PAD) / A.w))
   const z = Math.max(0.25, fit * zoom)
   const cw = drill && B ? A.w + TREE_GAP + B.w : A.w
   // При провале второе дерево начинается правее чипов уровней: иначе подпись
@@ -409,12 +439,12 @@ export function TreeView({ slug, onBack, initialDrill }:
   const DRILL_LEFT = 496
   const tx0 = drill && B
     ? DRILL_LEFT - (A.w + TREE_GAP + B.cols[0]) * z
-    : (box.w - A.w * z) / 2
+    : (useW - A.w * z) / 2
   // Границы панорамы: вверх схему не поднять выше исходного положения, вниз —
   // до нижней карточки, по горизонтали — до края схемы и не дальше.
   const ch = drill && B ? Math.max(A.h, B.h) : A.h
   const panY = Math.max(Math.min(0, box.h - PAD - BOTTOM - top - ch * z), Math.min(0, pan.y))
-  const panX = Math.max(Math.min(0, box.w - PAD - tx0 - cw * z),
+  const panX = Math.max(Math.min(0, useW - PAD - tx0 - cw * z),
                         Math.min(Math.max(0, PAD - tx0), pan.x))
   const tx = tx0 + panX
 
@@ -456,13 +486,13 @@ export function TreeView({ slug, onBack, initialDrill }:
 
       {/* Чип первого уровня — кнопка возврата: со второго уровня туда и целятся,
           а единственный выход раньше был на потускневшей карточке слева. */}
-      <div className="tree__lvls">
+      {!flat && <div className="tree__lvls">
         {drill
           ? <button type="button" className="tlvl tlvl--go" onClick={() => setDrill(null)}
               title="Вернуться на первый уровень"><b>1</b> уровень · {tree.info.name}</button>
           : <span className="tlvl"><b>1</b> уровень · {tree.info.name}</span>}
         {drill && <span className="tlvl tlvl--b"><b>2</b> уровень · {drill}</span>}
-      </div>
+      </div>}
 
       <div className="tree__heads">
         {[[A, 0, !!drill] as const,
@@ -515,7 +545,7 @@ export function TreeView({ slug, onBack, initialDrill }:
       <div className="tree__keys">
         <span><kbd>↑↓</kbd>метрики</span><i>|</i>
         <span><kbd>←→</kbd>ступени</span><i>|</i>
-        <span><kbd>⏎</kbd>раскрыть</span><i>|</i>
+        {!flat && <><span><kbd>⏎</kbd>раскрыть</span><i>|</i></>}
         <span><kbd>␣</kbd>карточка</span><i>|</i>
         <span><kbd>0</kbd>вид целиком</span>
       </div>
@@ -547,7 +577,9 @@ export function TreeView({ slug, onBack, initialDrill }:
   )
 }
 
-/** Есть ли в Базе дерево с таким адресом. */
+/** Есть ли в Базе дерево с таким адресом и загружены ли его метрики. Одной записи
+ *  в `trees` мало: у платного дерева она есть и в бесплатной сборке, а узлов там нет —
+ *  открывать такое нельзя, читатель без оплаты остаётся в каталоге (как с платной картой). */
 export function treeExists(slug: string): boolean {
-  return (BASE.trees ?? []).some((t) => t.slug === slug)
+  return !!treeBySlug(slug)
 }

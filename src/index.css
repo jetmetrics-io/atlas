@@ -177,6 +177,17 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
   background: var(--jm-green-tint); border-radius: var(--jm-r-pill); padding: 3px 9px;
 }
 
+/* Срез метрики на карточке дерева: «показана не вся метрика, а одно значение
+   разреза». Отдельной строкой под именем — служебная строка длинные срезы
+   не держит, а надстрочник отнимает у имени вторую строку (решение 16.09.2026). */
+.tnode__srez {
+  display: flex; align-items: center; gap: 5px; margin-top: 5px;
+  font-size: 10.5px; line-height: 1.3; color: var(--jm-faint);
+  white-space: nowrap; overflow: hidden;
+}
+.tnode__srez svg { flex: 0 0 auto; opacity: .85; }
+.tnode__srez > span { overflow: hidden; text-overflow: ellipsis; }
+
 /* Закрытые карты: замок-чип. В покое — только иконка замка в углу; на ховере чип
    раскрывается вправо-влево в «Открыть все карты». Чип позиционирован АБСОЛЮТНО,
    поэтому его рост НЕ меняет высоту карточки → нет реф-лоу каталога и мигания. */

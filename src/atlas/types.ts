@@ -18,6 +18,9 @@ export interface AtlasNode {
   units: string
   key?: boolean
   group?: string
+  /** Срез: метрика взята не целиком, а по одному значению разреза
+   *  («Повторный клиент»). Показывается строкой под именем (решение 16.09.2026). */
+  label?: string
   content_src?: string
 }
 

@@ -16,6 +16,8 @@ export interface TreeKid {
   sign: string
   group?: string
   total?: number
+  /** срез метрики — одно значение разреза, строкой под именем */
+  label?: string
 }
 
 export interface TreeComp extends TreeKid {
@@ -29,6 +31,7 @@ export interface TreeSpec {
   role: string
   units: string
   key?: boolean
+  label?: string
   comps: TreeComp[]
 }
 
@@ -47,6 +50,7 @@ export interface PlacedNode {
   isKey: boolean
   total?: number
   pick?: TreeComp['pick']
+  label?: string
 }
 
 export interface PlacedWire { d: string; color: string; marker?: string }
@@ -96,7 +100,7 @@ interface WireKid { sign: string; sy: number }
  *  входят в родителя лесенкой портов. */
 function wire(
   kids: WireKid[], sxCol: number, txCol: number, ty: number, th: number,
-  idp: string, audit: string[],
+  idp: string, audit: string[], center = false,
 ): { wires: PlacedWire[]; markers: { id: string; color: string }[] } {
   const midX = (sxCol + txCol) / 2
   const corr: [number, number] = [Math.min(sxCol, txCol), Math.max(sxCol, txCol)]
@@ -132,7 +136,10 @@ function wire(
     if (!best || sc[0] < best.sc[0] || (sc[0] === best.sc[0] &&
       (sc[1] < best.sc[1] || (sc[1] === best.sc[1] && sc[2] < best.sc[2])))) best = { s, sc }
   })
-  const shift = best ? (best as { s: number }).s : 0
+  // У ключевой метрики лесенку не сдвигаем: связи входят в центр карточки
+  // (решение Дмитрия 22.09). Подбор ниже гонится за тем, чтобы одна связь пучка
+  // шла прямой, и ради этого уводит порт с центра — на корне это заметно сразу.
+  const shift = center ? 0 : (best ? (best as { s: number }).s : 0)
   const etys = bundles.map((_, i) => ty + Math.max(-half, Math.min(half, off[i] + shift)))
 
   // Канал пучка. По умолчанию все идут по midX — тогда у ключевой метрики с двумя
@@ -219,14 +226,16 @@ export function layoutTree(spec: TreeSpec, idp: string, topKey = false,
     g.c.kids.forEach((k, i) => {
       const ky = gTop + i * (H + ROW)
       nodes.push({ name: k.name, role: k.role, units: k.units, tier: 2, group: k.group,
-                   parent: g.c.name, x: colD, y: ky, w: W, h: H, isKey: false, total: k.total })
+                   parent: g.c.name, x: colD, y: ky, w: W, h: H, isKey: false, total: k.total,
+                   label: k.label })
       if (k.total) chips.push({ name: k.name, x: colD + W, cy: ky + H / 2, total: k.total })
     })
     // в детальном дереве компонент прижат к верху своей группы, а не к центру:
     // верхний драйвер тогда встаёт с ним в одну линию, ступень читается сверху вниз
     const cy = topKey ? gTop : gTop + g.h / 2 - H / 2
     nodes.push({ name: g.c.name, role: g.c.role, units: g.c.units, tier: 1, group: g.c.group,
-                 parent: spec.name, x: colC, y: cy, w: W, h: H, isKey: false, pick: g.c.pick })
+                 parent: spec.name, x: colC, y: cy, w: W, h: H, isKey: false, pick: g.c.pick,
+                 label: g.c.label })
     mid.push({ c: g.c, cy: cy + H / 2, gTop, ci })
     y = gTop + g.h + GROUP
   })
@@ -238,7 +247,7 @@ export function layoutTree(spec: TreeSpec, idp: string, topKey = false,
   const kh = (topKey ? H : KEY_H) + keyExtra
   const rootY = topKey ? HEAD : (mid[0].cy + mid[mid.length - 1].cy) / 2 - kh / 2
   nodes.push({ name: spec.name, role: spec.role, units: spec.units, tier: 0,
-               parent: '', x: colR, y: rootY, w: W, h: kh, isKey: !topKey })
+               parent: '', x: colR, y: rootY, w: W, h: kh, isKey: !topKey, label: spec.label })
 
   mid.forEach((g) => {
     if (!g.c.kids.length) return
@@ -249,7 +258,7 @@ export function layoutTree(spec: TreeSpec, idp: string, topKey = false,
     wires.push(...w.wires); markers.push(...w.markers)
   })
   const w0 = wire(mid.map((g) => ({ sign: g.c.sign, sy: g.cy })),
-                  colC, colR + W, rootY + kh / 2, kh, `${idp}r`, audit)
+                  colC, colR + W, rootY + kh / 2, kh, `${idp}r`, audit, true)
   wires.push(...w0.wires); markers.push(...w0.markers)
 
   return {

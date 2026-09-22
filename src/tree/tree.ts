@@ -123,7 +123,10 @@ export function treeBySlug(slug: string): Tree | undefined {
     return acc
   }
   const root = info.root ?? [...nodes.values()].find((n) => !n.parent)?.id
-  if (!root) return undefined
+  // Узлов может не быть вовсе: у ПЛАТНОГО дерева бесплатная сборка несёт только
+  // запись для витрины (как у платных карт), метрики из неё вырезаны. Тогда дерева
+  // для приложения не существует — иначе `fill` падает на отсутствующем корне.
+  if (!root || !nodes.has(root)) return undefined
   fill(root)
 
   const tree: Tree = { info, nodes, root }
@@ -146,7 +149,7 @@ const kidOf = (t: Tree, id: string, profile: Profile): TreeKid => {
   const ALL: Profile = {}
   const total = childSize(t, id, ALL) || totalOf(n, ALL)
   return { name: n.name, role: n.role, units: n.units || '', sign: n.sign,
-           group: n.group, total }
+           group: n.group, total, label: n.label }
 }
 
 /**
@@ -172,7 +175,7 @@ export function specOf(t: Tree, id: string, profile: Profile): TreeSpec {
 
   // Метрики одной модели идут подряд — так их можно обвести общей рамкой.
   comps.sort((a, b) => (a.group ?? '').localeCompare(b.group ?? ''))
-  return { name: n.name, role: n.role, units: n.units || '', key: !!n.key, comps }
+  return { name: n.name, role: n.role, units: n.units || '', key: !!n.key, label: n.label, comps }
 }
 
 /** Дерево, в котором эта метрика — ключевая. Из дерева прибыли по такой связи
