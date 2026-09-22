@@ -6,11 +6,116 @@
    строке разреза и зелёной плитке. Фирменные токены остаются как есть —
    они шире дашборда, менять их в одиночку нельзя.
    ────────────────────────────────────────────────────────────────────────── */
-.dsheet {
-  --d-faint: #6A7074;   /* подписи осей, база, шапки таблиц — 5,02:1 на белом */
-  --d-bad:   #C83A42;   /* дельта в минус — 5,07:1 */
-  --d-good:  #0B7E65;   /* дельта в плюс  — 5,02:1 */
+/* ══════════════════════════════════════════════════════════════════════════
+   ТЕМА POWER BI. Калька с базовой темы Power BI, а не наша вёрстка.
+   Причина одна: человек в корпорации должен увидеть свой инструмент, а не наш,
+   и понять с первого взгляда, что это собирается у него, его коннекторами
+   и по его правилам защиты данных.
+
+   Тема живёт на .dmock и НЕ выходит за него. Внутри — сам дашборд: он чужой,
+   он Power BI. Снаружи — шапка листа, кнопки «Собрать у себя», сноска: это
+   наше, и оно фирменное. Иначе непонятно, где кончается образец и начинаемся
+   мы, и весь лист читается как чей-то скриншот.
+
+   Все значения ниже — из документации Microsoft (Создание пользовательских тем
+   отчётов), а не подобраны на глаз. Кегли там в пунктах, здесь переведены
+   в пиксели при 96 dpi: 1 pt = 4/3 px.
+
+   Структурные цвета базовой темы:
+     firstLevelElements   #252423  значения и итоги таблиц, выноска карточки, заголовок среза
+     secondLevelElements  #605E5C  подписи, метки осей, ШАПКИ таблиц, элементы среза, легенда
+     thirdLevelElements   #F3F2F1  линии сетки осей, сетка таблицы
+     fourthLevelElements  #B3B0AD  метка категории карточки, приглушённая легенда
+     background           #FFFFFF
+     secondaryBackground  #C8C6C4  контур сетки таблицы
+     tableAccent          #118DFF  контур таблицы
+
+   Палитра данных: #118DFF #12239E #E66C37 #6B007B #E044A7 #744EC2 #D9B300 #D64550
+   Настроение: good #1AAB40 · neutral #D9B300 · bad #D64554
+
+   Текстовые классы:
+     callout  DIN #252423 45 pt  →  60 px   выноска карточки, KPI
+     title    DIN #252423 12 pt  →  16 px   заголовки осей, заголовок среза
+       large title            14 pt  →  18,7 px  ЗАГОЛОВОК ВИЗУАЛА
+     header   Segoe UI Semibold 12 pt → 16 px
+     label    Segoe UI #252423 10 pt → 13,3 px  шапки и значения таблиц, сетка
+       bold label   Segoe UI Bold          ИТОГИ таблиц и матриц
+       small label            9 pt  →  12 px
+       light label  #605E5C               легенда, метки оси категорий, элементы среза
+       small light  #605E5C  9 pt → 12 px  метки данных, метки оси значений
+
+   Два расхождения с нашим сводом названы прямо, а не спрятаны:
+   1. Д7.5 требует числа моноширинным. Power BI набирает их Segoe UI.
+      Взяли Segoe UI, выравнивание держим через font-variant-numeric: tabular-nums.
+   2. Свод держит четыре кегля 30/18/12/10. У Power BI их больше и они другие.
+      Взяли шкалу Power BI: калька важнее нашей внутренней экономии кеглей.
+
+   Два места, где документация молчит и выбор сделан нами, — помечены ниже
+   словом ВЫБОР. Всё остальное взято из документации дословно.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.dmock {
+  /* Шрифты. DIN на macOS отдаёт DIN Alternate, на Windows подхватится настоящий DIN,
+     дальше Segoe UI. Segoe UI живёт на Windows; на macOS падаем в системный. */
+  --jm-font-sans: "Segoe UI", "Segoe UI Web (West European)", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --jm-font-mono: "Segoe UI", "Segoe UI Web (West European)", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --pbi-din: "DIN", "DIN Alternate", "Segoe UI", -apple-system, "Helvetica Neue", Arial, sans-serif;
+
+  /* Структурные цвета */
+  --jm-text:      #252423;
+  --jm-ink:       #252423;
+  --jm-muted:     #605E5C;
+  --d-faint:      #605E5C;
+  --jm-line:      #C8C6C4;
+  --jm-line-soft: #F3F2F1;
+  --jm-surface:   #FFFFFF;
+  --jm-bg:        #FFFFFF;
+  --pbi-tertiary: #B3B0AD;
+
+  /* Настроение. Ровно те два цвета, которые Power BI отдаёт по именам good и bad
+     при условном форматировании «значение поля», — то есть воспроизводится один в один. */
+  --d-bad:  #D64554;
+  --d-good: #1AAB40;
+
+  /* Акцент = первый цвет палитры данных. Занимает место фирменного зелёного:
+     на этом листе фирстиля нет намеренно, лист прикидывается Power BI. */
+  --jm-green:       #118DFF;
+  --jm-green-press: #118DFF;
+  --jm-green-deep:  #12239E;
+  --jm-green-tint:  #DEEFFF;  /* minimum градиента условного форматирования */
+  --jm-blue-tint:   #DEEFFF;
+  --jm-yellow-tint: #FDF6DE;
+  --jm-yellow-text: #D9B300;  /* neutral */
+
+  /* ВЫБОР 1: контур контейнера визуала. Microsoft его не публикует. Взят neutralLight
+     из Fluent — системы, на которой Power BI построен. */
+  --pbi-container: #E1DFDD;
+  /* ВЫБОР 2: заливка проблемной строки таблицы. В базовой теме её нет: в Power BI
+     это условное форматирование, цвет задаёт автор. Взят светлый оттенок bad. */
+  --pbi-row-bad: #FBEAEC;
 }
+
+/* Кегли Power BI. Перекрывают нашу шкалу там, где элемент соответствует визуалу
+   Power BI: заголовок визуала, выноска карточки, текст таблицы, метки осей. */
+.dmock .dpan { border-color: var(--pbi-container); }
+.dmock .dkey__v b { font-family: var(--pbi-din); font-size: 60px; font-weight: 400; letter-spacing: 0; }
+.dmock .dmval b { font-family: var(--pbi-din); font-size: 28px; font-weight: 400; letter-spacing: 0; }
+.dmock .dpan > h3 { font-family: var(--pbi-din); font-size: 16px; font-weight: 400; color: var(--jm-text); }
+.dmock .dpanel > h3 { font-family: var(--pbi-din); font-size: 18.7px; font-weight: 400; }
+.dmock .dtab { font-size: 13.3px; }
+.dmock .dtab thead th { font-size: 13.3px; font-weight: 400; color: var(--jm-muted); text-transform: none; letter-spacing: 0; }
+/* Итоги в Power BI — класс bold label, то есть Segoe UI Bold и основной цвет текста,
+   а не приглушённый. Они должны выделяться, иначе сумма теряется среди строк. */
+.dmock .dtab tfoot td { font-weight: 700; color: var(--jm-text); border-top-color: var(--jm-line); }
+.dmock .dtab tfoot .dtab__c1 { color: var(--jm-text); }
+.dmock .dtab tr.is-worst td { background: var(--pbi-row-bad); }
+.dmock .dchart b { font-size: 12px; color: var(--jm-muted); }
+.dmock .dd { font-size: 12px; font-weight: 600; }
+.dmock .dkey__v .dd { font-size: 13.3px; }
+/* Заголовок плитки держит две строки всегда. Иначе «Аренда» в одну строку поднимает
+   своё число выше, чем «ФОТ административный» в две, и ряд перестаёт сравниваться
+   по позиции — а сравнение по позиции и есть весь смысл одинаковых плиток (Д4.1).
+   В Power BI то же самое решается одинаковой высотой контейнеров. */
+.dmock .dgrid .dpan > h3 { min-height: 3.2em; }
 /* ── Кегли ──────────────────────────────────────────────────────────────────
    Четыре размера на весь дашборд, больше не бывает. Кеглей было шестнадцать:
    8,5 / 9 / 9,5 / 10 / 10,5 / 11 / 11,5 / 12 / 12,5 / 14 / 14,5 / 17 / 18 / 19 / 24 / 32.
@@ -131,10 +236,6 @@
 .dsheet__head h2 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
 .dsheet__meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
 .dsheet__headr { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
-.dsheet__demo {
-  font-size: 12px; color: var(--jm-muted); background: var(--jm-bg);
-  border: 1px solid var(--jm-line); border-radius: 7px; padding: 4px 8px; max-width: 180px; line-height: 1.25;
-}
 .dsheet__x { background: none; border: 0; font-size: 18px; line-height: 1; color: var(--d-faint); cursor: pointer; }
 .dsheet__x:hover { color: var(--jm-text); }
 .dsheet__body { overflow: auto; padding: 14px 18px 20px; }
@@ -165,12 +266,58 @@
   border-radius: 14px; padding: 11px 12px 12px;
 }
 .dmock__bar {
-  flex: 0 0 auto; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-  padding-bottom: 9px; border-bottom: 1px solid var(--jm-line-soft);
+  flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+  padding-bottom: 11px; border-bottom: 1px solid var(--jm-line-soft);
 }
-.dmock__barlab {
-  font-size: 10px; color: var(--d-faint); margin-right: 2px;
+/* Под раскрытым списком резервируется место, и он ничего не накрывает. В работающем
+   дашборде дропдаун ложится поверх холста — так и в DataLens, и в Power BI. Но здесь
+   статичный образец: накрытая им главная метрика читается не как открытый фильтр,
+   а как поломка вёрстки. Высота резерва считается из числа значений. */
+.dmock__bar.has-open { padding-bottom: calc(11px + var(--dsel-pop, 0px)); }
+
+/* Надпись «рекомендуемые фильтры» отдельной строкой, а не в ряду с контролами: у селектора
+   своя подпись сверху, и две подписи разной природы на одной высоте читаются как одна. */
+.dmock__sels { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; width: 100%; }
+
+/* ── Фильтр как контрол, а не как шильдик ───────────────────────────────────
+   Повторяет селектор DataLens и слайсер Power BI по устройству: подпись сверху,
+   поле снизу, календарь у даты, шеврон у списка. Пиксели у Яндекса не опубликованы
+   и меняются патчем, поэтому копируем не размеры, а строение: что из чего состоит
+   и что где стоит. Некликабельно — это образец листа, а не приложение.
+   ────────────────────────────────────────────────────────────────────────── */
+.dsel { position: relative; display: inline-flex; flex-direction: column; gap: 3px; pointer-events: none; }
+.dsel__lab { font-size: 10px; color: var(--d-faint); padding-left: 1px; }
+.dsel__box {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 26px;
+  font-size: 12px; color: var(--jm-ink); background: var(--jm-surface);
+  border: 1px solid var(--jm-line); border-radius: 6px; padding: 0 8px;
 }
+.dsel__val { white-space: nowrap; }
+.dsel__cal { width: 13px; height: 13px; color: var(--d-faint); flex: 0 0 auto; }
+.dsel__chev { width: 9px; height: 6px; color: var(--d-faint); flex: 0 0 auto; margin-left: 2px; }
+.dsel.is-first .dsel__box { border-color: #BFE6DA; background: var(--jm-green-tint); color: var(--jm-green-deep); }
+.dsel.is-first .dsel__cal { color: var(--jm-green-press); }
+
+/* Раскрытый список — ровно у одного фильтра: ось видно по имени, а из чего она
+   состоит, видно только так, и именно это человек сверяет со своим учётом.
+   Чекбоксы, а не радиокнопки: и в DataLens, и в Power BI список измерения множественный. */
+.dsel__pop {
+  position: absolute; top: 100%; left: 0; z-index: 3; margin-top: 4px;
+  display: flex; flex-direction: column; min-width: 100%;
+  background: var(--jm-surface); border: 1px solid var(--jm-line);
+  border-radius: 6px; padding: 4px; box-shadow: 0 6px 18px rgba(16, 24, 32, .10);
+}
+.dsel__opt {
+  display: flex; align-items: center; gap: 7px; white-space: nowrap;
+  font-size: 12px; color: var(--jm-ink); padding: 4px 7px; border-radius: 4px;
+}
+.dsel__box2 {
+  width: 12px; height: 12px; flex: 0 0 auto;
+  border: 1px solid var(--jm-line); border-radius: 3px; background: var(--jm-bg);
+}
+/* .dmock__barlab снят 25.08 (Дмитрий): подпись «рекомендуемые фильтры» дублировала
+   то, что и так видно по устройству контролов, и добавляла третий уровень подписей
+   над двумя имеющимися. Класс удалён вместе с разметкой. */
 
 /* Панель — единственный кирпич листа: и метрика, и таблица, и столбики */
 .dpan {
@@ -188,12 +335,33 @@
 }
 .dpan > h3 .dtile__i { margin-left: auto; align-self: center; }
 
+/* ── Плитка метрики = два визуала ──────────────────────────────────────────
+   Карточка со значением и линейный график — отдельные контейнеры со своими
+   рамками. Внутри пары зазор 4px, между плитками 8px: пара читается как одна
+   метрика, но собирать её человеку придётся двумя виджетами, и это видно. */
+.dtile { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.dtile > .dpan { flex: 0 0 auto; }
+/* У графика заголовка нет: в Power BI заголовок визуала выключается штатно,
+   а имя метрики уже стоит на карточке сверху. Второй раз оно только шумит. */
+.dpan--chart { padding: 9px 9px 7px; justify-content: center; }
+
+/* Вершина: карточка слева, график справа. */
+.dtile--key { flex-direction: row; align-items: stretch; }
+.dtile--key > .dpan--card { flex: 0 0 250px; }
+.dtile--key > .dpan--chart { flex: 1 1 auto; min-width: 0; }
+
 .drow { display: flex; gap: 8px; }
 .drow > * { flex: 1 1 0; min-width: 0; }
 .drow > .dpan--grow { flex: 1.25 1 0; }
-.dgrid { display: grid; gap: 8px; }
+/* Зазор по вертикали больше, чем внутри плитки (12 против 4): иначе график первой
+   строки и карточка второй стоят на одинаковом расстоянии, и пара распадается. */
+.dgrid { display: grid; gap: 12px 8px; }
+.dgrid--2 { grid-template-columns: repeat(2, 1fr); }
 .dgrid--3 { grid-template-columns: repeat(3, 1fr); }
 .dgrid--4 { grid-template-columns: repeat(4, 1fr); }
+.dgrid--5 { grid-template-columns: repeat(5, 1fr); }
+.dgrid--6 { grid-template-columns: repeat(6, 1fr); }
+.dgrid--7 { grid-template-columns: repeat(7, 1fr); }
 
 .dchart { margin-top: 3px; }
 .dsvg { display: block; width: 100%; height: auto; }
@@ -207,9 +375,9 @@
 .dd.is-good { color: var(--d-good); }
 .dd.is-flat { color: var(--d-faint); }
 
-/* Вершина: число слева, динамика справа. Ключевая помечена словом, а не цветом */
-.dkey { display: flex; align-items: center; gap: 16px; }
-.dkey__v { flex: 0 0 150px; }
+/* Вершина: число слева, динамика справа. Ключевая помечена словом, а не цветом.
+   Обёртки .dkey и .dkey__c больше нет: строку из двух колонок держит .dtile--key,
+   потому что число и график теперь разные визуалы, а не части одного. */
 .dkey__tag {
   display: block; font-family: var(--jm-font-mono); font-size: 10px;
   letter-spacing: .06em; text-transform: uppercase; color: var(--d-faint);
@@ -219,7 +387,6 @@
   line-height: 1.05; font-variant-numeric: tabular-nums;
 }
 .dkey__v .dd { font-size: 12px; }
-.dkey__c { flex: 1 1 auto; min-width: 0; }
 
 /* Разрез по типу обращения: числа выровнены под своими заголовками */
 .dtab { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; margin-top: 2px; }
@@ -246,10 +413,13 @@
 .dtab--cut td { padding: 3px 6px; }
 .dtab--cut .dtab__lbl { font-size: 12px; line-height: 1.2; }
 .dtab__v { font-weight: 600; }
-.dtab__d { display: inline-block; margin-left: 5px; font-size: 10px; font-weight: 600; }
-.dtab__d.is-bad { color: var(--d-bad); }
-.dtab__d.is-good { color: var(--d-good); }
-.dtab__d.is-flat { color: var(--d-faint); }
+/* Столбец изменения. Узкий и без своего отступа слева: он читается в паре
+   с числом слева от себя, а не сам по себе. Цвет ставится условным
+   форматированием по именам темы good и bad — так же, как в Power BI. */
+.dtab__dc { font-weight: 400; padding-left: 0 !important; }
+.dtab__dc.is-bad { color: var(--d-bad); }
+.dtab__dc.is-good { color: var(--d-good); }
+.dtab__dc.is-flat { color: var(--d-faint); }
 .dtab__base { color: var(--d-faint); font-size: 10px; }
 
 /* Переключатель метрики для разрезов */
@@ -316,23 +486,122 @@
 /* Ширины первой колонки и колонки тренда заданы явно: при table-layout: fixed ширину
    задаёт только шапка, и без этого спарклайн в 60px вылезал за правый край таблицы. */
 .dtab--cut .dtab__c1 { width: 23%; }
+.dtab--cut .dtab__dc { width: 8%; }
 
 /* График: подписи осей — HTML в css-полях вокруг svg, а не текст внутри него.
    Внутри svg с viewBox текст тянется вместе с картинкой: один и тот же кегль
    рисуется по-разному в блоках разной ширины (R6.5). Поле под подписи задано
    в пикселях: в процентах от ширины оно схлопывалось в узкой плитке, и «6 300»
    вылезало за край карточки. Штрихи не тянутся тоже — держит vector-effect. */
-.dchart { position: relative; padding: 0 0 13px 34px; }
+.dchart { position: relative; padding: 0 0 13px var(--dchart-pad, 34px); }
 .dchart__box { position: relative; width: 100%; }
 .dchart b {
   position: absolute; font-weight: 400; font-size: 10px; line-height: 1;
   color: var(--d-faint); pointer-events: none; white-space: nowrap;
 }
 .dchart__y { right: 100%; margin-right: 5px; transform: translateY(-50%); }
-.dchart__x { left: 34px; bottom: 0; }
+.dchart__x { left: var(--dchart-pad, 34px); bottom: 0; }
 .dchart__r { right: 2px; transform: translateY(-140%); }
 
 /* Проблемная строка помечена не только подложкой: в оттенках серого и при
    дальтонизме розовая заливка почти исчезает, а линейка у края — нет.
    Правило «статус дублируется не только цветом» из R6.4. */
-.dtab--cut tr.is-worst .dtab__c1 { box-shadow: inset 2px 0 0 var(--d-bad); }
+/* Полоски-акцента слева у худшей строки больше нет. Ни в DataLens, ни в Power BI такой
+   штрих штатным блоком не собирается, а лист обязан повторяться у человека один в один.
+   Роль подсветки целиком берёт на себя заливка строки (.dtab tr.is-worst td) — она есть
+   в обоих продуктах: DataLens через цвет строки с пороговыми значениями, Power BI через
+   условное форматирование фона. Снято 24.08 (Дмитрий): воспроизводимость важнее акцента. */
+
+/* Итоговая строка разреза. Отделена линией сверху и набрана тем же весом, что значения:
+   это не вывод, а сумма, и выделять её сильнее строк нельзя — иначе читается как ответ. */
+.dtab tfoot td { border-top: 1px solid var(--d-line, #E4E7E9); padding-top: 10px; color: var(--d-faint); }
+.dtab tfoot .dtab__c1 { color: var(--d-faint); }
+
+/* ── «Собрать у себя»: блок под белой карточкой листа ─────────────────────── */
+/* Кнопки живут вне .dmock — это не часть дашборда, а предложение забрать его. */
+.dtake { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 14px; }
+
+.dbtn {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--jm-font-sans); font-size: 12px; font-weight: 600;
+  color: #fff; background: var(--jm-green-press); border: 1px solid var(--jm-green-press);
+  border-radius: 10px; padding: 9px 14px; cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.dbtn:hover, .dpop.open .dbtn { background: var(--jm-green-deep); border-color: var(--jm-green-deep); }
+.dbtn:focus-visible { outline: 2px solid var(--jm-green-deep); outline-offset: 2px; }
+.dbtn .chev { transition: transform .2s; transform: rotate(180deg); }
+.dpop.open .dbtn .chev, .dpop:hover .dbtn .chev { transform: none; }
+
+/* Вторая кнопка неактивна, но граница должна читаться — иначе кнопки не видно. */
+.dbtn--soon { color: var(--jm-text); background: var(--jm-surface); border: 1px solid #CBD3DA; cursor: default; }
+.dbtn--soon:hover { background: var(--jm-surface); border-color: #CBD3DA; }
+.dbtn--soon svg { color: var(--d-faint); }
+.dtag {
+  font-family: var(--jm-font-mono); font-size: 10px; font-weight: 500;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--d-faint);
+  border: 1px solid #CBD3DA; border-radius: 999px; padding: 1px 6px; background: var(--jm-bg);
+}
+
+/* Поповер раскрывается НАД кнопкой. Раньше он ложился под неё, и под лист приходилось
+   резервировать 150px пустоты, чтобы карточке было куда лечь: обрезку у .dsheet снять
+   нельзя, панель скроллится. Кнопка стоит в самом низу листа, места над ней всегда больше,
+   чем под ним, — поэтому вверх. Пустой подвал ушёл вместе с резервом. */
+.dpop { position: relative; }
+.dpop__card {
+  position: absolute; left: 0; bottom: calc(100% + 6px); min-width: 340px;
+  background: var(--jm-surface); border: 1px solid var(--jm-line); border-radius: 12px;
+  box-shadow: 0 18px 40px -18px rgba(8, 11, 13, .4); padding: 5px;
+  opacity: 0; transform: translateY(6px); pointer-events: none;
+  transition: opacity .18s, transform .18s; z-index: 9;
+}
+.dpop:hover .dpop__card, .dpop:focus-within .dpop__card, .dpop.open .dpop__card {
+  opacity: 1; transform: none; pointer-events: auto;
+}
+.dopt {
+  display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: left;
+  background: transparent; border: 0; border-radius: 8px; padding: 9px 10px; cursor: pointer;
+  font-family: var(--jm-font-sans); transition: background .14s;
+}
+.dopt:hover { background: var(--jm-green-tint); }
+.dopt:focus-visible { outline: 2px solid var(--jm-green-press); outline-offset: -2px; }
+.dopt svg { flex: 0 0 auto; margin-top: 1px; color: var(--jm-green-press); }
+.dopt b { display: block; font-size: 12px; font-weight: 600; color: var(--jm-text); margin-bottom: 1px; }
+.dopt b em { font-style: normal; font-family: var(--jm-font-mono); font-size: 10px; color: var(--d-faint); margin-left: 6px; font-weight: 500; }
+.dopt span span { display: block; font-size: 10px; line-height: 1.4; color: var(--jm-muted); }
+
+/* Пометка про условные цифры — в самом низу, мелким. Резерв под поповер больше не нужен:
+   карточка раскрывается вверх. */
+.dsheet__tpl {
+  font-size: 10px; color: var(--d-faint); letter-spacing: .04em;
+  border: 1px solid var(--jm-line); border-radius: 20px; padding: 3px 9px; white-space: nowrap;
+}
+
+.dnote { margin: 16px 0 0; font-size: 10px; line-height: 1.4; color: var(--d-faint); }
+
+/* ── Группы блоков первого экрана ─────────────────────────────────────────── */
+/* Причины и второй уровень раньше шли просто двумя сетками через отступ 8px.
+   Пока причин было не больше четырёх, ряд читался сам. При пяти и больше ряд
+   приходится переносить, и без границы вторая строка причин неотличима от
+   второго уровня — ровно та путаница, ради которой Д4.4 перенос и запрещало.
+   Группа с подписью её снимает. Приём тот же, что Д4.5 разрешает противовесу. */
+.dgroup { position: relative; }
+.dgroup + .dgroup { margin-top: 12px; }
+.dgroup__lab {
+  display: block; margin: 0 0 4px 2px;
+  font-family: var(--jm-font-mono); font-size: 10px; font-weight: 500;
+  letter-spacing: .07em; text-transform: uppercase; color: var(--d-faint);
+}
+/* Обводка появляется только там, где ряд перенесён: одну строку и так видно. */
+.dgroup--wrap {
+  border: 1px solid var(--jm-line-soft); border-radius: 12px;
+  padding: 8px; background: var(--jm-bg);
+}
+.dgroup--wrap .dgroup__lab { margin: 0 0 6px 1px; }
+.dgroup--wrap .dpan { background: var(--jm-surface); }
+.dgroup .dgrid + .dgrid { margin-top: 12px; }
+
+/* Дельта под числом, а не рядом: на узкой плитке единица уезжала на вторую
+   строку и «13,9 / млн ₽» читалось как два разных числа. */
+.dmval--stack { flex-wrap: wrap; align-items: baseline; gap: 2px 7px; }
+.dmval--stack b { flex: 1 1 100%; }
