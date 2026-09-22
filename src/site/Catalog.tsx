@@ -83,8 +83,12 @@ export function Catalog({ onOpen, onOpenTree }: {
   const freeMaps: Sec[] = !PAID && showMaps
     ? BASE.sections.filter((s) => s.name && isSectionFree(s.name))
     : []
-  // Деревья открыты всем, поэтому стоят в той же витрине, что и бесплатные карты.
-  const freeTrees = !PAID && showTrees ? allFamilies().flatMap((f) => treesOfFamily(f)) : []
+  // Деревья бывают и платными: разбор платной карты платный, как сама карта
+  // («Выручка в ритейле» — по карте «Ритейл»). В витрину идут только бесплатные,
+  // остальные лежат в своих группах под замком, как закрытые карты.
+  const freeTrees = !PAID && showTrees
+    ? allFamilies().flatMap((f) => treesOfFamily(f)).filter((t) => isSectionFree(t.name))
+    : []
   const freeTitle = [
     freeMaps.length ? `${plural(freeMaps.length, 'карта', 'карты', 'карт')}` : '',
     freeTrees.length ? `${plural(freeTrees.length, 'дерево', 'дерева', 'деревьев')}` : '',
@@ -110,7 +114,7 @@ export function Catalog({ onOpen, onOpenTree }: {
   // Одна карточка каталога. showIndex — моно-индекс в углу (только оплатившим).
   const card = (s: Sec, kind: 'map' | 'tree' = 'map') => {
     const tree = kind === 'tree'
-    const free = tree || isSectionFree(s.name)
+    const free = isSectionFree(s.name)   // и у дерева доступ свой, не «раз дерево — значит открыто»
     const locked = !PAID && !free
     const cls = 'mcard' +
       (!PAID && free ? ' mcard--free' : '') +
