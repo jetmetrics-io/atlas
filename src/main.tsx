@@ -23,7 +23,10 @@ const loadData = (name: string): Promise<AtlasBase> =>
 async function boot() {
   // 1. Кто залогинен → 2. оплатил ли. Одна сборка, гейт — по факту оплаты.
   const email = await resolveEmail()
-  const paid = await isPaid(email)
+  // ?paid=1 — локальная отмычка для разработки: позволяет открыть платные карты
+  // на dev-сервере, не заводя email в paid.json. Работает только на localhost.
+  const devPaid = location.hostname === 'localhost' && new URLSearchParams(location.search).get('paid') === '1'
+  const paid = devPaid || (await isPaid(email))
   // 3. Данные: полная база только оплатившим; остальным — три бесплатные карты.
   //    full-данные грузим лишь при оплате — бесплатнику закрытые карты физически не приходят.
   const base = await loadData(paid ? 'atlas_full' : 'atlas_free')

@@ -54,7 +54,12 @@ export function onContentReady(fn: () => void): () => void {
  */
 export function loadContent(paid: boolean, base = ''): Promise<void> {
   const file = paid ? 'content_full.json' : 'content_free.json'
-  return fetch(`${base}data/${file}`)
+  // На dev-сервере файл пересобирается скриптом импорта дерева, и браузер отдавал
+  // из кэша старые тексты карточек — данные (atlas_*.json) грузятся с no-store,
+  // а контент грузился без него, и карточка расходилась с данными. В бою кэш нужен:
+  // файл 3.5 МБ и меняется только с деплоем.
+  const fresh = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+  return fetch(`${base}data/${file}`, fresh ? { cache: 'no-store' } : undefined)
     .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
     .then((json: ContentMap) => { CONTENT = json })
     .catch(() => { CONTENT = {} })   // без контента карточка показывает поля из базы
