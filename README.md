@@ -1,16 +1,30 @@
 # Атлас метрик — интерактивная карта показателей
 
-Интерактивный атлас метрик JetMetrics: 28 карт по направлениям, 745 показателей.
-Для каждой метрики — роль, формула, единицы; связи показывают, что на что влияет
-(прямо/обратно, влияние/ассоциация), с объяснением простым языком.
+Интерактивный атлас метрик JetMetrics: 28 карт по направлениям,
+10 деревьев драйверов, 874 показателя. Для каждой метрики — роль,
+формула, единицы; связи показывают, что на что влияет (прямо/обратно, влияние/ассоциация),
+с объяснением простым языком.
+
+📘 **Работа с данными и деплой — [DEPLOY.md](DEPLOY.md).** Правила для агента — [CLAUDE.md](CLAUDE.md).
 
 Боевой хостинг — бакет Яндекса (152-ФЗ): `jetmetrics-static.storage.yandexcloud.net/atlas/index.html`,
 встраивается в джетметрикс.рф через iframe. GitHub Pages (`jetmetrics-io.github.io/atlas/`) остаётся
 как площадка сборки/превью.
 
-## Стек
-Vite + React + @xyflow/react (React Flow). Исходные данные — `src/atlas/atlas_base.json`
-(выгрузка ручного RU-атласа из Miro; см. основной воркспейс Map Library 2.0).
+## Стек и данные
+Vite + React + @xyflow/react (React Flow).
+
+**Источник данных — База,** она же источник правды: дамп `db/atlas.sql` лежит в репозитории,
+рабочая `db/atlas.db` собирается из него (`npm run db`), выгрузка приложения —
+из Базы (`npm run gen`, скрипт `scripts/build_app.py`).
+
+```
+db/atlas.sql ──npm run db──> db/atlas.db ──npm run gen──> public/data/*.json ──> dist/
+```
+
+⛔ `public/data/*.json` руками не правятся: они пересобираются из Базы и правку затрут.
+Старый `src/atlas/atlas_base.json` (ручная выгрузка из Miro) и `scripts/gen-data.mjs` —
+легаси, приложение их не читает с переезда на Базу 26.08.2026.
 
 ## Гейт полной версии (важно)
 
@@ -33,10 +47,14 @@ Vite + React + @xyflow/react (React Flow). Исходные данные — `sr
 
 ## Локально
 ```bash
-npm install
-npm run dev      # http://localhost:5180 (npm run gen + vite)
-npm run build    # gen данных + tsc + прод-бандл в dist/ (данные в dist/data/)
+npm ci
+npm run db       # db/atlas.sql → db/atlas.db
+npm run dev      # npm run gen + vite
+npm run build    # выгрузка + tsc + прод-бандл в dist/ (данные в dist/data/)
+npm run pull     # что сейчас в бою и чем отличается от локального
 ```
+
+Вид оплатившего — `?paid=1` (работает только на localhost). Дашборды — `?dash=1`.
 
 ## Деплой
 
@@ -69,9 +87,15 @@ npm run build    # gen данных + tsc + прод-бандл в dist/ (дан
 **A. Локально (быстрее всего):**
 ```bash
 cp .deploy.env.example .deploy.env   # подставить ключи static-deploy (см. ниже)
-npm run deploy                        # = python3 scripts/deploy_storage.py: build + заливка в atlas/
-python3 scripts/deploy_storage.py --dry-run   # посмотреть, что зальётся, без заливки
+npm run pull                         # сперва посмотреть, что сейчас в бою
+npm run deploy                       # проверка выгрузки + слепок для отката + сборка + заливка
+npm run deploy -- --dry-run          # посмотреть, что зальётся, ничего не трогая
+npm run deploy -- --rollback .rollback   # вернуть прежний бой
 ```
+
+Перед каждой выкладкой скрипт проверяет выгрузку (`scripts/check_dump.py`), снимает
+слепок боя в `.rollback/` и показывает, что изменится. Если из боя пропадают метрики
+или артефакты — останавливается и просит подтверждения. Подробнее — `DEPLOY.md`.
 
 **B. Через CI (push в `main`):** `.github/workflows/deploy.yml` собирает одну версию,
 публикует в Pages и — **если в репо заданы секреты `YC_KEY_ID` / `YC_SECRET`** — заливает
