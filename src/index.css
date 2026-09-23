@@ -440,6 +440,29 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 .panel__copy:hover::after, .panel__copy.is-done::after { opacity: 1; }
 .panel__copy.is-done::after { background: var(--jm-green); }
 
+/* ── Подвал карточки: досье метрики в буфер ──
+   Кнопка нужна на любой вкладке и не должна уезжать с прокруткой тела, поэтому
+   стоит под ним, а не в нём. margin-top:auto прижимает подвал к низу панели,
+   когда содержимое короткое: .panel__body не растягивается сам. */
+.panel__foot { flex: none; margin-top: auto; padding: 10px var(--jm-space-6) 12px;
+  border-top: 1px solid var(--jm-line); background: var(--jm-surface); }
+/* Голос вторичный: копирование — подручное действие, а не то, ради чего открыли
+   карточку. Зелёным кнопка становится только под курсором и в момент успеха. */
+.panel__dossier { display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 9px 12px; cursor: pointer;
+  border: 1px solid var(--jm-line); border-radius: var(--jm-r-sm);
+  background: var(--jm-surface); color: var(--jm-text);
+  font-family: var(--jm-font-sans); font-size: var(--jm-body-s);
+  font-weight: var(--jm-w-medium);
+  transition: background var(--jm-dur) var(--jm-ease),
+              border-color var(--jm-dur) var(--jm-ease),
+              color var(--jm-dur) var(--jm-ease); }
+.panel__dossier svg { width: 14px; height: 14px; flex: none; color: var(--jm-faint);
+  transition: color var(--jm-dur) var(--jm-ease); }
+.panel__dossier:hover, .panel__dossier.is-done { border-color: var(--jm-green);
+  background: var(--jm-green-tint); color: var(--jm-green-press); }
+.panel__dossier:hover svg, .panel__dossier.is-done svg { color: var(--jm-green-press); }
+
 /* ── Нюансы списком: каждый пункт — отдельное правило ── */
 .panel__bullets { margin: 0; padding: 0; list-style: none; color: var(--jm-text); font-size: var(--jm-body-s); }
 .panel__bullets li { position: relative; padding-left: 15px; margin-bottom: 8px; }

@@ -21,7 +21,7 @@ const SCHEMA = 1
 /** Включает лог событий в консоль: ?jmdebug=1 в адресе. Для проверки без Метрики. */
 const DEBUG = typeof window !== 'undefined' && /[?&]jmdebug=1/.test(window.location.search)
 
-export type MetricAction = 'metric_open' | 'metric_view'
+export type MetricAction = 'metric_open' | 'metric_view' | 'metric_copy'
 
 export interface MetricEvent {
   type: 'jm-atlas-event'
@@ -85,9 +85,13 @@ export function trackMetric(
   //
   // Подчёркивание в `_open` — чтобы отрезок никогда не столкнулся с ключом будущей
   // вкладки: ключи вкладок подчёркиванием не начинаются.
-  const isOpen = action === 'metric_open'
-  const slot = isOpen ? '_open' : tabKey
-  const slotLabel = isOpen ? 'Открытие' : tabLabel
+  // Действия, у которых свой отрезок адреса: они происходят не на вкладке, и по
+  // вкладке их считать нельзя. Остальное отчитывается той вкладкой, где случилось.
+  const SLOT: Partial<Record<MetricAction, [string, string]>> = {
+    metric_open: ['_open', 'Открытие'],
+    metric_copy: ['_copy', 'Копирование досье'],
+  }
+  const [slot, slotLabel] = SLOT[action] ?? [tabKey, tabLabel]
 
   const ev: MetricEvent = {
     type: 'jm-atlas-event',

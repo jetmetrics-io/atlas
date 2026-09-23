@@ -4,6 +4,7 @@ import type { AtlasNode } from '../atlas/types'
 import { roleStyle } from '../atlas/style'
 import { treeOfMetric, BASE } from '../atlas/atlas'
 import { metricContent, contentReady, onContentReady } from '../atlas/content'
+import { metricDossier } from '../atlas/dossier'
 import { metricUrl, openTree } from '../site/nav'
 
 export type LinkTarget = { name: string; id: string }
@@ -169,6 +170,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
   // или добавление вкладки не требует правок здесь.
   const [tab, setTab] = useState<Tab>(TABS[0].key)
   const [copied, setCopied] = useState(false)
+  const [tookDossier, setTookDossier] = useState(false)
   // Контент грузится отдельным файлом уже после карты: как только пришёл — перерисуемся.
   const [, force] = useState(0)
   useEffect(() => onContentReady(() => force((n) => n + 1)), [])
@@ -181,6 +183,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
   useEffect(() => {
     setTab(TABS[0].key)
     setCopied(false)
+    setTookDossier(false)
     if (tracked.current !== node.id) {
       tracked.current = node.id
       // Два события: сам факт открытия и показ первой вкладки — она показывается
@@ -228,6 +231,21 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
       : `${window.location.origin}${url}`).catch(() => {})
     setCopied(true)
     window.setTimeout(() => setCopied(false), 1800)
+  }
+
+  // Досье метрики текстом: всё, что показывает карточка, плюс связи — их на карте
+  // видно стрелками, а в карточке нет. Кнопка стоит в подвале панели: она нужна
+  // на любой вкладке, а прокрутка тела не должна её уносить.
+  // Успех показывается по факту записи, а не заранее: соврать «скопировано» там,
+  // где браузер не дал буфер, хуже, чем не сработать вовсе — человек вставит старое.
+  const copyDossier = () => {
+    navigator.clipboard?.writeText(metricDossier(node))
+      .then(() => {
+        setTookDossier(true)
+        trackMetric('metric_copy', node, tab, TABS.find((t) => t.key === tab)?.label ?? '')
+        window.setTimeout(() => setTookDossier(false), 1800)
+      })
+      .catch(() => {})
   }
 
   return (
@@ -407,6 +425,19 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
             )}
           </>
         )}
+      </div>
+
+      <div className="panel__foot">
+        <button
+          className={`panel__dossier${tookDossier ? ' is-done' : ''}`}
+          onClick={copyDossier}
+        >
+          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <rect x="5.5" y="5.5" width="8" height="9" rx="1.6" stroke="currentColor" strokeWidth="1.4" />
+            <path d="M10.5 3.5h-6A1.5 1.5 0 0 0 3 5v7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+          {tookDossier ? 'Досье в буфере' : 'Скопировать досье о метрике'}
+        </button>
       </div>
     </aside>
   )
