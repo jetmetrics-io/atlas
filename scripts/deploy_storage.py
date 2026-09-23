@@ -229,6 +229,30 @@ def guard_prefix():
                  f"и список покупателей. Деплой остановлен.")
 
 
+def lending(dry: bool):
+    """Подтянуть числа на лендинге Атласа — он показывает ту же Базу, что и приложение.
+
+    Лендинг (джетметрикс.рф/atlas) лежит ВНЕ этого репозитория, в `Map Library 2.0/landing/`,
+    и заливается отдельным ключом бакета. Стат-строка героя и счётчики карт на нём
+    считаются из public/data/atlas_full.json — той самой выгрузки, которую мы только что
+    выложили. Пока их правили руками, лендинг отстал от Базы на два месяца: обещал
+    745 метрик при 874 и 28 метрик на карте «Финансы» при 39.
+
+    Зовём с --only-numbers: лендинг обновится, только если от боя отличается числами,
+    и не увезёт туда чью-то незаконченную правку вёрстки. Нет папки рядом (у кого-то
+    другая раскладка воркспейса) — молча пропускаем, Атлас это не ломает.
+    """
+    skript = APP.parent / "landing" / "deploy_landing.py"
+    if not skript.exists():
+        print("\n— Лендинга рядом нет (он вне репозитория), числа на нём не трогаю.")
+        return
+    print("\n=== Лендинг: числа из этой же выгрузки ===", flush=True)
+    args = [sys.executable, str(skript), "--only-numbers"] + (["--dry-run"] if dry else [])
+    if subprocess.run(args, cwd=skript.parent).returncode != 0:
+        print("  ⚠ Лендинг не обновился. Атлас в бою, лендинг залей руками:")
+        print("     cd ../landing && python3 deploy_landing.py")
+
+
 def main():
     load_env()
     guard_prefix()
@@ -262,6 +286,7 @@ def main():
         print(f"   откат, если что: python3 scripts/deploy_storage.py --rollback {ROLLBACK.name}")
         print("\nГотово. В Тильде iframe адресует ...index.html (не «папку»). "
               "После правок — Publish и проверка с ?v=<timestamp> (кэш агрессивный).")
+    lending(dry)
 
 if __name__ == "__main__":
     main()
