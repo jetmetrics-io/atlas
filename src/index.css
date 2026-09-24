@@ -463,6 +463,15 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
   background: var(--jm-green-tint); color: var(--jm-green-press); }
 .panel__dossier:hover svg, .panel__dossier.is-done svg { color: var(--jm-green-press); }
 
+/* Буфер не дали — кнопка говорит об этом словами, а не молчит. Цвет коралловый:
+   тот же, которым на картах помечено «не в плюс». Случается во встройке, где
+   родитель не открыл фрейму доступ к буферу (см. src/site/clipboard.ts). */
+.panel__copy.is-fail { color: var(--jm-coral-text); background: var(--jm-coral-tint); }
+.panel__copy.is-fail::after { background: var(--jm-coral-text); opacity: 1; }
+.panel__dossier.is-fail { border-color: var(--jm-coral); background: var(--jm-coral-tint);
+  color: var(--jm-coral-text); }
+.panel__dossier.is-fail svg { color: var(--jm-coral-text); }
+
 /* ── Нюансы списком: каждый пункт — отдельное правило ── */
 .panel__bullets { margin: 0; padding: 0; list-style: none; color: var(--jm-text); font-size: var(--jm-body-s); }
 .panel__bullets li { position: relative; padding-left: 15px; margin-bottom: 8px; }

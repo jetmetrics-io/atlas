@@ -6,6 +6,7 @@ import { treeOfMetric, BASE } from '../atlas/atlas'
 import { metricContent, contentReady, onContentReady } from '../atlas/content'
 import { metricDossier } from '../atlas/dossier'
 import { metricUrl, openTree } from '../site/nav'
+import { copyText } from '../site/clipboard'
 
 export type LinkTarget = { name: string; id: string }
 
@@ -112,6 +113,8 @@ function bold(text: string, targets: LinkTarget[], onNav: (id: string) => void):
   return out
 }
 
+type CopyState = '' | 'ok' | 'fail'
+
 type Tab = 'essence' | 'calc' | 'why' | 'dims'
 // «Анализ» — разрезы метрики; дальше сюда же лягут вопросы к ней.
 const TABS: { key: Tab; label: string }[] = [
@@ -169,8 +172,11 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
   // Вкладка по умолчанию — первая в TABS, а не 'essence' строкой: тогда перестановка
   // или добавление вкладки не требует правок здесь.
   const [tab, setTab] = useState<Tab>(TABS[0].key)
-  const [copied, setCopied] = useState(false)
-  const [tookDossier, setTookDossier] = useState(false)
+  // Итог копирования: пусто — покоя, 'ok' — записали, 'fail' — браузер не дал буфер.
+  // Отказ показывается словами, а не молчанием: кнопка, которая молча ничего
+  // не делает, читается как сломанная, и человек жмёт её снова и снова.
+  const [copied, setCopied] = useState<CopyState>('')
+  const [tookDossier, setTookDossier] = useState<CopyState>('')
   // Контент грузится отдельным файлом уже после карты: как только пришёл — перерисуемся.
   const [, force] = useState(0)
   useEffect(() => onContentReady(() => force((n) => n + 1)), [])
@@ -182,8 +188,8 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
   const tracked = useRef<string | null>(null)
   useEffect(() => {
     setTab(TABS[0].key)
-    setCopied(false)
-    setTookDossier(false)
+    setCopied('')
+    setTookDossier('')
     if (tracked.current !== node.id) {
       tracked.current = node.id
       // Два события: сам факт открытия и показ первой вкладки — она показывается
@@ -224,38 +230,34 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
 
   // Ссылка на метрику: страница Тильды её карты + ?node=. Внутри iframe адрес самого
   // приложения ведёт на бакет, поэтому собираем публичный адрес, а не берём location.
-  const copyLink = () => {
+  const copyLink = async () => {
     // У метрики дерева свой вид адреса: ?tree=, а не ?map= (site/nav.ts).
     const url = metricUrl(node.section, node.id)
-    navigator.clipboard?.writeText(url.startsWith('http') ? url
-      : `${window.location.origin}${url}`).catch(() => {})
-    setCopied(true)
-    window.setTimeout(() => setCopied(false), 1800)
+    const ok = await copyText(url.startsWith('http') ? url : `${window.location.origin}${url}`)
+    setCopied(ok ? 'ok' : 'fail')
+    window.setTimeout(() => setCopied(''), 1800)
   }
 
   // Досье метрики текстом: всё, что показывает карточка, плюс связи — их на карте
   // видно стрелками, а в карточке нет. Кнопка стоит в подвале панели: она нужна
   // на любой вкладке, а прокрутка тела не должна её уносить.
-  // Успех показывается по факту записи, а не заранее: соврать «скопировано» там,
-  // где браузер не дал буфер, хуже, чем не сработать вовсе — человек вставит старое.
-  const copyDossier = () => {
-    navigator.clipboard?.writeText(metricDossier(node))
-      .then(() => {
-        setTookDossier(true)
-        trackMetric('metric_copy', node, tab, TABS.find((t) => t.key === tab)?.label ?? '')
-        window.setTimeout(() => setTookDossier(false), 1800)
-      })
-      .catch(() => {})
+  const copyDossier = async () => {
+    const ok = await copyText(metricDossier(node))
+    setTookDossier(ok ? 'ok' : 'fail')
+    // Считаем только удавшееся копирование: отказ буфера — не действие читателя.
+    if (ok) trackMetric('metric_copy', node, tab, TABS.find((t) => t.key === tab)?.label ?? '')
+    window.setTimeout(() => setTookDossier(''), 1800)
   }
 
   return (
     <aside className="panel">
       <button className="panel__close" onClick={onClose} aria-label="Закрыть">×</button>
       <button
-        className={`panel__copy${copied ? ' is-done' : ''}`}
+        className={`panel__copy${copied === 'ok' ? ' is-done' : ''}${copied === 'fail' ? ' is-fail' : ''}`}
         onClick={copyLink}
         aria-label="Скопировать ссылку на метрику"
-        data-tip={copied ? 'Скопировано' : 'Ссылка на метрику'}
+        data-tip={copied === 'ok' ? 'Скопировано'
+          : copied === 'fail' ? 'Не удалось скопировать' : 'Ссылка на метрику'}
       >
         <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
           <path d="M6.5 9.5a3 3 0 0 0 4.24 0l2.12-2.12a3 3 0 0 0-4.24-4.24l-.7.7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -429,14 +431,16 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
 
       <div className="panel__foot">
         <button
-          className={`panel__dossier${tookDossier ? ' is-done' : ''}`}
+          className={`panel__dossier${tookDossier === 'ok' ? ' is-done' : ''}${tookDossier === 'fail' ? ' is-fail' : ''}`}
           onClick={copyDossier}
         >
           <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <rect x="5.5" y="5.5" width="8" height="9" rx="1.6" stroke="currentColor" strokeWidth="1.4" />
             <path d="M10.5 3.5h-6A1.5 1.5 0 0 0 3 5v7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
           </svg>
-          {tookDossier ? 'Досье в буфере' : 'Скопировать досье о метрике'}
+          {tookDossier === 'ok' ? 'Досье в буфере'
+            : tookDossier === 'fail' ? 'Не удалось скопировать'
+            : 'Скопировать досье о метрике'}
         </button>
       </div>
     </aside>
