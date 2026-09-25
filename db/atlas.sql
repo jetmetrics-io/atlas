@@ -47,6 +47,7 @@ INSERT INTO artifact VALUES(35,'tree','Управленческие расход
 INSERT INTO artifact VALUES(36,'tree','Коммерческие расходы','kommercheskie-rashody','free','идёт вычитка','Из чего складывается показатель «Коммерческие расходы»',22);
 INSERT INTO artifact VALUES(37,'tree','Себестоимость продаж','sebestoimost-prodazh','free','идёт вычитка','Из чего складывается показатель «Себестоимость продаж»',22);
 INSERT INTO artifact VALUES(38,'tree','Выручка с повторных клиентов','vyruchka-s-povtornyh','paid','собрано, не деплоено','Чем двигать выручку с повторных клиентов',20);
+INSERT INTO artifact VALUES(39,'tree','Пожизненная ценность клиента (LTV)','ltv','paid','собрано, не деплоено','Чем двигать пожизненную ценность клиента',20);
 CREATE TABLE metric_artifact (
   id          INTEGER PRIMARY KEY,
   metric_id   INTEGER NOT NULL REFERENCES metric(id)   ON DELETE CASCADE,
@@ -1012,6 +1013,42 @@ INSERT INTO metric_artifact VALUES(968,323,38,'vyruchka-s-povtornyh/zakazov_s_bo
 INSERT INTO metric_artifact VALUES(969,161,38,'vyruchka-s-povtornyh/srednee_kolichestvo_tovarov_v_zakaze',NULL,1300.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам');
 INSERT INTO metric_artifact VALUES(970,927,38,'vyruchka-s-povtornyh/srednee_kolichestvo_edinic_v_stroke_zakaza',NULL,1400.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам');
 INSERT INTO metric_artifact VALUES(971,159,38,'vyruchka-s-povtornyh/srednyaya_cena_tovara',NULL,1500.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам');
+INSERT INTO metric_artifact VALUES(972,518,39,'ltv/pozhiznennaya_cennost_klienta_ltv',NULL,0.0,NULL,NULL,NULL,1,'key',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(973,930,39,'ltv/marzhinalnaya_rentabelnost',NULL,100.0,NULL,NULL,'ОБЩЕЕ ДЛЯ ВСЕХ',0,'component',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(974,934,39,'ltv/sredniy_dohod_na_akkaunt_arpa',NULL,200.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ ПО ПОДПИСКЕ',0,'component',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(975,198,39,'ltv/sredniy_chek_aov',NULL,210.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ БЕЗ ПОДПИСКИ',0,'component',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(976,947,39,'ltv/zakazov_na_pokupatelya_v_mesyac_zhizni',NULL,300.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ БЕЗ ПОДПИСКИ',0,'component',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(977,625,39,'ltv/sredniy_srok_zhizni_klienta',NULL,400.0,NULL,NULL,'ОБЩЕЕ ДЛЯ ВСЕХ',0,'component',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(978,942,39,'ltv/dolya_sebestoimosti_v_vyruchke',NULL,1010.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ БЕЗ ПОДПИСКИ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(979,931,39,'ltv/zatraty_na_infrastrukturu_i_storonnie_servisy_na_akkaunt',NULL,1011.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ ПО ПОДПИСКЕ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(980,294,39,'ltv/stoimost_obrabotki_zakaza',NULL,1020.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ БЕЗ ПОДПИСКИ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(981,932,39,'ltv/zatraty_na_podderzhku_na_akkaunt',NULL,1021.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ ПО ПОДПИСКЕ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(982,943,39,'ltv/chistye_zatraty_na_dostavku_na_zakaz',NULL,1030.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ БЕЗ ПОДПИСКИ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(983,944,39,'ltv/dolya_komissii_za_priem_platezhey_v_vyruchke',NULL,1040.0,NULL,NULL,'ОБЩЕЕ ДЛЯ ВСЕХ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(984,933,39,'ltv/zatraty_na_soprovozhdenie_klientov_na_akkaunt',NULL,1041.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ ПО ПОДПИСКЕ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(985,945,39,'ltv/zatraty_na_vozvraty_i_nevykup_na_zakaz',NULL,1050.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ БЕЗ ПОДПИСКИ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(986,946,39,'ltv/zatraty_na_podderzhku_na_zakaz',NULL,1060.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ БЕЗ ПОДПИСКИ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(987,919,39,'ltv/srednyaya_cena_podpiski',NULL,2010.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ ПО ПОДПИСКЕ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(988,161,39,'ltv/srednee_kolichestvo_tovarov_v_zakaze',NULL,2020.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ БЕЗ ПОДПИСКИ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(989,927,39,'ltv/srednee_kolichestvo_edinic_v_stroke_zakaza',NULL,2030.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ БЕЗ ПОДПИСКИ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(990,928,39,'ltv/srednyaya_cena_za_edinicu_do_skidok',NULL,2040.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ БЕЗ ПОДПИСКИ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(991,929,39,'ltv/srednyaya_fakticheskaya_skidka',NULL,2050.0,NULL,NULL,'ОБЩЕЕ ДЛЯ ВСЕХ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(992,948,39,'ltv/vizitov_na_pokupatelya_v_mesyac_zhizni',NULL,3010.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ БЕЗ ПОДПИСКИ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(993,949,39,'ltv/konversiya_vizita_v_oformlennyy_zakaz',NULL,3020.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ БЕЗ ПОДПИСКИ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(994,950,39,'ltv/vykupa_zakazov',NULL,3030.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ БЕЗ ПОДПИСКИ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(995,951,39,'ltv/dolya_pokupateley_s_soglasiem_na_rassylku',NULL,3040.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ БЕЗ ПОДПИСКИ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(996,935,39,'ltv/aktivirovannyh_platyaschih_klientov',NULL,4010.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ ПО ПОДПИСКЕ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(997,952,39,'ltv/konversiya_vo_vtoroy_zakaz',NULL,4011.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ БЕЗ ПОДПИСКИ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(998,936,39,'ltv/aktivnyh_dney_v_mesyac_na_akkaunt',NULL,4020.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ ПО ПОДПИСКЕ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(999,953,39,'ltv/ottok_povtornyh_pokupateley',NULL,4021.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ БЕЗ ПОДПИСКИ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(1000,937,39,'ltv/srednee_chislo_ispolzuemyh_klyuchevyh_funkciy_na_akkaunt',NULL,4030.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ ПО ПОДПИСКЕ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(1001,413,39,'ltv/dostavok_vovremya',NULL,4031.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ БЕЗ ПОДПИСКИ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(1002,938,39,'ltv/udovletvorennost_produktom_csat',NULL,4040.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ ПО ПОДПИСКЕ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(1003,954,39,'ltv/udovletvorennost_zakazom_csat',NULL,4041.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ БЕЗ ПОДПИСКИ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(1004,939,39,'ltv/konversiya_iz_pervogo_mesyaca_vo_vtoroy',NULL,4050.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ ПО ПОДПИСКЕ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(1005,955,39,'ltv/dolya_pokupateley_v_programme_loyalnosti',NULL,4051.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ БЕЗ ПОДПИСКИ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(1006,940,39,'ltv/konversiya_iz_mesyaca_x_v_mesyac_y',NULL,4060.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ ПО ПОДПИСКЕ',0,'driver',NULL,NULL,NULL);
+INSERT INTO metric_artifact VALUES(1007,941,39,'ltv/ottok_klientov_iz_za_neproshedshey_oplaty',NULL,4070.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ ПО ПОДПИСКЕ',0,'driver',NULL,NULL,NULL);
 CREATE TABLE dimension (
   id          INTEGER PRIMARY KEY,
   name        TEXT NOT NULL UNIQUE,
@@ -6533,6 +6570,42 @@ INSERT INTO metric_metric VALUES(1055,968,959,'influence','+',NULL,'solid',NULL)
 INSERT INTO metric_metric VALUES(1056,969,960,'influence','+',NULL,'solid',NULL);
 INSERT INTO metric_metric VALUES(1057,970,960,'influence','+',NULL,'solid',NULL);
 INSERT INTO metric_metric VALUES(1058,971,960,'influence','+',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1059,973,972,'influence','+',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1060,974,972,'influence','+',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1061,975,972,'influence','+',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1062,976,972,'influence','+',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1063,977,972,'influence','+',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1064,978,973,'influence','-',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1065,979,973,'influence','-',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1066,980,973,'influence','-',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1067,981,973,'influence','-',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1068,982,973,'influence','-',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1069,983,973,'influence','-',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1070,984,973,'influence','-',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1071,985,973,'influence','-',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1072,986,973,'influence','-',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1073,987,974,'influence','+',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1074,988,975,'influence','+',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1075,989,975,'influence','+',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1076,990,975,'influence','+',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1077,991,974,'influence','-',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1078,991,975,'influence','-',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1079,992,976,'influence','+',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1080,993,976,'influence','+',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1081,994,976,'influence','+',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1082,995,976,'influence','+',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1083,996,977,'influence','+',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1084,997,977,'influence','+',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1085,998,977,'influence','+',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1086,999,977,'influence','-',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1087,1000,977,'influence','+',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1088,1001,977,'influence','+',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1089,1002,977,'influence','+',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1090,1003,977,'influence','+',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1091,1004,977,'influence','+',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1092,1005,977,'influence','+',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1093,1006,977,'influence','+',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1094,1007,977,'influence','-',NULL,'solid',NULL);
 CREATE TABLE IF NOT EXISTS "metric" (
       id          INTEGER PRIMARY KEY,
       name        TEXT NOT NULL,
