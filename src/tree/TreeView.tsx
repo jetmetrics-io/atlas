@@ -12,7 +12,7 @@ import { BASE, resolveMetricLink } from '../atlas/atlas'
 import { metricUrl } from '../site/nav'
 import { layoutTree, type TreeLayout, TREE_GAP, TREE_HEAD } from './layout'
 import {
-  AXES, SHORT, treeBySlug, specOf, canDrill, nodeByName, keepGroup, childTree,
+  AXES, SHORT, treeBySlug, specOf, canDrill, nodeByName, keepGroup, childTree, withDefaults,
   type Profile, type Tree,
 } from './tree'
 import type { AtlasNode } from '../atlas/types'
@@ -192,6 +192,8 @@ export function TreeView({ slug, onBack, initialDrill }:
   { slug: string; onBack: () => void; initialDrill?: string | null }) {
   const tree: Tree | undefined = useMemo(() => treeBySlug(slug), [slug])
   const [profile, setProfile] = useState<Profile>(readProfile)
+  // профиль, по которому рисуем: у осей с одиночным выбором модель есть всегда
+  const eff = useMemo(() => withDefaults(profile), [profile])
   const [drill, setDrill] = useState<string | null>(null)
   // Метрику из адреса запоминаем при первом рендере: App синхронизирует адрес
   // и стирает ?node= раньше, чем эффекты успевают его прочитать.
@@ -256,7 +258,7 @@ export function TreeView({ slug, onBack, initialDrill }:
     if (n.parent && n.parent !== tree.root) {
       const par = tree.nodes.get(n.parent)!
       if (par.parent && par.parent !== tree.root) setDrill(par.name)
-      else if (childTree(tree, n.parent) && canDrill(tree, n.parent, profile)) setDrill(par.name)
+      else if (childTree(tree, n.parent) && canDrill(tree, n.parent, eff)) setDrill(par.name)
     }
     setCard(n.name)
     setSel(n.name)
@@ -345,17 +347,28 @@ export function TreeView({ slug, onBack, initialDrill }:
     if (!t) return 0
     const gs = new Set([...t.nodes.values()].map((n) => n.group).filter(Boolean) as string[])
     const opts = AXES.flatMap((ax) => ax.opts).filter((o) => gs.has(o)).length
+    // «подписка» и «разовые покупки» в одну строку карточки не входят: вторая строка
+    // вытесняла имя метрики. Для оси с одиночным выбором строки считаем по длине подписей.
+    if (AXES.some((ax) => ax.single && ax.opts.some((o) => gs.has(o)))) {
+      const labels = AXES.flatMap((ax) => ax.opts).filter((o) => gs.has(o)).map((o) => SHORT[o] ?? o)
+      let rows = 1, used = 0
+      labels.forEach((l) => {
+        const w = 28 + 8.3 * l.length
+        if (used && used + 7 + w > 227) { rows++; used = w } else used += (used ? 7 : 0) + w
+      })
+      return 40 * rows
+    }
     return opts ? 40 * Math.ceil(opts / 2) : 0
   }, [tree, sub])
 
   const A = useMemo(
-    () => (tree ? layoutTree(specOf(tree, tree.root, profile), 'a', false,
+    () => (tree ? layoutTree(specOf(tree, tree.root, eff), 'a', tree.info.slug === 'ltv',
                              sub ? 0 : keyExtra) : null),
-    [tree, profile, sub, keyExtra])
+    [tree, eff, sub, keyExtra])
 
   const B = useMemo(
-    () => (sub ? layoutTree(specOf(sub, sub.root, profile), 'b', true, keyExtra) : null),
-    [sub, profile, keyExtra])
+    () => (sub ? layoutTree(specOf(sub, sub.root, eff), 'b', true, keyExtra) : null),
+    [sub, eff, keyExtra])
 
   const cardNode: AtlasNode | undefined = useMemo(() => {
     if (!card) return undefined
@@ -386,8 +399,10 @@ export function TreeView({ slug, onBack, initialDrill }:
    *  и офлайн, и онлайн — тогда в дереве видны обе ветки. */
   const toggleModel = (key: string, value: string) => {
     const picked = profile[key] ?? []
+    const single = AXES.find((a) => a.key === key)?.single
     const next = { ...profile,
-      [key]: picked.includes(value) ? picked.filter((v) => v !== value) : [...picked, value] }
+      [key]: single ? [value]
+        : picked.includes(value) ? picked.filter((v) => v !== value) : [...picked, value] }
     if (!next[key].length) delete next[key]
     setProfile(next); setPan({ x: 0, y: 0 })
     try { localStorage.setItem(PROFILE_KEY, JSON.stringify(next)) } catch { /* приватный режим */ }
@@ -458,7 +473,7 @@ export function TreeView({ slug, onBack, initialDrill }:
   const models = axesHere.length ? (
     <span className="tmodels" onClick={(e) => e.stopPropagation()}>
       {axesHere.map((ax) => {
-        const picked = profile[ax.key] ?? []
+        const picked = eff[ax.key] ?? []
         return ax.opts.filter((o) => groupsHere.has(o)).map((o) => (
           <button key={o} className={picked.includes(o) ? 'is-on' : undefined}
             onClick={() => toggleModel(ax.key, o)}>{SHORT[o] ?? o}</button>
@@ -470,7 +485,7 @@ export function TreeView({ slug, onBack, initialDrill }:
   // Метрик в этом дереве — вместе с ключевой: у неё такая же карточка со своим
   // контентом, и не считать её странно. Размер всего разбора подписан на плашке
   // каталога; внутри дерева он только мешает — здесь видно ровно эти карточки.
-  const total = [...shown.nodes.values()].filter((n) => keepGroup(n.group, profile)).length
+  const total = [...shown.nodes.values()].filter((n) => keepGroup(n.group, eff)).length
 
   return (
     <div

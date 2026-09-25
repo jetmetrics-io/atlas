@@ -17,7 +17,12 @@ export interface TreeNode extends AtlasNode {
 // Метрики групп «ЕСЛИ …» относятся не ко всем: у розницы нет сессий сайта,
 // у услуг — закупочной стоимости товара. Оси три, выбор по каждой запоминается:
 // модель бизнеса у человека одна, спрашивать её на каждой ветке незачем.
-export interface Axis { key: string; label: string; all: string; opts: string[] }
+export interface Axis {
+  key: string; label: string; all: string; opts: string[]
+  /** модель одна на экране: чип выбирает, а не добавляет, и эта модель стоит,
+   *  пока не выбрана другая (дерево LTV, Дмитрий 25.09) */
+  single?: string
+}
 
 export const AXES: Axis[] = [
   { key: 'channel', label: 'Канал продаж', all: 'все каналы',
@@ -27,6 +32,10 @@ export const AXES: Axis[] = [
     opts: ['ЕСЛИ ПЕРЕПРОДАЁТЕ ТОВАР', 'ЕСЛИ ПРОИЗВОДИТЕ', 'ЕСЛИ ОКАЗЫВАЕТЕ УСЛУГИ'] },
   { key: 'tax', label: 'Налоги', all: 'любые',
     opts: ['ЕСЛИ НА ОСНО', 'ЕСЛИ НА УСН', 'ЕСЛИ НА ПАТЕНТЕ ИЛИ АУСН'] },
+  // Модели LTV различаются оплатой, а не каналом (C-11): своя ось, иначе выбор
+  // модели в LTV прятал бы ветки «Выручки» — профиль у деревьев общий.
+  { key: 'pay', label: 'Модель оплаты', all: '', single: 'ЕСЛИ ПРОДАЁТЕ БЕЗ ПОДПИСКИ',
+    opts: ['ЕСЛИ ПРОДАЁТЕ ПО ПОДПИСКЕ', 'ЕСЛИ ПРОДАЁТЕ БЕЗ ПОДПИСКИ'] },
 ]
 
 export const SHORT: Record<string, string> = {
@@ -40,6 +49,8 @@ export const SHORT: Record<string, string> = {
   'ЕСЛИ НА ОСНО': 'ОСНО',
   'ЕСЛИ НА УСН': 'УСН',
   'ЕСЛИ НА ПАТЕНТЕ ИЛИ АУСН': 'патент или АУСН',
+  'ЕСЛИ ПРОДАЁТЕ ПО ПОДПИСКЕ': 'подписка',
+  'ЕСЛИ ПРОДАЁТЕ БЕЗ ПОДПИСКИ': 'разовые покупки',
   'ОБЩЕЕ ДЛЯ ВСЕХ': 'общее для всех',
 }
 
@@ -53,6 +64,13 @@ export type Profile = Record<string, string[]>
 export function axisOf(group?: string): Axis | undefined {
   if (!group || group === ALL_GROUP) return undefined
   return AXES.find((a) => a.opts.includes(group))
+}
+
+/** Профиль, в котором у осей с одиночным выбором модель стоит всегда. */
+export function withDefaults(profile: Profile): Profile {
+  const out = { ...profile }
+  AXES.forEach((ax) => { if (ax.single && !out[ax.key]?.length) out[ax.key] = [ax.single] })
+  return out
 }
 
 /** Метрика подходит профилю: она общая или её модель выбрана. */
@@ -174,7 +192,11 @@ export function specOf(t: Tree, id: string, profile: Profile): TreeSpec {
   })
 
   // Метрики одной модели идут подряд — так их можно обвести общей рамкой.
-  comps.sort((a, b) => (a.group ?? '').localeCompare(b.group ?? ''))
+  // У оси с одиночным выбором на экране одна модель, и её метрики стоят подряд и без
+  // сортировки. Компоненты там идут в порядке автора, как в формуле ключевой:
+  // у LTV маржа первая (T-71, Дмитрий 26.09).
+  const single = comps.some((c) => AXES.some((ax) => ax.single && ax.opts.includes(c.group ?? '')))
+  if (!single) comps.sort((a, b) => (a.group ?? '').localeCompare(b.group ?? ''))
   return { name: n.name, role: n.role, units: n.units || '', key: !!n.key, label: n.label, comps }
 }
 
