@@ -97,7 +97,10 @@ const isHeading = (s: string) => /:$/.test(s) && !/\d/.test(s)
 const nbsp = (s: string) =>
   s.replace(/(\d)[  ](?=\d)/g, '$1\u00A0').replace(/(\d)[  ](?=[₽%])/g, '$1\u00A0')
 
-// Жирный текст в примере расчёта: **итог** → <b>
+// Жирный текст: **итог** → <b>. Ручная ссылка [[…→адрес]] внутри жирного — тоже ссылка:
+// жирным выделяют суть нюанса, и суть часто называет соседнюю метрику. Раньше такая
+// ссылка показывалась сырой разметкой — 26.09.2026 так стояло в 21 карточке.
+// Автоматических ссылок внутри жирного по-прежнему нет.
 function bold(text: string, targets: LinkTarget[], onNav: (id: string) => void): ReactNode[] {
   const out: ReactNode[] = []
   let i = 0
@@ -106,7 +109,7 @@ function bold(text: string, targets: LinkTarget[], onNav: (id: string) => void):
   let m: RegExpExecArray | null
   while ((m = re.exec(text))) {
     if (m.index > i) out.push(...withExplicit(text.slice(i, m.index), targets, onNav))
-    out.push(<b key={`b${k++}`}>{m[1]}</b>)
+    out.push(<b key={`b${k++}`}>{withExplicit(m[1], [], onNav)}</b>)
     i = m.index + m[0].length
   }
   if (i < text.length) out.push(...withExplicit(text.slice(i), targets, onNav))
