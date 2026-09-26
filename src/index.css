@@ -774,3 +774,55 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
   color: var(--jm-text); cursor: pointer; }
 .tree__zoom button:hover { background: var(--jm-bg); }
 .tree__zoom button + button { border-top: 1px solid var(--jm-line); }
+
+/* ── Вопросы дерева: список справа, на месте карточки метрики (Дмитрий 25.09.2026) ──
+   Правила перенесены со стенда семейства LTV v14 (design/trees_ltv/tools/stand.py). */
+/* верх-слева: крошки и пристыкованная к ним справа галочка «Вопросы дерева»;
+   крошки встают в строку, их отступы от края переходят на общий блок */
+.ttop { position: absolute; left: 20px; top: 14px; z-index: 7; display: flex; align-items: center; gap: 8px; }
+.ttop .tree__crumbs { position: static; }
+.qtoggle { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 14px 0 12px; white-space: nowrap;
+  background: var(--jm-surface); border: 1px solid var(--jm-line); border-radius: 999px; box-shadow: var(--jm-e1);
+  font-size: 12.5px; color: var(--jm-ink); cursor: pointer; }
+.qtoggle input { accent-color: var(--jm-green); margin: 0; }
+.qpanel { position: absolute; top: 0; right: 0; bottom: 0; width: 448px; z-index: 8; background: var(--jm-surface);
+  border-left: 1px solid var(--jm-line); box-shadow: -8px 0 32px rgba(8,11,13,.06); display: flex; flex-direction: column; }
+.tree.has-qs .panel { z-index: 9; }
+.qpanel__head { position: relative; display: flex; align-items: baseline; gap: 10px; padding: 20px 56px 14px 24px;
+  border-bottom: 1px solid var(--jm-line-soft); }
+.qpanel__head .panel__label { margin: 0; }
+.qpanel__head .panel__close { top: 13px; }
+.qpanel__model { font-family: var(--jm-font-mono); font-size: 11px; color: var(--jm-muted); }
+.qpanel__body { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 18px 28px 16px; }
+.qrow { --tier: #4991FF; display: flex; gap: 9px; align-items: baseline; width: 100%; text-align: left; border: 0;
+  background: none; border-radius: 8px; padding: 7px 10px; font: inherit; font-size: 14px; line-height: 1.38;
+  color: var(--jm-text); cursor: pointer; transition: background .15s var(--jm-ease), box-shadow .15s var(--jm-ease); }
+.qrow[data-tier="0"] { --tier: #0E9C7D; font-size: 15px; font-weight: 600; color: var(--jm-ink); }
+.qrow[data-tier="1"] { --tier: #E0A800; font-weight: 600; color: var(--jm-ink); }
+.qrow .tnode__dot { transform: translateY(-1px); }
+.qrow:hover { background: var(--jm-bg); }
+/* навели на карточку на холсте — строка подсвечена так же, как карточка из списка */
+.qrow.is-hl { background: color-mix(in srgb, var(--tier) 12%, var(--jm-surface)); color: var(--jm-ink); }
+/* выбранная — как карточка на холсте: цвет ступени и кольцо */
+.qrow.is-on { background: color-mix(in srgb, var(--tier) 10%, var(--jm-surface)); box-shadow: inset 0 0 0 1.5px var(--tier); color: var(--jm-ink); }
+/* лесенка: у каждого уровня своя линия слева — видно, чьи это драйверы */
+.qkids { margin: 2px 0 6px 13px; padding-left: 7px; border-left: 1px solid var(--jm-line); }
+.qkids--root { margin-top: 4px; }
+.qbranch + .qbranch { margin-top: 6px; }
+/* с холста подсвечена строка, из списка — карточка: рамка цвета ступени и лёгкая заливка */
+.tnode.is-hl { border-color: var(--tier); background: color-mix(in srgb, var(--tier) 9%, var(--jm-surface)); }
+/* полоска списка слева от открытой карточки: видно, что под карточкой есть вопросы */
+.qpanel__strip { display: none; position: absolute; left: 0; top: 0; bottom: 0; width: 28px; z-index: 2; padding: 0;
+  border: 0; border-right: 1px solid var(--jm-line); background: var(--jm-bg); cursor: pointer; }
+.tree.has-panel .qpanel__strip { display: flex; align-items: center; justify-content: center; }
+.qpanel__strip span { writing-mode: vertical-rl; transform: rotate(180deg); font-family: var(--jm-font-mono);
+  font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--jm-muted); }
+.qpanel__strip:hover { background: var(--jm-line-soft); }
+.qpanel__strip:hover span { color: var(--jm-ink); }
+.tree.has-qs .tree__zoom { right: 466px; }
+.tree.has-qs .tree__keys { left: calc((100% - 448px) / 2); }
+@media (max-width: 760px) { .ttop { left: 12px; top: 12px; } }
+@media (max-width: 900px) {
+  .qpanel { width: 100%; }
+  .tree.has-qs .panel { width: calc(100% - 28px); }
+}

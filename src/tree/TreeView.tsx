@@ -31,6 +31,10 @@ const PROFILE_KEY = 'jm-tree-profile'
 const TOP = 122, PAD = 24, BOTTOM = 76
 // Ширина карточки метрики (.panel в index.css): на неё резервируем место справа.
 const PANEL_W = 420
+// «Вопросы дерева» — список справа, на месте карточки метрики (Дмитрий 25.09.2026).
+// Список на полоску шире карточки: из-под открытой карточки слева торчит «Вопросы».
+const STRIP = 28, QS_W = PANEL_W + STRIP
+const QS_KEY = 'jm-tree-questions'
 // на узком экране профиль встаёт отдельной строкой и сдвигает всё вниз
 const TOP_NARROW = 150, NARROW = 760
 
@@ -70,14 +74,23 @@ function readProfile(): Profile {
   try { return JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}') || {} } catch { return {} }
 }
 
+/** Галочка «Вопросы дерева», если её трогали. Не трогали — null: тогда список
+ *  включён, когда дереву остаётся не меньше 600 px. */
+function readQs(): boolean | null {
+  try { const s = localStorage.getItem(QS_KEY); return s === null ? null : s === '1' } catch { return null }
+}
+
 /** Карточка метрики на холсте дерева. У ключевой — переключатель моделей бизнеса:
  *  он разбирает именно эту метрику, поэтому и стоит на ней. */
 function Card({
-  n, open, onClick, models,
+  n, open, hl, onClick, onHover, models,
 }: {
   n: TreeLayout['nodes'][number]
   open: boolean
+  /** навели на строку в «Вопросах дерева» — карточка подсвечена */
+  hl?: boolean
   onClick: () => void
+  onHover?: (on: boolean) => void
   models?: React.ReactNode
 }) {
   const rs = roleStyle(n.role)
@@ -95,13 +108,15 @@ function Card({
   // недопустима. Клавиатурой карточка всё равно доступна.
   return (
     <div
-      className={`tnode${open ? ' is-open' : ''}`}
+      className={`tnode${open ? ' is-open' : ''}${hl ? ' is-hl' : ''}`}
       data-tier={n.tier}
       style={style}
       role="button"
       tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === 'Enter') onClick() }}
+      onMouseEnter={onHover && (() => onHover(true))}
+      onMouseLeave={onHover && (() => onHover(false))}
     >
       <span className="tnode__meta">
         <span className="tnode__role">
@@ -134,7 +149,7 @@ function Srez({ label }: { label?: string }) {
 
 /** Одно дерево: связи и карточки в своей системе координат. */
 function Stage({
-  lay, id, openName, selName, onNode, onDrill, drillOpen, models,
+  lay, id, openName, selName, onNode, onDrill, drillOpen, models, hlName, onHover,
 }: {
   models?: React.ReactNode
   lay: TreeLayout
@@ -144,6 +159,8 @@ function Stage({
   onNode: (name: string) => void
   onDrill: (name: string) => void
   drillOpen: string | null
+  hlName?: string | null
+  onHover?: (name: string | null) => void
 }) {
   return (
     <div className="tstage" style={{ width: lay.w, height: lay.h }}>
@@ -166,6 +183,8 @@ function Stage({
       {lay.nodes.map((n) => (
         <Card key={`${n.tier}-${n.name}`} n={n}
           open={openName === n.name || selName === n.name}
+          hl={hlName === n.name}
+          onHover={onHover && ((on) => onHover(on ? n.name : null))}
           models={n.tier === 0 ? models : undefined}
           onClick={() => (n.pick ? onDrill(n.name) : onNode(n.name))} />
       ))}
@@ -208,6 +227,11 @@ export function TreeView({ slug, onBack, initialDrill }:
   const moved = useRef(false)
   const wrap = useRef<HTMLDivElement>(null)
   const [box, setBox] = useState({ w: 1200, h: 800 })
+  // «Вопросы дерева»: выбор человека (null — не трогал) и подсветка по наведению.
+  // Навели на строку — подсвечена карточка на холсте, навели на карточку — строка.
+  const [qsPref, setQsPref] = useState<boolean | null>(readQs)
+  const [hl, setHl] = useState<{ name: string; from: 'list' | 'tree' } | null>(null)
+  const qbody = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const move = (e: PointerEvent) => {
@@ -385,6 +409,26 @@ export function TreeView({ slug, onBack, initialDrill }:
     window.history.replaceState(null, '', url.toString())
   }, [cardNode])
 
+  // Список вопросов есть только у дерева, где вопросы узлов лежат в Базе.
+  const hasQs = useMemo(() => {
+    const t = sub ?? tree
+    return !!t && [...t.nodes.values()].some((n) => n.question)
+  }, [tree, sub])
+  const qsOn = hasQs && (qsPref ?? box.w - QS_W >= 600)
+
+  // Выбрали метрику на холсте или стрелками — список подводится к её строке.
+  // Прокручиваем только список: scrollIntoView прокрутил бы и страницу.
+  const focusName = card ?? sel
+  useEffect(() => {
+    const body = qbody.current
+    if (!body || !focusName) return
+    const r = [...body.querySelectorAll<HTMLElement>('.qrow')].find((x) => x.dataset.name === focusName)
+    if (!r) return
+    const br = body.getBoundingClientRect(), rr = r.getBoundingClientRect()
+    if (rr.top < br.top + 8) body.scrollTop -= br.top + 8 - rr.top
+    else if (rr.bottom > br.bottom - 8) body.scrollTop += rr.bottom - (br.bottom - 8)
+  }, [focusName, qsOn])
+
   // Правила геометрии связей проверяются на каждой раскладке: сдавать дерево
   // можно только с пустым списком (design/map_layout_rules.md § 9).
   useEffect(() => {
@@ -436,7 +480,9 @@ export function TreeView({ slug, onBack, initialDrill }:
   // экран целиком, панорамировать его некуда, и панель накрывает правую колонку —
   // те самые драйверы, ради которых карточку и открыли (Dmitry 11.09.2026).
   const flat = !(BASE.trees ?? []).some((t) => t.parent === tree.info.slug)
-  const useW = flat && box.w - PANEL_W >= 600 ? box.w - PANEL_W : box.w
+  // с «Вопросами дерева» справа держим место под список — он на полоску шире карточки
+  const reserve = qsOn ? QS_W : PANEL_W
+  const useW = flat && box.w - reserve >= 600 ? box.w - reserve : box.w
   // Вписываем дерево в экран, но не мельче читаемого: у выручки одиннадцать
   // компонентов, и по высоте она всё равно не поместится — её листают.
   const fit = Math.max(0.78,
@@ -487,13 +533,67 @@ export function TreeView({ slug, onBack, initialDrill }:
   // каталога; внутри дерева он только мешает — здесь видно ровно эти карточки.
   const total = [...shown.nodes.values()].filter((n) => keepGroup(n.group, eff)).length
 
+  // ── Вопросы дерева ──────────────────────────────────────────────────────────
+  // Лесенка в порядке холста: ключевая, под ней компоненты сверху вниз, под каждым
+  // его драйверы. Строка — вопрос дерева у этого места; вопроса нет — имя метрики.
+  const L = drill && B ? B : A
+  const byY = (a: { y: number }, b: { y: number }) => a.y - b.y
+  const qOf = (name: string) => {
+    const n = nodeByName(shown, name)
+    return n?.question || name
+  }
+  // Щелчок по строке открывает карточку и подводит холст к метрике, если она за краем
+  const reveal = (name: string) => {
+    const n = L.nodes.find((x) => x.name === name)
+    if (!n) return
+    const off = drill && B ? A.w + TREE_GAP : 0
+    const y = top + panY + n.y * z, x = tx + (off + n.x) * z
+    let dx = 0, dy = 0
+    if (y < top) dy = top - y
+    else if (y + n.h * z > box.h - BOTTOM) dy = box.h - BOTTOM - (y + n.h * z)
+    if (x < PAD) dx = PAD - x
+    else if (x + n.w * z > useW - PAD) dx = useW - PAD - (x + n.w * z)
+    if (dx || dy) setPan({ x: panX + dx, y: panY + dy })
+  }
+  const qrow = (n: TreeLayout['nodes'][number]) => (
+    <button key={`${n.tier}-${n.name}`} type="button" data-tier={n.tier} data-name={n.name}
+      className={`qrow${card === n.name || sel === n.name ? ' is-on' : ''}${
+        hl?.from === 'tree' && hl.name === n.name ? ' is-hl' : ''}`}
+      onClick={() => { setCard(n.name); setSel(n.name); reveal(n.name) }}
+      onMouseEnter={() => setHl({ name: n.name, from: 'list' })}
+      onMouseLeave={() => setHl(null)}>
+      <span className="tnode__dot" style={{ background: roleStyle(n.role).color }} />
+      <span>{qOf(n.name)}</span>
+    </button>
+  )
+  const qRoot = L.nodes.find((n) => n.tier === 0)
+  const qModel = axesHere.flatMap((ax) => (eff[ax.key] ?? []).filter((o) => groupsHere.has(o)))
+    .map((o) => SHORT[o] ?? o).join(', ')
+  const toggleQs = (on: boolean) => {
+    setQsPref(on); setPan({ x: 0, y: 0 })
+    try { localStorage.setItem(QS_KEY, on ? '1' : '0') } catch { /* приватный режим */ }
+  }
+  const hoverCard = qsOn ? (name: string | null) => setHl(name ? { name, from: 'tree' } : null) : undefined
+  const hlCard = hl?.from === 'list' ? hl.name : null
+
+  const crumbs = (
+    <div className="tree__crumbs">
+      <button onClick={onBack}>Каталог</button>
+      <span>›</span>
+      {drill ? <button onClick={() => setDrill(null)}>{tree.info.name}</button>
+             : <b>{tree.info.name}</b>}
+      {drill && <><span>›</span><b>{drill}</b></>}
+      <span className="tree__count">{metrics(total)}</span>
+    </div>
+  )
+
   return (
     <div
-      className="tree"
+      className={`tree${cardNode ? ' has-panel' : ''}${qsOn ? ' has-qs' : ''}`}
       ref={wrap}
       onPointerDown={(e) => {
         // клик по карточке, чипу или кнопке — не перетаскивание
-        if ((e.target as HTMLElement).closest('.tnode, .tchip, button, select, .panel')) return
+        if ((e.target as HTMLElement).closest('.tnode, .tchip, button, select, label, .panel, .qpanel')) return
         drag.current = { x: e.clientX, y: e.clientY, px: panX, py: panY }
         moved.current = false
       }}
@@ -531,25 +631,28 @@ export function TreeView({ slug, onBack, initialDrill }:
         <div className={`tree__a${drill ? ' is-dim' : ''}`}>
           <Stage lay={A} id="a" openName={card} selName={drill ? null : sel} drillOpen={drill}
             models={drill ? undefined : models}
+            hlName={drill ? null : hlCard} onHover={drill ? undefined : hoverCard}
             onNode={(n) => { setCard(n); setSel(n) }} onDrill={onDrill} />
         </div>
         {drill && B && (
           <div className="tree__b" style={{ left: A.w + TREE_GAP }}>
             <Stage lay={B} id="b" openName={card} selName={sel} drillOpen={null}
-              models={models}
+              models={models} hlName={hlCard} onHover={hoverCard}
               onNode={(n) => { setCard(n); setSel(n) }} onDrill={onDrill} />
           </div>
         )}
       </div>
 
-      <div className="tree__crumbs">
-        <button onClick={onBack}>Каталог</button>
-        <span>›</span>
-        {drill ? <button onClick={() => setDrill(null)}>{tree.info.name}</button>
-               : <b>{tree.info.name}</b>}
-        {drill && <><span>›</span><b>{drill}</b></>}
-        <span className="tree__count">{metrics(total)}</span>
-      </div>
+      {/* «Вопросы дерева» пристыкованы справа к крошкам (Дмитрий 25.09.2026) */}
+      {hasQs ? (
+        <div className="ttop">
+          {crumbs}
+          <label className="qtoggle">
+            <input type="checkbox" checked={qsOn} onChange={(e) => toggleQs(e.target.checked)} />
+            Вопросы дерева
+          </label>
+        </div>
+      ) : crumbs}
 
       {drill && (
         <button className="tree__esc" onClick={() => setDrill(null)}>
@@ -569,6 +672,34 @@ export function TreeView({ slug, onBack, initialDrill }:
         <button onClick={() => setZoom((v) => Math.min(2.2, v * 1.15))} aria-label="Приблизить">+</button>
         <button onClick={() => setZoom((v) => Math.max(0.3, v / 1.15))} aria-label="Отдалить">−</button>
       </div>
+
+      {qsOn && qRoot && (
+        <aside className="qpanel" aria-label="Вопросы дерева">
+          {/* из-под открытой карточки торчит полоска: щелчок закрывает карточку */}
+          <button type="button" className="qpanel__strip" onClick={() => setCard(null)}
+            title="Закрыть карточку и вернуться к вопросам"><span>Вопросы</span></button>
+          <div className="qpanel__head">
+            <span className="panel__label">Вопросы дерева</span>
+            <span className="qpanel__model">{qModel}</span>
+            <button type="button" className="panel__close" onClick={() => toggleQs(false)}
+              aria-label="Скрыть вопросы">×</button>
+          </div>
+          <div className="qpanel__body" ref={qbody}>
+            {qrow(qRoot)}
+            <div className="qkids qkids--root">
+              {L.nodes.filter((n) => n.tier === 1 && !n.pick).sort(byY).map((c) => {
+                const kids = L.nodes.filter((d) => d.tier === 2 && d.parent === c.name).sort(byY)
+                return (
+                  <div key={c.name} className="qbranch">
+                    {qrow(c)}
+                    {kids.length > 0 && <div className="qkids">{kids.map(qrow)}</div>}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </aside>
+      )}
 
       {cardNode && (
         <NodeCard
