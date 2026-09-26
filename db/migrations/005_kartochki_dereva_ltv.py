@@ -29,7 +29,7 @@
    и синонимы у них не меняются.
 4. Срезает у 187 хвост отчёта агента, попавший в «Когда не нужна» при первой сборке.
 """
-import sys, re, sqlite3, shutil, pathlib, datetime
+import sys, re, sqlite3, shutil, pathlib, datetime, importlib.util
 
 # Тексты — из design/trees_ltv/карточки/05_конвейер/карточки/ после проверок и приёмки.
 # dims: (приоритет, id разреза, имя разреза, заметка)
@@ -2873,8 +2873,21 @@ def primenit(con):
     return otchet
 
 
+def imena_posle_009():
+    """mid → имя, которое дала миграция 009 после языковой проверки (26.09.2026).
+    Без этого --check 005 ждал бы прежние имена и поднимал ложную тревогу, как у 518 после 007."""
+    put = pathlib.Path(__file__).with_name("009_yazykovaya_proverka_ltv.py")
+    if not put.exists():
+        return {}
+    spec = importlib.util.spec_from_file_location("m009", put)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return {mid: stalo for mid, (_, stalo) in mod.IMENA.items()}
+
+
 def proverit(con):
     pretenzii = []
+    pereimenovany = imena_posle_009()
     for r in RAZREZY["novye"] + RAZREZY["pravka"]:
         v_baze = con.execute("select description, source, variants from dimension where name=?", (r["name"],)).fetchone()
         if v_baze != (r["description"], r["source"], r["variants"]):
@@ -2891,7 +2904,7 @@ def proverit(con):
         if not r:
             pretenzii.append(f"⛔ mid {m['id']} нет в базе")
             continue
-        if r[0] != m["name"]:
+        if r[0] != m["name"] and r[0] != pereimenovany.get(m["id"]):
             pretenzii.append(f"⛔ mid {m['id']}: имя «{r[0]}», ждали «{m['name']}»")
         if not all(r[1:]):
             pretenzii.append(f"⛔ mid {m['id']}: пустое обязательное поле")
