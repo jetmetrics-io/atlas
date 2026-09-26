@@ -82,6 +82,7 @@ def sobrat_uzly(con):
            join artifact a on a.id = pa.artifact_id
            order by pa.id"""
     uzly = []
+    voprosy = sobrat_voprosy(con)
     for r in con.execute(q):
         u = {"id": r["node_id"], "mid": r["metric_id"], "name": r["name"],
              "section": r["section"], "role": r["role"]}
@@ -104,8 +105,20 @@ def sobrat_uzly(con):
             u["key"] = True
         if r["grp"]:
             u["group"] = r["grp"]
+        # Вопрос дерева у места (миграция 008): его показывает панель «Вопросы дерева».
+        if voprosy.get(r["id"]):
+            u["question"] = voprosy[r["id"]]
         uzly.append(u)
     return uzly
+
+
+def sobrat_voprosy(con):
+    """Вопрос дерева по месту: {metric_artifact.id: текст}. Колонки нет (База старше
+    миграции 008) — вопросов нет, выгрузка та же, что без них."""
+    if "question" not in {r[1] for r in con.execute("pragma table_info(metric_artifact)")}:
+        return {}
+    return {r[0]: r[1] for r in con.execute(
+        "select id, question from metric_artifact where coalesce(trim(question), '') != ''")}
 
 
 def formula_celikom(osnovnaya, alternativa):
