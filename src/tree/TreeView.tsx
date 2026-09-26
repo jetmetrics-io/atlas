@@ -29,6 +29,8 @@ const metrics = (n: number) => {
 const PROFILE_KEY = 'jm-tree-profile'
 // Внизу висят крошки и подсказки: без запаса последняя карточка упирается в них.
 const TOP = 122, PAD = 24, BOTTOM = 76
+// Мельче этого дерево не ужимаем: подписи перестают читаться. Длинные деревья листают.
+const FIT_MIN = 0.78
 // Ширина карточки метрики (.panel в index.css): на неё резервируем место справа.
 const PANEL_W = 420
 // «Вопросы дерева» — список справа, на месте карточки метрики (Дмитрий 25.09.2026).
@@ -414,7 +416,22 @@ export function TreeView({ slug, onBack, initialDrill }:
     const t = sub ?? tree
     return !!t && [...t.nodes.values()].some((n) => n.question)
   }, [tree, sub])
-  const qsOn = hasQs && (qsPref ?? box.w - QS_W >= 600)
+  // Масштаб, в который дерево вписывается по ширине w: не крупнее 1 и не мельче читаемого.
+  const top = box.w <= NARROW ? TOP_NARROW : TOP
+  const fitFor = (L: TreeLayout, w: number) => Math.max(FIT_MIN,
+    Math.min(1, (box.h - top - PAD - BOTTOM) / L.h, (w - 2 * PAD) / L.w))
+  // По умолчанию список включён, если рядом с ним все карточки дерева видны целиком:
+  // ни одна не уходит за левый край и под список. Порог «дереву остаётся 600 px» (25.09)
+  // для LTV мал: на экранах 1066–1236 px ключевая метрика уходила за левый край.
+  // Выбор человека галочкой важнее этого правила.
+  const qsFits = useMemo(() => {
+    const w = box.w - QS_W
+    if (!A || !A.nodes.length || w < 600) return false
+    const z = fitFor(A, w), x0 = (w - A.w * z) / 2
+    return x0 + Math.min(...A.nodes.map((n) => n.x)) * z >= 0
+      && x0 + Math.max(...A.nodes.map((n) => n.x + n.w)) * z <= w
+  }, [A, box.w, box.h])
+  const qsOn = hasQs && (qsPref ?? qsFits)
 
   // Выбрали метрику на холсте или стрелками — список подводится к её строке.
   // Прокручиваем только список: scrollIntoView прокрутил бы и страницу.
@@ -473,7 +490,6 @@ export function TreeView({ slug, onBack, initialDrill }:
 
   // Масштаб считаем по первому дереву и при провале НЕ пересчитываем: высокое
   // дерево второго уровня ужало бы разом оба до нечитаемого.
-  const top = box.w <= NARROW ? TOP_NARROW : TOP
   // Дерево БЕЗ ПРОВАЛОВ: ни у одной его метрики нет своего разбора. Тогда незачем
   // и чип «1 уровень» (второго не будет), и «⏎ раскрыть» в подсказке — нажимать
   // нечего. А место справа держим под карточку метрики: такое дерево влезает в
@@ -485,8 +501,7 @@ export function TreeView({ slug, onBack, initialDrill }:
   const useW = flat && box.w - reserve >= 600 ? box.w - reserve : box.w
   // Вписываем дерево в экран, но не мельче читаемого: у выручки одиннадцать
   // компонентов, и по высоте она всё равно не поместится — её листают.
-  const fit = Math.max(0.78,
-    Math.min(1, (box.h - top - PAD - BOTTOM) / A.h, (useW - 2 * PAD) / A.w))
+  const fit = fitFor(A, useW)
   const z = Math.max(0.25, fit * zoom)
   const cw = drill && B ? A.w + TREE_GAP + B.w : A.w
   // При провале второе дерево начинается правее чипов уровней: иначе подпись
