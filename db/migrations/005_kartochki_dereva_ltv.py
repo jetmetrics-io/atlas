@@ -2909,8 +2909,10 @@ def proverit(con):
                 pretenzii.append(f"⛔ mid {m['id']}: заметка к разрезу «{n}» не та")
     if con.execute("select 1 from metric where id=628").fetchone():
         pretenzii.append("⛔ 628 не удалена")
-    if con.execute("select count(*) from metric_artifact where metric_id=518").fetchone()[0] != 2:
-        pretenzii.append("⛔ у 518 не два места (CRM и SaaS)")
+    # считаются только места на картах: место в дереве LTV у 518 появилось позже, в миграции 007
+    if con.execute("""select count(*) from metric_artifact pa join artifact a on a.id = pa.artifact_id
+                      where pa.metric_id = 518 and a.type = 'map'""").fetchone()[0] != 2:
+        pretenzii.append("⛔ у 518 не два места на картах (CRM и SaaS)")
     nn = con.execute("select not_needed from metric where id=187").fetchone()[0] or ""
     if "Обработаны все" in nn:
         pretenzii.append("⛔ у 187 остался хвост отчёта")
