@@ -1012,7 +1012,6 @@ INSERT INTO metric_artifact VALUES(967,81,38,'vyruchka-s-povtornyh/polzovateley_
 INSERT INTO metric_artifact VALUES(968,323,38,'vyruchka-s-povtornyh/zakazov_s_bonusami',NULL,1200.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам',NULL);
 INSERT INTO metric_artifact VALUES(969,161,38,'vyruchka-s-povtornyh/srednee_kolichestvo_tovarov_v_zakaze',NULL,1300.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам',NULL);
 INSERT INTO metric_artifact VALUES(970,927,38,'vyruchka-s-povtornyh/srednee_kolichestvo_edinic_v_stroke_zakaza',NULL,1400.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам',NULL);
-INSERT INTO metric_artifact VALUES(971,159,38,'vyruchka-s-povtornyh/srednyaya_cena_tovara',NULL,1500.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам',NULL);
 INSERT INTO metric_artifact VALUES(972,518,39,'ltv/pozhiznennaya_cennost_klienta_ltv',NULL,0.0,NULL,NULL,NULL,1,'key',NULL,NULL,NULL,'Сколько прибыли мы получим с одного клиента?');
 INSERT INTO metric_artifact VALUES(973,930,39,'ltv/marzhinalnaya_rentabelnost',NULL,100.0,NULL,NULL,'ОБЩЕЕ ДЛЯ ВСЕХ',0,'component',NULL,NULL,NULL,'Насколько прибылен каждый клиент?');
 INSERT INTO metric_artifact VALUES(974,934,39,'ltv/sredniy_dohod_na_akkaunt_arpa',NULL,200.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ ПО ПОДПИСКЕ',0,'component',NULL,NULL,NULL,'Сколько клиент платит нам за месяц?');
@@ -1049,6 +1048,8 @@ INSERT INTO metric_artifact VALUES(1004,939,39,'ltv/konversiya_iz_pervogo_mesyac
 INSERT INTO metric_artifact VALUES(1005,955,39,'ltv/dolya_pokupateley_v_programme_loyalnosti',NULL,4051.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ БЕЗ ПОДПИСКИ',0,'driver',NULL,NULL,NULL,'Держит ли покупателей программа лояльности?');
 INSERT INTO metric_artifact VALUES(1006,940,39,'ltv/konversiya_iz_mesyaca_x_v_mesyac_y',NULL,4060.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ ПО ПОДПИСКЕ',0,'driver',NULL,NULL,NULL,'Сколько клиентов продлевают подписку от месяца X до месяца Y?');
 INSERT INTO metric_artifact VALUES(1007,941,39,'ltv/ottok_klientov_iz_za_neproshedshey_oplaty',NULL,4070.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ ПО ПОДПИСКЕ',0,'driver',NULL,NULL,NULL,'Сколько клиентов мы теряем только потому, что не прошла оплата?');
+INSERT INTO metric_artifact VALUES(1008,928,38,'vyruchka-s-povtornyh/srednyaya_cena_za_edinicu_do_skidok',NULL,1500.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам',NULL);
+INSERT INTO metric_artifact VALUES(1009,929,38,'vyruchka-s-povtornyh/srednyaya_fakticheskaya_skidka',NULL,1600.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам',NULL);
 CREATE TABLE dimension (
   id          INTEGER PRIMARY KEY,
   name        TEXT NOT NULL UNIQUE,
@@ -6569,7 +6570,6 @@ INSERT INTO metric_metric VALUES(1054,967,959,'influence','+',NULL,'solid',NULL)
 INSERT INTO metric_metric VALUES(1055,968,959,'influence','+',NULL,'solid',NULL);
 INSERT INTO metric_metric VALUES(1056,969,960,'influence','+',NULL,'solid',NULL);
 INSERT INTO metric_metric VALUES(1057,970,960,'influence','+',NULL,'solid',NULL);
-INSERT INTO metric_metric VALUES(1058,971,960,'influence','+',NULL,'solid',NULL);
 INSERT INTO metric_metric VALUES(1059,973,972,'influence','+',NULL,'solid',NULL);
 INSERT INTO metric_metric VALUES(1060,974,972,'influence','+',NULL,'solid',NULL);
 INSERT INTO metric_metric VALUES(1061,975,972,'influence','+',NULL,'solid',NULL);
@@ -6606,6 +6606,8 @@ INSERT INTO metric_metric VALUES(1091,1004,977,'influence','+',NULL,'solid',NULL
 INSERT INTO metric_metric VALUES(1092,1005,977,'influence','+',NULL,'solid',NULL);
 INSERT INTO metric_metric VALUES(1093,1006,977,'influence','+',NULL,'solid',NULL);
 INSERT INTO metric_metric VALUES(1094,1007,977,'influence','-',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1095,1008,960,'influence','+',NULL,'solid',NULL);
+INSERT INTO metric_metric VALUES(1096,1009,960,'influence','-',NULL,'solid',NULL);
 CREATE TABLE IF NOT EXISTS "metric" (
       id          INTEGER PRIMARY KEY,
       name        TEXT NOT NULL,

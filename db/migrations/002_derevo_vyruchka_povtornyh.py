@@ -110,24 +110,38 @@ def primenit(con, derevo, uzly, rebra):
     return otchet
 
 
+def posle_011(con):
+    """Миграция 011 (27.09) привела чек к канону: 159 ушла, встали 928 и 929 со срезом.
+    Мест 15 → 16, связей 14 → 15, срезов 10 → 11."""
+    put = pathlib.Path(__file__).with_name("011_chek_povtornyh_po_kanonu.py")
+    if not put.exists():
+        return False
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("m011", put)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.primenena(con)
+
+
 def proverit(con):
     pretenzii = []
     aid = con.execute("select id from artifact where slug=?", (SLUG,)).fetchone()
     if not aid: return ["⛔ артефакта дерева нет"]
     aid = aid[0]
+    zhdu_mest, zhdu_svyazey, zhdu_srezov = (16, 15, 11) if posle_011(con) else (15, 14, 10)
     mest = con.execute("select count(*) from metric_artifact where artifact_id=?", (aid,)).fetchone()[0]
-    if mest != 15: pretenzii.append(f"⛔ мест {mest}, ожидалось 15")
+    if mest != zhdu_mest: pretenzii.append(f"⛔ мест {mest}, ожидалось {zhdu_mest}")
     klyuch = con.execute("select count(*) from metric_artifact where artifact_id=? and is_key=1",
                          (aid,)).fetchone()[0]
     if klyuch != 1: pretenzii.append(f"⛔ ключевых метрик {klyuch}, ожидалась 1")
     svyaz = con.execute("""select count(*) from metric_metric mm
                            join metric_artifact ms on ms.id=mm.source_id
                            where ms.artifact_id=?""", (aid,)).fetchone()[0]
-    if svyaz != 14: pretenzii.append(f"⛔ связей {svyaz}, ожидалось 14")
+    if svyaz != zhdu_svyazey: pretenzii.append(f"⛔ связей {svyaz}, ожидалось {zhdu_svyazey}")
     srezov = con.execute("""select count(*) from metric_artifact
                             where artifact_id=? and label_dimension_id is not null""",
                          (aid,)).fetchone()[0]
-    if srezov != 10: pretenzii.append(f"⛔ срезов {srezov}, ожидалось 10")
+    if srezov != zhdu_srezov: pretenzii.append(f"⛔ срезов {srezov}, ожидалось {zhdu_srezov}")
     polov = con.execute("""select count(*) from metric_artifact
                            where (label_dimension_id is null) != (label_value is null)""").fetchone()[0]
     if polov: pretenzii.append(f"⛔ мест с половиной label: {polov}")
