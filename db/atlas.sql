@@ -998,20 +998,20 @@ INSERT INTO metric_artifact VALUES(953,923,37,'sebestoimost-prodazh/oplata_truda
 INSERT INTO metric_artifact VALUES(954,924,37,'sebestoimost-prodazh/arenda_i_soderzhanie_sklada',NULL,NULL,NULL,NULL,'ОБЩЕЕ ДЛЯ ВСЕХ',0,'driver',NULL,NULL,NULL,NULL);
 INSERT INTO metric_artifact VALUES(955,925,37,'sebestoimost-prodazh/oplata_truda_skladskogo_personala',NULL,NULL,NULL,NULL,'ОБЩЕЕ ДЛЯ ВСЕХ',0,'driver',NULL,NULL,NULL,NULL);
 INSERT INTO metric_artifact VALUES(956,926,2,'assortiment/srednee_kolichestvo_edinic_v_zakaze',2584.199999999999819,19998.29999999999928,256.0,111.0,'Продажи продуктов',0,'action',NULL,NULL,NULL,NULL);
-INSERT INTO metric_artifact VALUES(957,134,38,'vyruchka-s-povtornyh/vyruchka_s_povtornyh_klientov',NULL,100.0,NULL,NULL,NULL,1,'key',NULL,NULL,NULL,NULL);
-INSERT INTO metric_artifact VALUES(958,126,38,'vyruchka-s-povtornyh/povtornye_klienty',NULL,200.0,NULL,NULL,NULL,0,'component',NULL,NULL,NULL,NULL);
-INSERT INTO metric_artifact VALUES(959,121,38,'vyruchka-s-povtornyh/zakazov_na_klienta',NULL,300.0,NULL,NULL,NULL,0,'component',8,'повторный','По повторным клиентам',NULL);
-INSERT INTO metric_artifact VALUES(960,136,38,'vyruchka-s-povtornyh/sredniy_chek_povtornyh_klientov',NULL,400.0,NULL,NULL,NULL,0,'component',NULL,NULL,NULL,NULL);
-INSERT INTO metric_artifact VALUES(961,413,38,'vyruchka-s-povtornyh/dostavok_vovremya',NULL,500.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам',NULL);
-INSERT INTO metric_artifact VALUES(962,333,38,'vyruchka-s-povtornyh/vozvratov',NULL,600.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам',NULL);
-INSERT INTO metric_artifact VALUES(963,251,38,'vyruchka-s-povtornyh/reshennyh_obrascheniy',NULL,700.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам',NULL);
-INSERT INTO metric_artifact VALUES(964,186,38,'vyruchka-s-povtornyh/dostupnost_tovarov',NULL,800.0,NULL,NULL,NULL,0,'driver',NULL,NULL,NULL,NULL);
-INSERT INTO metric_artifact VALUES(965,405,38,'vyruchka-s-povtornyh/srednee_vremya_dostavki',NULL,900.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам',NULL);
-INSERT INTO metric_artifact VALUES(966,317,38,'vyruchka-s-povtornyh/aktivnyh_uchastnikov',NULL,1000.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам',NULL);
-INSERT INTO metric_artifact VALUES(967,81,38,'vyruchka-s-povtornyh/polzovateley_s_pushami',NULL,1100.0,NULL,NULL,NULL,0,'driver',NULL,NULL,NULL,NULL);
-INSERT INTO metric_artifact VALUES(968,323,38,'vyruchka-s-povtornyh/zakazov_s_bonusami',NULL,1200.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам',NULL);
-INSERT INTO metric_artifact VALUES(969,161,38,'vyruchka-s-povtornyh/srednee_kolichestvo_tovarov_v_zakaze',NULL,1300.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам',NULL);
-INSERT INTO metric_artifact VALUES(970,927,38,'vyruchka-s-povtornyh/srednee_kolichestvo_edinic_v_stroke_zakaza',NULL,1400.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам',NULL);
+INSERT INTO metric_artifact VALUES(957,134,38,'vyruchka-s-povtornyh/vyruchka_s_povtornyh_klientov',NULL,100.0,NULL,NULL,NULL,1,'key',NULL,NULL,NULL,'Сколько денег приносят покупатели, которые к нам вернулись?');
+INSERT INTO metric_artifact VALUES(958,126,38,'vyruchka-s-povtornyh/povtornye_klienty',NULL,200.0,NULL,NULL,NULL,0,'component',NULL,NULL,NULL,'Сколько покупателей вернулись к нам за новой покупкой?');
+INSERT INTO metric_artifact VALUES(959,121,38,'vyruchka-s-povtornyh/zakazov_na_klienta',NULL,300.0,NULL,NULL,NULL,0,'component',8,'повторный','По повторным клиентам','Сколько заказов делает вернувшийся покупатель?');
+INSERT INTO metric_artifact VALUES(960,136,38,'vyruchka-s-povtornyh/sredniy_chek_povtornyh_klientov',NULL,400.0,NULL,NULL,NULL,0,'component',NULL,NULL,NULL,'Сколько вернувшийся покупатель тратит за один заказ?');
+INSERT INTO metric_artifact VALUES(961,413,38,'vyruchka-s-povtornyh/dostavok_vovremya',NULL,500.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам','Приходят ли заказы вовремя?');
+INSERT INTO metric_artifact VALUES(962,333,38,'vyruchka-s-povtornyh/vozvratov',NULL,600.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам','Какую часть купленного покупатели возвращают?');
+INSERT INTO metric_artifact VALUES(963,251,38,'vyruchka-s-povtornyh/reshennyh_obrascheniy',NULL,700.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам','Решает ли поддержка проблемы покупателей?');
+INSERT INTO metric_artifact VALUES(964,186,38,'vyruchka-s-povtornyh/dostupnost_tovarov',NULL,800.0,NULL,NULL,NULL,0,'driver',NULL,NULL,NULL,'Сколько времени товары есть в наличии?');
+INSERT INTO metric_artifact VALUES(965,405,38,'vyruchka-s-povtornyh/srednee_vremya_dostavki',NULL,900.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам','Как быстро мы довозим заказ?');
+INSERT INTO metric_artifact VALUES(966,317,38,'vyruchka-s-povtornyh/aktivnyh_uchastnikov',NULL,1000.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам','Пользуются ли участники программой лояльности?');
+INSERT INTO metric_artifact VALUES(967,81,38,'vyruchka-s-povtornyh/polzovateley_s_pushami',NULL,1100.0,NULL,NULL,NULL,0,'driver',NULL,NULL,NULL,'До скольких пользователей приложения мы можем дотянуться пушами?');
+INSERT INTO metric_artifact VALUES(968,323,38,'vyruchka-s-povtornyh/zakazov_s_bonusami',NULL,1200.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам','Как часто покупатели платят бонусами?');
+INSERT INTO metric_artifact VALUES(969,161,38,'vyruchka-s-povtornyh/srednee_kolichestvo_tovarov_v_zakaze',NULL,1300.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам','Сколько разных товаров покупатель кладёт в один заказ?');
+INSERT INTO metric_artifact VALUES(970,927,38,'vyruchka-s-povtornyh/srednee_kolichestvo_edinic_v_stroke_zakaza',NULL,1400.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам','Сколько штук каждого товара он берёт?');
 INSERT INTO metric_artifact VALUES(972,518,39,'ltv/pozhiznennaya_cennost_klienta_ltv',NULL,0.0,NULL,NULL,NULL,1,'key',NULL,NULL,NULL,'Сколько прибыли мы получим с одного клиента?');
 INSERT INTO metric_artifact VALUES(973,930,39,'ltv/marzhinalnaya_rentabelnost',NULL,100.0,NULL,NULL,'ОБЩЕЕ ДЛЯ ВСЕХ',0,'component',NULL,NULL,NULL,'Насколько прибылен каждый клиент?');
 INSERT INTO metric_artifact VALUES(974,934,39,'ltv/sredniy_dohod_na_akkaunt_arpa',NULL,200.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ ПО ПОДПИСКЕ',0,'component',NULL,NULL,NULL,'Сколько клиент платит нам за месяц?');
@@ -1048,8 +1048,8 @@ INSERT INTO metric_artifact VALUES(1004,939,39,'ltv/konversiya_iz_pervogo_mesyac
 INSERT INTO metric_artifact VALUES(1005,955,39,'ltv/dolya_pokupateley_v_programme_loyalnosti',NULL,4051.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ БЕЗ ПОДПИСКИ',0,'driver',NULL,NULL,NULL,'Держит ли покупателей программа лояльности?');
 INSERT INTO metric_artifact VALUES(1006,940,39,'ltv/konversiya_iz_mesyaca_x_v_mesyac_y',NULL,4060.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ ПО ПОДПИСКЕ',0,'driver',NULL,NULL,NULL,'Сколько клиентов продлевают подписку от месяца X до месяца Y?');
 INSERT INTO metric_artifact VALUES(1007,941,39,'ltv/ottok_klientov_iz_za_neproshedshey_oplaty',NULL,4070.0,NULL,NULL,'ЕСЛИ ПРОДАЁТЕ ПО ПОДПИСКЕ',0,'driver',NULL,NULL,NULL,'Сколько клиентов мы теряем только потому, что не прошла оплата?');
-INSERT INTO metric_artifact VALUES(1008,928,38,'vyruchka-s-povtornyh/srednyaya_cena_za_edinicu_do_skidok',NULL,1500.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам',NULL);
-INSERT INTO metric_artifact VALUES(1009,929,38,'vyruchka-s-povtornyh/srednyaya_fakticheskaya_skidka',NULL,1600.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам',NULL);
+INSERT INTO metric_artifact VALUES(1008,928,38,'vyruchka-s-povtornyh/srednyaya_cena_za_edinicu_do_skidok',NULL,1500.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам','Сколько в среднем стоит одна купленная штука без скидок?');
+INSERT INTO metric_artifact VALUES(1009,929,38,'vyruchka-s-povtornyh/srednyaya_fakticheskaya_skidka',NULL,1600.0,NULL,NULL,NULL,0,'driver',8,'повторный','По повторным клиентам','Сколько мы уступаем от цены промокодами, акциями и баллами?');
 CREATE TABLE dimension (
   id          INTEGER PRIMARY KEY,
   name        TEXT NOT NULL UNIQUE,
