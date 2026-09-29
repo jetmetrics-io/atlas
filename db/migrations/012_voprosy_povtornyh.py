@@ -84,9 +84,23 @@ def primenit(con):
     return postavleno, stoyalo
 
 
+def posle_014(con):
+    """Миграция 014 (29.09) перестроила ветки по редакции 5.2: четыре места ушли вместе
+    с вопросами, у 11 новых свои. Список ниже тогда не полный — вопросы сверяет 014."""
+    put = pathlib.Path(__file__).with_name("014_vetki_povtornyh_v52.py")
+    if not put.exists():
+        return False
+    spec = importlib.util.spec_from_file_location("m014", put)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.primenena(con)
+
+
 def proverit(con):
     aid = derevo(con)
     pretenzii = []
+    if posle_014(con):
+        return m008().proverit(con)
     mesta = dict(con.execute("select metric_id, question from metric_artifact where artifact_id=?",
                              (aid,)).fetchall())
     if set(mesta) != set(VOPROSY):

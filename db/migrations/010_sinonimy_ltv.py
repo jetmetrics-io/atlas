@@ -81,6 +81,18 @@ def primenit(con):
     return [f"«Она же» записано: {len(plan)} (уже стояло {len(SINONIMY) - len(plan)})"]
 
 
+def snyaty_v_014():
+    """mid, у которых миграция 014 (29.09.2026) сняла «Она же» без замены."""
+    import importlib.util
+    put = pathlib.Path(__file__).with_name("014_vetki_povtornyh_v52.py")
+    if not put.exists():
+        return set()
+    spec = importlib.util.spec_from_file_location("m014", put)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return {mid for mid, pole, _, stalo in mod.PRAVKI if pole == "synonyms" and stalo is None}
+
+
 def proverit(con):
     """Список претензий. Пустой список — всё чисто."""
     pretenzii = []
@@ -88,9 +100,13 @@ def proverit(con):
         r = con.execute("select synonyms from metric where id=?", (mid,)).fetchone()
         if not r or r[0] != s:
             pretenzii.append(f"⛔ mid {mid}: «Она же» не «{s}»")
-    # правило 26.09: у новой карточки «Она же» не пусто; после этой миграции пустых нет нигде
+    # правило 26.09: у новой карточки «Она же» не пусто; после этой миграции пустых нет нигде,
+    # кроме снятых решением Дмитрия 28.09 без замены (миграция 014: 126 и 129 — обязательный
+    # синоним только у новых карточек)
+    snyaty = snyaty_v_014()
     for mid, name in con.execute("select id, name from metric where synonyms is null or trim(synonyms)=''"):
-        pretenzii.append(f"⛔ mid {mid} «{name}»: пустое «Она же»")
+        if mid not in snyaty:
+            pretenzii.append(f"⛔ mid {mid} «{name}»: пустое «Она же»")
     # новый синоним не совпадает ни с именем, ни с синонимом другой метрики
     chuzhie = {}
     for mid, name, syn in con.execute("select id, name, coalesce(synonyms,'') from metric"):

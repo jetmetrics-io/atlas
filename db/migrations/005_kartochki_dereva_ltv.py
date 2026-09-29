@@ -2885,15 +2885,29 @@ def imena_posle_009():
     return {mid: stalo for mid, (_, stalo) in mod.IMENA.items()}
 
 
+def zametki_posle_014():
+    """(mid, разрез) → заметка, которую переписала миграция 014 (29.09.2026): у 950 заметка
+    к «Новый или повторный» читала «повторный» по заказам, а дерево — по покупателю."""
+    put = pathlib.Path(__file__).with_name("014_vetki_povtornyh_v52.py")
+    if not put.exists():
+        return {}
+    spec = importlib.util.spec_from_file_location("m014", put)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return {(mid, imya): stalo for mid, imya, _, stalo in mod.ZAMETKI}
+
+
 def proverit(con):
     pretenzii = []
     pereimenovany = imena_posle_009()
+    zametki_014 = zametki_posle_014()
     for r in RAZREZY["novye"] + RAZREZY["pravka"]:
         v_baze = con.execute("select description, source, variants from dimension where name=?", (r["name"],)).fetchone()
         if v_baze != (r["description"], r["source"], r["variants"]):
             pretenzii.append(f"⛔ разрез «{r['name']}» в базе не совпадает со справочником")
     for m in NOVYE:
         for pr, _, n, note in m["dims"]:
+            note = zametki_014.get((m["id"], n), note)
             if not con.execute("""select 1 from metric_dimension md join dimension d on d.id=md.dimension_id
                                   where md.metric_id=? and d.name=? and md.priority=? and md.note=?""",
                                (m["id"], n, pr, note)).fetchone():

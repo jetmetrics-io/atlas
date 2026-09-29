@@ -123,12 +123,28 @@ def posle_011(con):
     return mod.primenena(con)
 
 
+def posle_014(con):
+    """Миграция 014 (29.09) перестроила ветки 1 и 2 по редакции 5.2: ушли 333, 317, 81, 323,
+    встали 11 мест, у 413 и 251 срез снят. Мест 16 → 23, связей 15 → 22, срезов 11 → 9."""
+    put = pathlib.Path(__file__).with_name("014_vetki_povtornyh_v52.py")
+    if not put.exists():
+        return False
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("m014", put)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.primenena(con)
+
+
 def proverit(con):
     pretenzii = []
     aid = con.execute("select id from artifact where slug=?", (SLUG,)).fetchone()
     if not aid: return ["⛔ артефакта дерева нет"]
     aid = aid[0]
-    zhdu_mest, zhdu_svyazey, zhdu_srezov = (16, 15, 11) if posle_011(con) else (15, 14, 10)
+    if posle_014(con):
+        zhdu_mest, zhdu_svyazey, zhdu_srezov = 23, 22, 9
+    else:
+        zhdu_mest, zhdu_svyazey, zhdu_srezov = (16, 15, 11) if posle_011(con) else (15, 14, 10)
     mest = con.execute("select count(*) from metric_artifact where artifact_id=?", (aid,)).fetchone()[0]
     if mest != zhdu_mest: pretenzii.append(f"⛔ мест {mest}, ожидалось {zhdu_mest}")
     klyuch = con.execute("select count(*) from metric_artifact where artifact_id=? and is_key=1",
