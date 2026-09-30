@@ -82,10 +82,25 @@ export function Reference({ tq, setTq, openMid, setOpenMid }: {
   const [F, setF] = useState<Filters>(emptyFilters)
   const [pop, setPop] = useState<Key | null>(null)
   const [popQ, setPopQ] = useState('')
-  // На странице Тильды iframe растёт под содержимое, и «прилипнуть» к экрану карточка
-  // не может — ставим её рядом со строкой, по которой нажали.
+  // На странице Тильды iframe растёт под содержимое, и сам «прилипнуть» к экрану карточка
+  // не может. Страница сообщает, где сейчас экран (jm-atlas-view: верх iframe относительно
+  // экрана и высота экрана), и карточка стоит справа на всю высоту экрана, как на карте
+  // (Мария 30.09). Пока сообщений нет (старый блок на Тильде) — рядом со строкой.
   const [anchor, setAnchor] = useState<number | null>(null)
+  const [view, setView] = useState<{ top: number; vh: number } | null>(null)
   const root = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!EMBED) return
+    const onMsg = (e: MessageEvent) => {
+      if (e.source !== window.parent) return
+      const d = e.data as { type?: string; top?: unknown; vh?: unknown } | null
+      if (d && d.type === 'jm-atlas-view' && typeof d.top === 'number' && typeof d.vh === 'number') {
+        setView({ top: d.top, vh: d.vh })
+      }
+    }
+    window.addEventListener('message', onMsg)
+    return () => window.removeEventListener('message', onMsg)
+  }, [])
 
   const fams = families()
   // Карты и деревья для фильтра — по направлениям; подчинённые деревья разбора прибыли
@@ -213,8 +228,21 @@ export function Reference({ tq, setTq, openMid, setOpenMid }: {
     } else setAnchor(null)
     setOpenMid(mid)
   }
+  // Открыли карточку — просим у страницы свежее положение экрана, не дожидаясь прокрутки.
+  useEffect(() => {
+    if (EMBED && openMid != null) try { window.parent.postMessage({ type: 'jm-atlas-want-view' }, '*') } catch { /* нет родителя */ }
+  }, [openMid])
   const openMetric = openMid != null ? refByMid(openMid) : undefined
-  const panelStyle: CSSProperties | undefined = EMBED ? { top: anchor ?? 0 } : undefined
+  const panelStyle: CSSProperties | undefined = !EMBED ? undefined : (() => {
+    if (!view || !root.current) return { top: anchor ?? 0 }
+    // видимая часть iframe в его собственных координатах: от верха экрана до низа экрана,
+    // но не выше начала и не ниже конца iframe
+    const y0 = Math.max(0, -view.top)
+    const y1 = Math.min(window.innerHeight, view.vh - view.top)
+    const r = root.current.getBoundingClientRect()
+    // карточка стоит в .ref, а прижаться должна к правому краю экрана, как на карте
+    return { top: y0 - (r.top + window.scrollY), height: Math.max(240, y1 - y0), right: r.right - document.documentElement.clientWidth }
+  })()
 
   if (!refReady()) return <div className="rempty">Загружаем справочник…</div>
 

@@ -890,8 +890,11 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 .rtable tbody tr { cursor: pointer; }
 .rtable tbody tr:hover td { background: #FAFCFB; }
 .rtable tbody tr.is-on td { background: var(--jm-green-tint); }
-.rtable th:nth-child(1) { width: 36%; } .rtable th:nth-child(2) { width: 25%; } .rtable th:nth-child(3) { width: 9%; }
-.rtable th:nth-child(4) { width: 10%; } .rtable th:nth-child(5) { width: 20%; }
+/* Четыре столбца: «Суть» из таблицы убрана 30.09. «Где стоит» шире остальных настолько,
+   чтобы самое длинное имя артефакта («Пожизненная ценность клиента (LTV)») вставало
+   не больше чем в две строки (Мария 30.09). */
+.rtable th:nth-child(1) { width: 34%; } .rtable th:nth-child(2) { width: 26%; } .rtable th:nth-child(3) { width: 10%; }
+.rtable th:nth-child(4) { width: 30%; }
 /* при наведении название метрики только меняет цвет, без подчёркивания (решение 29.09) */
 .rtable__nm { font-weight: var(--jm-w-semibold); color: var(--jm-ink); font-size: 14px; line-height: 1.3; text-decoration: none; transition: color .12s; }
 .rtable tbody tr:hover .rtable__nm, .rtable tbody tr.is-on .rtable__nm { color: var(--jm-green-deep); }
@@ -901,9 +904,9 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 .rtable .sign { font-size: 12px; padding: 2px 8px; border-radius: 6px; }
 .rtable__w { display: flex; flex-wrap: wrap; gap: 5px; }
 .rtable__none { font-size: 12px; color: var(--jm-text-3, #8a8f98); }
-.rchip { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; font: inherit; font-size: 12px; line-height: 1.3; padding: 3px 8px;
+.rchip { display: inline-flex; align-items: flex-start; gap: 5px; max-width: 100%; font: inherit; font-size: 12px; line-height: 1.3; padding: 3px 8px;
   border: 1px solid var(--jm-line); border-radius: 7px; background: var(--jm-surface); color: var(--jm-text); cursor: pointer; text-align: left; }
-.rchip svg { flex: none; color: var(--jm-faint); }
+.rchip svg { flex: none; color: var(--jm-faint); margin-top: 2px; } /* при переносе иконка остаётся у первой строки */
 .rchip:hover { border-color: var(--jm-green); color: var(--jm-green-deep); }
 .rchip.is-locked { color: var(--jm-faint); background: #FAFBFC; }
 .rchip.is-locked:hover { border-color: #C9D2D8; color: var(--jm-muted); }
