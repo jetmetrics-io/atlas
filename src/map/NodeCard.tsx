@@ -6,7 +6,7 @@ import { treeOfMetric, BASE, isSectionUnlocked } from '../atlas/atlas'
 import { metricContent, contentReady, onContentReady } from '../atlas/content'
 import { refByMid, onRefReady, midOfNode, isRefOnly, type RefPlace } from '../atlas/reference'
 import { metricDossier } from '../atlas/dossier'
-import { metricUrl, openTree, refUrl, openPlaceInNewTab } from '../site/nav'
+import { EMBED, metricUrl, openTree, refUrl, openPlaceInNewTab } from '../site/nav'
 import { copyText } from '../site/clipboard'
 import { openLockDialog } from '../site/LockDialog'
 
@@ -254,6 +254,17 @@ export function NodeCard({ node, siblings, onNavigate, onClose, mode = 'map', lo
   // не делает, читается как сломанная, и человек жмёт её снова и снова.
   const [copied, setCopied] = useState<CopyState>('')
   const [tookDossier, setTookDossier] = useState<CopyState>('')
+  // На странице Тильды справа сверху висит круглая иконка кабинета и ложится на кнопки
+  // карточки. Пока карточка открыта, просим страницу её спрятать (блок /hub-atlas,
+  // site-state/tilda/hub-atlas.html; на страницах карт её и так прячет HEAD сайта).
+  useEffect(() => {
+    if (!EMBED) return
+    const say = (open: boolean) => {
+      try { window.parent.postMessage({ type: 'jm-atlas-card', open }, '*') } catch { /* нет родителя */ }
+    }
+    say(true)
+    return () => say(false)
+  }, [])
   // Контент грузится отдельным файлом уже после карты: как только пришёл — перерисуемся.
   const [, force] = useState(0)
   useEffect(() => onContentReady(() => force((n) => n + 1)), [])
