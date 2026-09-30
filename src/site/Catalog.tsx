@@ -1,7 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { families as allFamilies, sectionsOfFamily, treesOfFamily, BASE, PAID, isSectionFree } from '../atlas/atlas'
-import { EMBED, BUY_URL, goTop, mapPageUrl } from './nav'
+import { refMetrics, refReady, onRefReady } from '../atlas/reference'
+import { EMBED, goTop, mapPageUrl } from './nav'
 import { Search } from './Search'
+import { Reference } from './Reference'
+import { openLockDialog } from './LockDialog'
+
+// Вид главной: каталог карт и деревьев или справочник метрик. Держим в адресе
+// (?view=metrics&metric=<номер>), чтобы на справочник и на метрику в нём можно было дать ссылку.
+const params = () => new URLSearchParams(window.location.search)
+const refFromUrl = () => params().get('view') === 'metrics'
+const midFromUrl = () => { const v = Number(params().get('metric')); return Number.isFinite(v) && v > 0 ? v : null }
 
 const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
   'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
@@ -64,10 +73,27 @@ export function Catalog({ onOpen, onOpenTree }: {
   // Атласа. Число приходит из Базы (meta.metrics); складывать метрики артефактов нельзя,
   // так получаются места, и общие записи считаются дважды.
   const totalMetrics = meta.metrics ?? 0
+  const refCount = refReady() ? refMetrics().length : totalMetrics
 
   // Фильтр каталога: карты и деревья читаются по-разному, и человек обычно приходит
   // за чем-то одним. Витрину бесплатного фильтр разбирает вместе с группами.
   const [kindFilter, setKindFilter] = useState<'all' | 'map' | 'tree'>('all')
+  // Справочник метрик — рядом с фильтром отдельной кнопкой, а не четвёртым значением
+  // фильтра: метрика не тип артефакта (решение Марии 29.09.2026). Шапка, поиск и строка
+  // фильтра при переключении остаются на месте — меняется только то, что под ними.
+  const [inRef, setInRef] = useState(refFromUrl)
+  const [openMid, setOpenMid] = useState<number | null>(midFromUrl)
+  const [q, setQ] = useState('')
+  // фильтр таблицы справочника по названию — поле в шапке столбца «Метрика»
+  const [tq, setTq] = useState('')
+  const [, force] = useState(0)
+  useEffect(() => onRefReady(() => force((n) => n + 1)), [])
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    if (inRef) url.searchParams.set('view', 'metrics'); else url.searchParams.delete('view')
+    if (inRef && openMid != null) url.searchParams.set('metric', String(openMid)); else url.searchParams.delete('metric')
+    window.history.replaceState(null, '', url.toString())
+  }, [inRef, openMid])
   const showMaps = kindFilter !== 'tree'
   const showTrees = kindFilter !== 'map'
 
@@ -75,7 +101,8 @@ export function Catalog({ onOpen, onOpenTree }: {
     [String(families.length), 'категорий'],
     [String(totalMaps), 'карт'],
     [String(trees.length), trees.length === 1 ? 'дерево' : 'деревьев'],
-    [String(totalMetrics), 'метрик'],
+    // все метрики Атласа — и неоплатившему: справочник показывает ему все, и лендинг обещает все
+    [String(refCount), 'метрик'],
   ]
 
   // Бесплатные карты (когда пользователь без оплаты) — для витрины сверху, чтобы первый
@@ -121,7 +148,7 @@ export function Catalog({ onOpen, onOpenTree }: {
       (locked ? ' mcard--locked' : '')
     return (
       <div key={s.slug} className={cls}
-        onClick={() => (locked ? goTop(BUY_URL) : tree ? onOpenTree(s.slug) : openCard(s.name))}>
+        onClick={() => (locked ? openLockDialog() : tree ? onOpenTree(s.slug) : openCard(s.name))}>
         {locked ? (
           // Замок-чип: в покое — только иконка; на ховере раскрывается в «Открыть все карты».
           // Абсолютное позиционирование → раскрытие НЕ меняет высоту карточки.
@@ -150,26 +177,52 @@ export function Catalog({ onOpen, onOpenTree }: {
         <div className="catalog__top">
           <div className="catalog__hero">
             <span className="eyebrow"><span className="line" />АТЛАС МЕТРИК</span>
-            <h1>Карты метрик <span className="ac">по направлениям</span></h1>
-            <p>Выберите направление. Внутри карта показателей: что на что влияет, прямо или обратно,
-              и на какие рычаги вы реально можете нажать.</p>
+            {inRef ? (
+              <>
+                <h1>Справочник <span className="ac">метрик</span></h1>
+                <p>Все {plural(refCount, 'метрика', 'метрики', 'метрик')} Атласа: что показывает каждая,
+                  как её считать и в каких картах и деревьях она стоит.</p>
+              </>
+            ) : (
+              <>
+                <h1>Карты метрик <span className="ac">по направлениям</span></h1>
+                <p>Выберите направление. Внутри карта показателей: что на что влияет, прямо или обратно,
+                  и на какие рычаги вы реально можете нажать.</p>
+              </>
+            )}
             <Search
+              q={q}
+              setQ={setQ}
               onOpenMap={(s) => openCard(s)}
-              onOpenMetric={(s, id) => openCard(s, id)}
-              onBuy={() => goTop(BUY_URL)}
+              onOpenMetric={(mid) => { setInRef(true); setOpenMid(mid) }}
+              onAllInRef={(query) => { setInRef(true); setOpenMid(null); setTq(query); setQ('') }}
+              onBuy={openLockDialog}
             />
 
-            <div className="kindbar" role="group" aria-label="Что показывать">
-              {([['all', 'Всё', totalMaps + trees.length],
-                 ['map', 'Карты', totalMaps],
-                 ['tree', 'Деревья', trees.length]] as const).map(([k, label, n]) => (
-                <button key={k} type="button"
-                  className={'kindbar__b' + (kindFilter === k ? ' is-on' : '')}
-                  aria-pressed={kindFilter === k}
-                  onClick={() => setKindFilter(k)}>
-                  {label}<span className="kindbar__n">{n}</span>
+            <div className="catalog__views">
+              <div className="kindbar" role="group" aria-label="Что показывать">
+                {([['all', 'Всё', totalMaps + trees.length],
+                   ['map', 'Карты', totalMaps],
+                   ['tree', 'Деревья', trees.length]] as const).map(([k, label, n]) => (
+                  <button key={k} type="button"
+                    className={'kindbar__b' + (!inRef && kindFilter === k ? ' is-on' : '')}
+                    aria-pressed={!inRef && kindFilter === k}
+                    onClick={() => { setKindFilter(k); setInRef(false); setOpenMid(null) }}>
+                    {label}<span className="kindbar__n">{n}</span>
+                  </button>
+                ))}
+              </div>
+              <span className="catalog__vsep" aria-hidden />
+              <div className="kindbar">
+                <button type="button" className={'kindbar__b' + (inRef ? ' is-on' : '')} aria-pressed={inRef}
+                  onClick={() => setInRef(true)}>
+                  <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+                    <path d="M5.5 4h8M5.5 8h8M5.5 12h8" /><circle cx="2.5" cy="4" r=".9" fill="currentColor" />
+                    <circle cx="2.5" cy="8" r=".9" fill="currentColor" /><circle cx="2.5" cy="12" r=".9" fill="currentColor" />
+                  </svg>
+                  Справочник метрик<span className="kindbar__n">{refCount}</span>
                 </button>
-              ))}
+              </div>
             </div>
           </div>
 
@@ -188,7 +241,11 @@ export function Catalog({ onOpen, onOpenTree }: {
           </aside>
         </div>
 
-        {(freeMaps.length > 0 || freeTrees.length > 0) && (
+        {inRef && (
+          <Reference tq={tq} setTq={setTq} openMid={openMid} setOpenMid={setOpenMid} />
+        )}
+
+        {!inRef && (freeMaps.length > 0 || freeTrees.length > 0) && (
           <section className="freebar">
             <div className="freebar__head">
               <span className="freebar__badge">Открыто бесплатно</span>
@@ -203,7 +260,7 @@ export function Catalog({ onOpen, onOpenTree }: {
           </section>
         )}
 
-        {families.map((fam) => {
+        {!inRef && families.map((fam) => {
           const secs = showMaps ? sectionsOfFamily(fam) : []
           const fTrees = showTrees ? treesOfFamily(fam) : []
           if (!secs.length && !fTrees.length) return null

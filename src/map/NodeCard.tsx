@@ -1,12 +1,14 @@
-import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react'
 import { trackMetric } from '../site/analytics'
 import type { AtlasNode } from '../atlas/types'
-import { roleStyle } from '../atlas/style'
-import { treeOfMetric, BASE } from '../atlas/atlas'
+import { roleStyle, ROLE_DEFAULT } from '../atlas/style'
+import { treeOfMetric, BASE, isSectionUnlocked } from '../atlas/atlas'
 import { metricContent, contentReady, onContentReady } from '../atlas/content'
+import { refByMid, onRefReady, midOfNode, isRefOnly, type RefPlace } from '../atlas/reference'
 import { metricDossier } from '../atlas/dossier'
-import { metricUrl, openTree } from '../site/nav'
+import { metricUrl, openTree, refUrl, openPlaceInNewTab } from '../site/nav'
 import { copyText } from '../site/clipboard'
+import { openLockDialog } from '../site/LockDialog'
 
 export type LinkTarget = { name: string; id: string }
 
@@ -165,13 +167,85 @@ function EssenceChip({ essence, note }: { essence: string; note?: string }) {
   )
 }
 
-export function NodeCard({ node, siblings, onNavigate, onClose }: {
+const LOCK_ICON = (
+  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"
+    strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" />
+  </svg>
+)
+const MAP_ICON = (
+  <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+    <rect x="1.5" y="2.5" width="13" height="11" rx="2" /><path d="M5.5 2.5v11M10.5 2.5v11" />
+  </svg>
+)
+const TREE_ICON = (
+  <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+    <circle cx="8" cy="3" r="1.8" /><circle cx="3.5" cy="13" r="1.8" /><circle cx="12.5" cy="13" r="1.8" />
+    <path d="M8 4.8V8M8 8H3.5v3.2M8 8h4.5v3.2" />
+  </svg>
+)
+
+// «Где стоит»: все места метрики группами «на карте / в деревьях», у места — его роль
+// (роль принадлежит месту, свод C-28, C-29). Блок один для карт, деревьев и справочника:
+// карточка сквозная (решение Марии 29.09.2026). Место, где читатель сейчас, помечено
+// и не кликается; остальные открываются новой вкладкой, закрытые — окном «в полной версии».
+function WherePlaces({ places, here }: { places: RefPlace[]; here?: string }) {
+  const row = (p: RefPlace) => {
+    const rs = roleStyle(p.role)
+    const role = (
+      <span className="where__role" style={{ color: rs.text }}>
+        <i style={{ background: rs.color }} />{rs.label}
+      </span>
+    )
+    if (p.node === here) {
+      return (
+        <div key={p.node} className="where__row is-here">
+          <span className="where__nm">{p.type === 'tree' ? TREE_ICON : MAP_ICON}<span>{p.a}</span>
+            <span className="where__here">вы здесь</span></span>{role}
+        </div>
+      )
+    }
+    const locked = !isSectionUnlocked(p.a)
+    return (
+      <button key={p.node} type="button" className={`where__row${locked ? ' is-locked' : ''}`}
+        onClick={() => (locked ? openLockDialog() : openPlaceInNewTab(p.a, p.node))}>
+        <span className="where__nm">{locked ? LOCK_ICON : p.type === 'tree' ? TREE_ICON : MAP_ICON}<span>{p.a}</span></span>
+        {role}
+      </button>
+    )
+  }
+  const group = (type: 'map' | 'tree', one: string, many: string) => {
+    const ps = places.filter((p) => p.type === type)
+    return ps.length ? (
+      <div className="where__grp">
+        <div className="where__h">{ps.length > 1 ? many : one}</div>
+        {ps.map(row)}
+      </div>
+    ) : null
+  }
+  if (!places.length) return <div className="where"><div className="where__none">Пока ни на одной карте</div></div>
+  return <div className="where">{group('map', 'На карте', 'На картах')}{group('tree', 'В дереве', 'В деревьях')}</div>
+}
+
+export function NodeCard({ node, siblings, onNavigate, onClose, mode = 'map', locked = false, className = '', style }: {
   node: AtlasNode
   siblings: LinkTarget[]
   onNavigate: (id: string) => void
   onClose: () => void
+  /** 'ref' — карточка открыта в справочнике: места у неё нет, поэтому вместо роли
+   *  в шапке «Метрика», ссылка ведёт в справочник, кнопки «Дерево этой метрики» нет. */
+  mode?: 'map' | 'ref'
+  /** Метрика только из платных артефактов у неоплатившего: вкладки, кроме «Сути»,
+   *  под замком, досье нет. В карточке — только то, что видно в таблице справочника. */
+  locked?: boolean
+  className?: string
+  style?: CSSProperties
 }) {
-  const rs = roleStyle(node.role)
+  const inRef = mode === 'ref'
+  const rs = inRef ? ROLE_DEFAULT : roleStyle(node.role)
+  // В аналитике метрика из справочника идёт своим адресом, а не адресом случайного места.
+  const trackNode = inRef && node.mid != null
+    ? { id: `spravochnik/${node.mid}`, section: 'Справочник', name: node.name } : node
   // Вкладка по умолчанию — первая в TABS, а не 'essence' строкой: тогда перестановка
   // или добавление вкладки не требует правок здесь.
   const [tab, setTab] = useState<Tab>(TABS[0].key)
@@ -183,6 +257,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
   // Контент грузится отдельным файлом уже после карты: как только пришёл — перерисуемся.
   const [, force] = useState(0)
   useEffect(() => onContentReady(() => force((n) => n + 1)), [])
+  useEffect(() => onRefReady(() => force((n) => n + 1)), [])
   // Новая метрика — снова открываем первую вкладку.
   // Здесь же считаем открытие метрики и показ первой вкладки.
   // React.StrictMode в деве прогоняет эффект дважды — без этой отсечки открытие
@@ -193,18 +268,31 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
     setTab(TABS[0].key)
     setCopied('')
     setTookDossier('')
-    if (tracked.current !== node.id) {
-      tracked.current = node.id
+    if (tracked.current !== trackNode.id) {
+      tracked.current = trackNode.id
       // Два события: сам факт открытия и показ первой вкладки — она показывается
       // без клика, но это такой же показ, как и любой другой.
-      trackMetric('metric_open', node, TABS[0].key, TABS[0].label)
-      trackMetric('metric_view', node, TABS[0].key, TABS[0].label)
+      trackMetric('metric_open', trackNode, TABS[0].key, TABS[0].label)
+      trackMetric('metric_view', trackNode, TABS[0].key, TABS[0].label)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [node.id])
 
   const c = metricContent(node.id)
-  const L = (t: string) => withExplicit(t, siblings, onNavigate)
+  // Открытые поля справочника — запасной источник: у метрики платной карты неоплатившему
+  // контент не приходит, а суть и другие имена в таблице видны всем.
+  const ref = refByMid(node.mid)
+  // Ссылка на метрику без места ведёт в справочник: с карты и из дерева — новой вкладкой,
+  // в самом справочнике карточка открывается на месте (onNavigate справочника знает адрес).
+  const nav = (id: string) => {
+    if (!inRef && isRefOnly(id)) {
+      const mid = midOfNode(id)
+      if (mid != null) window.open(refUrl(mid), '_blank', 'noopener')
+      return
+    }
+    onNavigate(id)
+  }
+  const L = (t: string) => withExplicit(t, siblings, nav)
 
   // Поля контента с запасным вариантом из базы, пока файл не приехал.
   const description = c['Описание'] || node.description
@@ -215,15 +303,15 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
   const whenNot = c['Когда не нужна']
   // Суть: тег направления стоит рядом с единицей, объяснение открывается по знаку
   // вопроса. Постоянно виден знак, фраза вызывается наведением — решено 04.09.2026.
-  const essence = c['Суть']
+  const essence = c['Суть'] || ref?.ess
   const essenceNote = c['Суть · пояснение']
   // Другие имена метрики: русский синоним и английское название. Хранятся строкой,
   // несколько имён разделены «;» — показываем списком, по имени на строку.
-  const synonyms = names(c['Синонимы'])
-  const english = names(c['EN'])
+  const synonyms = names(c['Синонимы'] || ref?.syn)
+  const english = names(c['EN'] || ref?.en)
   const dims = c['Разрезы'] ?? []
   // Метрика, которую разбирает своё дерево: из карточки в него ведёт кнопка.
-  const tree = treeOfMetric(node)
+  const tree = inRef ? undefined : treeOfMetric(node)
   // С карты дерево открывается новой вкладкой: это другой артефакт, и карта,
   // с которой пришли, должна остаться. Внутри разбора переход идёт на месте.
   const fromMap = !(BASE.trees ?? []).some((t) => t.name === node.section)
@@ -235,7 +323,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
   // приложения ведёт на бакет, поэтому собираем публичный адрес, а не берём location.
   const copyLink = async () => {
     // У метрики дерева свой вид адреса: ?tree=, а не ?map= (site/nav.ts).
-    const url = metricUrl(node.section, node.id)
+    const url = inRef && node.mid != null ? refUrl(node.mid) : metricUrl(node.section, node.id)
     const ok = await copyText(url.startsWith('http') ? url : `${window.location.origin}${url}`)
     setCopied(ok ? 'ok' : 'fail')
     window.setTimeout(() => setCopied(''), 1800)
@@ -248,12 +336,12 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
     const ok = await copyText(metricDossier(node))
     setTookDossier(ok ? 'ok' : 'fail')
     // Считаем только удавшееся копирование: отказ буфера — не действие читателя.
-    if (ok) trackMetric('metric_copy', node, tab, TABS.find((t) => t.key === tab)?.label ?? '')
+    if (ok) trackMetric('metric_copy', trackNode, tab, TABS.find((t) => t.key === tab)?.label ?? '')
     window.setTimeout(() => setTookDossier(''), 1800)
   }
 
   return (
-    <aside className="panel">
+    <aside className={`panel ${className}`.trim()} style={style}>
       <button className="panel__close" onClick={onClose} aria-label="Закрыть">×</button>
       <button
         className={`panel__copy${copied === 'ok' ? ' is-done' : ''}${copied === 'fail' ? ' is-fail' : ''}`}
@@ -302,7 +390,17 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
         )}
       </div>
 
-      {(hasCalc || hasWhy || hasDims) && (
+      {locked ? (
+        // Вкладки видны, чтобы было понятно, что ещё есть в карточке; сами тексты закрыты.
+        <div className="panel__tabs" role="tablist">
+          {TABS.map((t) => t.key === 'essence' ? (
+            <button key={t.key} role="tab" className="panel__tab" aria-selected>{t.label}</button>
+          ) : (
+            <button key={t.key} role="tab" className="panel__tab is-locked" aria-selected={false}
+              onClick={openLockDialog}>{t.label}{LOCK_ICON}</button>
+          ))}
+        </div>
+      ) : (hasCalc || hasWhy || hasDims) && (
         <div className="panel__tabs" role="tablist">
           {TABS.map((t) => {
             const disabled = (t.key === 'calc' && !hasCalc) || (t.key === 'why' && !hasWhy) ||
@@ -314,7 +412,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
                 role="tab"
                 className="panel__tab"
                 aria-selected={tab === t.key}
-                onClick={() => { setTab(t.key); trackMetric('metric_view', node, t.key, t.label) }}
+                onClick={() => { setTab(t.key); trackMetric('metric_view', trackNode, t.key, t.label) }}
               >
                 {t.label}
               </button>
@@ -329,7 +427,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
             {description && (
               <div className="panel__section">
                 <div className="panel__label">Что это</div>
-                <div className="panel__text">{parts(description).map((p, i) => <p key={i} className="panel__para">{bold(p, siblings, onNavigate)}</p>)}</div>
+                <div className="panel__text">{parts(description).map((p, i) => <p key={i} className="panel__para">{bold(p, siblings, nav)}</p>)}</div>
               </div>
             )}
             {formula && (
@@ -349,6 +447,12 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
                   {node.units && <span className="chip chip--unit">{node.units}</span>}
                   {essence && <EssenceChip essence={essence} note={essenceNote} />}
                 </div>
+              </div>
+            )}
+            {ref && (
+              <div className="panel__section">
+                <div className="panel__label">Где стоит</div>
+                <WherePlaces places={ref.places} here={inRef ? undefined : node.id} />
               </div>
             )}
             {tree && (
@@ -375,7 +479,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
               <div className="panel__section">
                 <div className="panel__label">Нюансы расчёта</div>
                 <ul className="panel__bullets">
-                  {nuances.map((n, i) => <li key={i}>{bold(n, siblings, onNavigate)}</li>)}
+                  {nuances.map((n, i) => <li key={i}>{bold(n, siblings, nav)}</li>)}
                 </ul>
               </div>
             )}
@@ -389,7 +493,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
                     const isResult = line.includes('**')
                     return (
                       <div key={i} className={isResult ? 'panel__example-result' : undefined}>
-                        {bold(nbsp(line), siblings, onNavigate)}
+                        {bold(nbsp(line), siblings, nav)}
                       </div>
                     )
                   })}
@@ -416,7 +520,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
               <div className="panel__section">
                 <div className="panel__label">Важность</div>
                 <div className="panel__text">
-                  {parts(why).map((p, i) => <p key={i} className="panel__para">{bold(p, siblings, onNavigate)}</p>)}
+                  {parts(why).map((p, i) => <p key={i} className="panel__para">{bold(p, siblings, nav)}</p>)}
                 </div>
               </div>
             )}
@@ -424,7 +528,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
               <div className="panel__section">
                 <div className="panel__label">Когда не нужна</div>
                 <div className="panel__text">
-                  {parts(whenNot).map((p, i) => <p key={i} className="panel__para">{bold(p, siblings, onNavigate)}</p>)}
+                  {parts(whenNot).map((p, i) => <p key={i} className="panel__para">{bold(p, siblings, nav)}</p>)}
                 </div>
               </div>
             )}
@@ -432,7 +536,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
         )}
       </div>
 
-      <div className="panel__foot">
+      {!locked && <div className="panel__foot">
         <button
           className={`panel__dossier${tookDossier === 'ok' ? ' is-done' : ''}${tookDossier === 'fail' ? ' is-fail' : ''}`}
           onClick={copyDossier}
@@ -445,7 +549,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose }: {
             : tookDossier === 'fail' ? 'Не удалось скопировать'
             : 'Скопировать досье о метрике'}
         </button>
-      </div>
+      </div>}
     </aside>
   )
 }

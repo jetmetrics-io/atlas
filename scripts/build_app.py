@@ -3,7 +3,7 @@
 
     python3 scripts/build_app.py [--db <путь>] [--out <папка>] [--check <эталон>]
 
-Четыре файла на выходе:
+Пять файлов на выходе:
 
 | Файл                | Что внутри                                                |
 |---------------------|-----------------------------------------------------------|
@@ -11,6 +11,12 @@
 | `atlas_free.json`   | тот же каталог целиком, но узлы только бесплатных карт    |
 | `content_full.json` | карточки всех метрик                                      |
 | `content_free.json` | карточки метрик из бесплатных карт                        |
+| `reference.json`    | справочник: открытые поля всех метрик и их места          |
+
+`reference.json` один на всех: в справочнике неоплативший видит все метрики —
+название, единицу, суть, определение и формулу (решение Марии 29.09.2026).
+Нюансов, примера, важности и разрезов в нём нет: они остаются в `content_*`
+и режутся гейтом, как раньше. Первые четыре файла от него не зависят.
 
 ⛔ **Каталог одинаков в обеих выгрузках.** В `families`, `sections` и `trees`
 перечислены ВСЕ артефакты, платные тоже: неоплативший должен видеть их в каталоге
@@ -250,6 +256,54 @@ def sobrat_kartochki(con, node_ids):
     return karty
 
 
+def adres_bez_mesta(slug):
+    """Адрес метрики, у которой нет места ни на карте, ни в дереве."""
+    return f"spravochnik/{slug}"
+
+
+def bez_mesta(con):
+    """(адрес, mid) метрик без места — их карточки идут только в полную выгрузку:
+    метрика не стоит ни в одном бесплатном артефакте."""
+    return [(adres_bez_mesta(r["slug"]), r["id"]) for r in con.execute(
+        """select id, slug from metric m
+           where not exists (select 1 from metric_artifact p where p.metric_id = m.id) order by id""")]
+
+
+def sobrat_spravochnik(con):
+    """Справочник метрик: строка на метрику, у неё — все места (артефакт, тип, доступ, роль).
+
+    Роль берётся у места (`metric_artifact.role`): на карте — роль карты, в дереве —
+    ярус. Своей роли у метрики нет (свод C-28, C-29). Семья — у артефакта; по ней
+    справочник фильтрует «Направление».
+    """
+    semya = {r["id"]: r["key"] for r in con.execute("select id, key from family")}
+    arty = {r["id"]: dict(r) for r in con.execute("select id, name, type, access, family_id from artifact")}
+    mesta = {}
+    for r in con.execute("select metric_id, artifact_id, node_id, role from metric_artifact order by id"):
+        a = arty[r["artifact_id"]]
+        mesto = {"node": r["node_id"], "a": a["name"], "type": a["type"], "access": a["access"],
+                 "role": r["role"]}
+        if semya.get(a["family_id"]):
+            mesto["fam"] = semya[a["family_id"]]
+        mesta.setdefault(r["metric_id"], []).append(mesto)
+    metriki = []
+    for m in con.execute("""select id, slug, name, unit, formula, alt_formula, description, en, synonyms,
+                                   essence from metric order by id"""):
+        z = {"mid": m["id"], "name": m["name"]}
+        # Метрика без места живёт только в справочнике: у неё свой адрес вместо узла,
+        # по нему открывается карточка и ведут ссылки [[…→spravochnik/<slug>]] (Мария 30.09).
+        if m["id"] not in mesta:
+            z["node"] = adres_bez_mesta(m["slug"])
+        for klyuch, znach in (("unit", m["unit"]), ("ess", m["essence"]), ("desc", m["description"]),
+                              ("formula", formula_celikom(m["formula"], m["alt_formula"])),
+                              ("syn", m["synonyms"]), ("en", m["en"])):
+            if znach:
+                z[klyuch] = znach
+        z["places"] = mesta.get(m["id"], [])
+        metriki.append(z)
+    return {"metrics": metriki}
+
+
 def zapisat(put, dannye):
     """Одной строкой, юникод как есть — так собран бой, так читается diff."""
     put.write_text(json.dumps(dannye, ensure_ascii=False), encoding="utf-8")
@@ -295,10 +349,11 @@ def sobrat(db_put, out_put, data_segodnya=None):
         "meta": shapka(uzly_free, svyazi_free), "families": semyi, "sections": karty,
         "trees": derevya, "nodes": uzly_free, "edges": svyazi_free})
 
-    vse_mesta   = [(u["id"], u["mid"]) for u in uzly]
+    vse_mesta   = [(u["id"], u["mid"]) for u in uzly] + bez_mesta(con)
     free_mesta  = [(u["id"], u["mid"]) for u in uzly_free]
     itog["content_full.json"] = zapisat(out / "content_full.json", sobrat_kartochki(con, vse_mesta))
     itog["content_free.json"] = zapisat(out / "content_free.json", sobrat_kartochki(con, free_mesta))
+    itog["reference.json"] = zapisat(out / "reference.json", sobrat_spravochnik(con))
 
     print(f"── Выгрузка собрана из {db_put} ──")
     print(f"   узлов {len(uzly)} · метрик {len({u['mid'] for u in uzly})} · связей {len(svyazi)}"

@@ -5,6 +5,7 @@ import './index.css'
 import App from './App'
 import { initAtlas } from './atlas/atlas'
 import { loadContent } from './atlas/content'
+import { loadReference } from './atlas/reference'
 import { resolveEmail, isPaid } from './site/access'
 import type { AtlasBase } from './atlas/types'
 
@@ -34,6 +35,8 @@ async function boot() {
   // 4. Контент карточек — параллельно, без await: карта рисуется сразу, тексты
   //    подъезжают следом и панель перерисовывается сама (см. atlas/content.ts).
   loadContent(paid, './')
+  // Справочник метрик — тоже параллельно: один файл на всех, каталог его не ждёт.
+  loadReference('./')
   root.render(
     <React.StrictMode>
       <App />

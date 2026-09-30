@@ -79,3 +79,26 @@ export function goTop(url: string) {
   } catch { /* cross-origin: читать нельзя, но навигация ниже сработает */ }
   window.location.href = url
 }
+
+/** Адрес метрики в справочнике: каталог с ?view=metrics&metric=<номер метрики>. */
+export function refUrl(mid: number): string {
+  if (EMBED) return `${CATALOG_PAGE}?view=metrics&metric=${mid}`
+  const paid = new URLSearchParams(window.location.search).get('paid') === '1' ? '&paid=1' : ''
+  return `${window.location.origin}${window.location.pathname}?view=metrics&metric=${mid}${paid}`
+}
+
+/** Открыть метрику в её карте или дереве НОВОЙ вкладкой: справочник или карта, откуда
+ *  пришли, остаются на месте (решение Марии 29.09.2026). На сайте — страница артефакта
+ *  на Тильде, локально — свой же адрес (с отмычкой ?paid=1, если она стоит). */
+export function openPlaceInNewTab(section: string, nodeId: string) {
+  let url: string
+  if (EMBED) url = metricUrl(section, nodeId)
+  else {
+    const tree = (BASE.trees ?? []).find((t) => t.name === section)
+    const q = new URLSearchParams(tree ? { tree: tree.slug, node: nodeId } : { map: section, node: nodeId })
+    if (new URLSearchParams(window.location.search).get('paid') === '1') q.set('paid', '1')
+    url = `${window.location.origin}${window.location.pathname}?${q}`
+  }
+  window.open(url, '_blank', 'noopener')
+}
+

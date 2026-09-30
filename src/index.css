@@ -826,3 +826,141 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
   .qpanel { width: 100%; }
   .tree.has-qs .panel { width: calc(100% - 28px); }
 }
+
+/* ══ Справочник метрик (главная Атласа, ?view=metrics) ══════════════════════════
+   Макет и решения — 29.09.2026, Мария. Строка фильтров одна; таблица — строка на
+   метрику; карточка та же, что на картах (NodeCard, mode="ref"). */
+.catalog { position: relative; }
+.catalog__views { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin-top: var(--jm-space-4); }
+.catalog__views .kindbar { margin-top: 0; }
+.catalog__vsep { width: 1px; height: 26px; background: var(--jm-line); }
+.kindbar__b svg { color: var(--jm-faint); }
+.kindbar__b.is-on svg { color: var(--jm-green); }
+
+.ref { position: relative; }
+.rempty { padding: 28px; text-align: center; color: var(--jm-muted); }
+
+
+.rbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 8px 0 12px; }
+.rfilter { position: relative; }
+.rfbtn { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--jm-line); background: var(--jm-surface);
+  border-radius: 10px; padding: 7px 11px; font: inherit; font-size: 13px; color: var(--jm-text); cursor: pointer; white-space: nowrap; }
+.rfbtn svg { color: var(--jm-faint); }
+.rfbtn:hover { border-color: #C9D2D8; }
+.rfbtn.is-on { border-color: var(--jm-green); background: var(--jm-green-tint); color: var(--jm-green-deep); font-weight: var(--jm-w-semibold); }
+.rfbtn.is-on svg { color: var(--jm-green); }
+.rfbtn[aria-expanded="true"] { box-shadow: 0 0 0 3px var(--jm-green-tint); }
+.rbar__end { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.rbar__n { font-family: var(--jm-font-mono); font-size: 12px; color: var(--jm-faint); white-space: nowrap; }
+.rbar__reset { border: 0; background: none; padding: 0; font: inherit; font-size: 13px; color: var(--jm-muted); cursor: pointer;
+  text-decoration: underline; text-decoration-color: var(--jm-line); text-underline-offset: 3px; }
+.rbar__reset:hover { color: var(--jm-coral-text); }
+
+.rpop { position: absolute; top: calc(100% + 6px); left: 0; z-index: 35; width: 300px; max-width: calc(100vw - 32px);
+  background: var(--jm-surface); border: 1px solid var(--jm-line); border-radius: var(--jm-r-md); box-shadow: var(--jm-e3);
+  padding: 6px; display: flex; flex-direction: column; max-height: 420px; }
+.rpop--wide { width: 360px; }
+.rpop__q { margin: 2px 2px 6px; font: inherit; font-size: 13px; padding: 7px 10px; border: 1px solid var(--jm-line);
+  border-radius: var(--jm-r-sm); outline: none; background: var(--jm-bg); }
+.rpop__q:focus { border-color: var(--jm-green); background: var(--jm-surface); }
+.rpop__list { overflow: auto; display: grid; gap: 1px; }
+.ropt { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 9px; align-items: center; border: 0; background: none;
+  text-align: left; padding: 7px 8px; border-radius: 7px; font: inherit; font-size: 13.5px; color: var(--jm-text); cursor: pointer; width: 100%; }
+.ropt:hover { background: var(--jm-bg); }
+.ropt.is-sub { padding-left: 24px; }
+.ropt.is-zero { opacity: .4; }
+.ropt__l { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.ropt__l > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ropt__l svg { flex: none; color: var(--jm-faint); }
+.ropt__par { color: var(--jm-faint); font-size: 12px; }
+.ropt__n { font-family: var(--jm-font-mono); font-size: 11px; color: var(--jm-faint); }
+.ropt__cb { width: 16px; height: 16px; border: 1.5px solid #C4CCD2; border-radius: 4px; display: grid; place-items: center; background: var(--jm-surface); }
+.ropt[aria-checked="true"] .ropt__cb { background: var(--jm-green); border-color: var(--jm-green); }
+.ropt[aria-checked="true"] .ropt__cb::after { content: ""; width: 8px; height: 4px; border-left: 2px solid #fff; border-bottom: 2px solid #fff; transform: rotate(-45deg) translate(1px, -1px); }
+.ropt.is-grp { font-weight: var(--jm-w-semibold); color: var(--jm-ink); margin-top: 4px; }
+.ropt[aria-checked="mixed"] .ropt__cb { background: var(--jm-green); border-color: var(--jm-green); }
+.ropt[aria-checked="mixed"] .ropt__cb::after { content: ""; width: 8px; height: 2px; background: #fff; border-radius: 1px; }
+.ropt__empty { padding: 20px; text-align: center; color: var(--jm-muted); font-size: 13px; }
+
+.rtable-wrap { overflow-x: auto; border: 1px solid var(--jm-line); border-radius: var(--jm-r-md); background: var(--jm-surface); }
+.rtable { width: 100%; min-width: 960px; border-collapse: separate; border-spacing: 0; font-size: 13.5px; }
+.rtable th { position: sticky; top: 0; z-index: 2; background: #FAFBFC; text-align: left; font-family: var(--jm-font-mono); font-size: 10.5px;
+  font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--jm-faint); padding: 10px 12px; border-bottom: 1px solid var(--jm-line); }
+.rtable td { padding: 11px 12px; border-bottom: 1px solid var(--jm-line-soft); vertical-align: top; }
+.rtable tbody tr { cursor: pointer; }
+.rtable tbody tr:hover td { background: #FAFCFB; }
+.rtable tbody tr.is-on td { background: var(--jm-green-tint); }
+.rtable th:nth-child(1) { width: 36%; } .rtable th:nth-child(2) { width: 25%; } .rtable th:nth-child(3) { width: 9%; }
+.rtable th:nth-child(4) { width: 10%; } .rtable th:nth-child(5) { width: 20%; }
+/* при наведении название метрики только меняет цвет, без подчёркивания (решение 29.09) */
+.rtable__nm { font-weight: var(--jm-w-semibold); color: var(--jm-ink); font-size: 14px; line-height: 1.3; text-decoration: none; transition: color .12s; }
+.rtable tbody tr:hover .rtable__nm, .rtable tbody tr.is-on .rtable__nm { color: var(--jm-green-deep); }
+.rtable__ds { color: var(--jm-muted); font-size: 13px; line-height: 1.45; margin-top: 3px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.rtable__f { font-family: var(--jm-font-mono); font-size: 12px; line-height: 1.5; color: var(--jm-text); }
+.rtable__u { display: inline-block; font-size: 12px; padding: 2px 8px; border: 1px solid var(--jm-line); border-radius: 6px; white-space: nowrap; }
+.rtable .sign { font-size: 12px; padding: 2px 8px; border-radius: 6px; }
+.rtable__w { display: flex; flex-wrap: wrap; gap: 5px; }
+.rtable__none { font-size: 12px; color: var(--jm-text-3, #8a8f98); }
+.rchip { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; font: inherit; font-size: 12px; line-height: 1.3; padding: 3px 8px;
+  border: 1px solid var(--jm-line); border-radius: 7px; background: var(--jm-surface); color: var(--jm-text); cursor: pointer; text-align: left; }
+.rchip svg { flex: none; color: var(--jm-faint); }
+.rchip:hover { border-color: var(--jm-green); color: var(--jm-green-deep); }
+.rchip.is-locked { color: var(--jm-faint); background: #FAFBFC; }
+.rchip.is-locked:hover { border-color: #C9D2D8; color: var(--jm-muted); }
+
+/* карточка в справочнике: у каталога своя прокрутка страницы, поэтому карточка прибита
+   к экрану; на Тильде iframe растёт под содержимое — там она встаёт рядом со строкой */
+.panel.panel--ref { position: fixed; z-index: 40; }
+.panel.panel--ref-embed { position: absolute; bottom: auto; height: 760px; }
+.panel__tab.is-locked { display: inline-flex; align-items: center; gap: 5px; color: var(--jm-faint); }
+
+/* «Где стоит» в карточке — места группами «на карте / в деревьях», у места его роль */
+.where { display: grid; gap: 12px; }
+.where__grp { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.where__none { font-size: 13px; color: var(--jm-text-3, #8a8f98); }
+.where__h { font-size: 12px; color: var(--jm-faint); }
+.where__row { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-width: 0; font: inherit;
+  font-size: 13px; padding: 7px 10px; border: 1px solid var(--jm-line); border-radius: 7px; background: var(--jm-surface);
+  color: var(--jm-text); cursor: pointer; text-align: left; }
+.where__row:hover { border-color: var(--jm-green); color: var(--jm-green-deep); }
+.where__row.is-here { cursor: default; background: var(--jm-bg); border-color: var(--jm-line-soft); }
+.where__row.is-here:hover { color: var(--jm-text); }
+.where__row.is-locked { color: var(--jm-faint); background: #FAFBFC; }
+.where__row.is-locked:hover { border-color: #C9D2D8; color: var(--jm-muted); }
+.where__nm { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.where__nm > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.where__nm svg { flex: none; color: var(--jm-faint); }
+.where__here { font-size: 11px; color: var(--jm-faint); flex: none; }
+.where__role { display: inline-flex; align-items: center; gap: 5px; font-family: var(--jm-font-mono); font-size: 10.5px; letter-spacing: .04em;
+  text-transform: uppercase; font-weight: 600; flex: none; }
+.where__role i { width: 7px; height: 7px; border-radius: 2px; }
+
+/* поиск: переход ко всем найденным метрикам в справочнике */
+.asearch__all { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 4px; padding: 10px 10px 6px;
+  border: 0; border-top: 1px solid var(--jm-line-soft); background: none; font: inherit; font-size: var(--jm-body-s);
+  color: var(--jm-green-press); font-weight: var(--jm-w-semibold); cursor: pointer; text-align: left; }
+.asearch__all:hover { color: var(--jm-green-deep); }
+
+/* окно «Доступно в полной версии»: по центру, кнопки одной высоты по центру */
+.lockdlg { position: fixed; inset: 0; z-index: 90; background: rgba(8, 11, 13, .32); display: grid; place-items: center; padding: 16px; }
+.lockdlg__box { width: min(380px, 100%); background: var(--jm-surface); border-radius: 16px; box-shadow: var(--jm-e3); padding: 22px 22px 18px; display: grid; gap: 12px; }
+.lockdlg__ic { width: 36px; height: 36px; border-radius: 10px; background: var(--jm-green-tint); color: var(--jm-green); display: grid; place-items: center; }
+.lockdlg__box h3 { margin: 0; font-size: 18px; font-weight: var(--jm-w-bold); line-height: 1.3; color: var(--jm-ink); }
+.lockdlg__box p { margin: 0; font-size: 14px; color: var(--jm-muted); }
+.lockdlg__act { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 6px; }
+.lockdlg__btn { height: 40px; padding: 0 16px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px;
+  border: 1px solid var(--jm-line); background: var(--jm-surface); color: var(--jm-green-press); font: inherit; font-weight: 600; font-size: 13.5px; cursor: pointer; }
+.lockdlg__btn--go { background: var(--jm-green); border-color: var(--jm-green); color: #fff; }
+.lockdlg__btn--go:hover { background: var(--jm-green-press); }
+
+/* фильтр таблицы по названию — в шапке столбца «Метрика» */
+.rth-q { display: flex; align-items: center; gap: 10px; }
+.rth-q__f { display: inline-flex; align-items: center; gap: 6px; flex: 1 1 auto; height: 28px; padding: 0 9px; margin: -4px 0;
+  border: 1px solid var(--jm-line); border-radius: 7px; background: var(--jm-surface); color: var(--jm-faint);
+  text-transform: none; letter-spacing: 0; font-family: var(--jm-font-sans); font-weight: 400; }
+.rth-q__f:focus-within { border-color: var(--jm-green); box-shadow: 0 0 0 2px var(--jm-green-tint); }
+.rth-q__f input { flex: 1 1 auto; min-width: 0; border: 0; outline: none; background: none; font: inherit; font-size: 12.5px; color: var(--jm-text); }
+.rth-q__f input::placeholder { color: var(--jm-faint); }
+.rth-q__f button { border: 0; background: none; padding: 0 2px; cursor: pointer; color: var(--jm-faint); font-size: 14px; line-height: 1; }
+.rth-q__f button:hover { color: var(--jm-ink); }
+

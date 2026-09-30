@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Footer } from './site/Footer'
 import { Catalog } from './site/Catalog'
+import { LockDialogHost } from './site/LockDialog'
 import { MapView } from './map/MapView'
 import { TreeView, treeExists } from './tree/TreeView'
 import { BASE, isSectionUnlocked } from './atlas/atlas'
@@ -110,9 +111,11 @@ export default function App() {
             if (nodeId) url.searchParams.set('node', nodeId)
             else url.searchParams.delete('node')
             window.history.replaceState(null, '', url.toString())
-            setDrillTo(null)
+            // подчинённое дерево — как по адресу: родитель с провалом внутрь (treeFromUrl)
+            const t = (BASE.trees ?? []).find((x) => x.slug === slug)
+            setDrillTo(t?.parent ? t.name : null)
             setUrlTree(slug)
-            setTree(slug)
+            setTree(t?.parent ?? slug)
             window.scrollTo(0, 0)
           }} onOpen={(s, nodeId) => {
             // Метрика из поиска: адрес правим ДО монтирования карты — MapView
@@ -126,6 +129,7 @@ export default function App() {
         )}
       </main>
       {!EMBED && !section && <Footer />}
+      <LockDialogHost />
     </div>
   )
 }
