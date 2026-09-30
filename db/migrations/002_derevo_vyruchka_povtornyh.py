@@ -163,7 +163,8 @@ def proverit(con):
     if polov: pretenzii.append(f"⛔ мест с половиной label: {polov}")
     for mid in (159, 697):
         imya = con.execute("select name from metric where id=?", (mid,)).fetchone()[0]
-        if imya != "Средняя цена за единицу товара":
+        # миграция 015 (30.09) развела их по каналу: 697 — «…офлайн»
+        if imya not in ("Средняя цена за единицу товара", "Средняя цена за единицу товара офлайн"):
             pretenzii.append(f"⛔ mid {mid} называется «{imya}»")
     return pretenzii
 

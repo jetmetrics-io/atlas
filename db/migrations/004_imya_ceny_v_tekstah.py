@@ -75,7 +75,8 @@ def proverit(con):
     # имена самих метрик должны быть уже переименованы миграцией 002
     for mid in (159, 697):
         r = con.execute("select name from metric where id=?", (mid,)).fetchone()
-        if r and r[0] != "Средняя цена за единицу товара":
+        # миграция 015 (30.09) развела их по каналу: 697 — «…офлайн»
+        if r and r[0] not in ("Средняя цена за единицу товара", "Средняя цена за единицу товара офлайн"):
             pretenzii.append(f"⛔ mid {mid} называется «{r[0]}» — сперва прогнать 002")
     return pretenzii
 
