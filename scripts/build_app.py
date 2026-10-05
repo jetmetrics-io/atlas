@@ -14,6 +14,11 @@
 | `reference.json`      | справочник: открытые поля всех метрик и их места        |
 | `questions_full.json` | вопросы к метрикам: группы, базовые, вопросы всех метрик |
 | `questions_free.json` | то же, но вопросы только метрик бесплатных карт         |
+| `stats.json`          | числа для лендинга /atlas: метрики, карты, деревья      |
+
+`stats.json` — несколько сотен байт: лендинг читает его при открытии и подставляет числа
+в первый экран и в чипы карт. Раньше числа вшивались в лендинг шагом выкладки, и только
+если исходник лендинга лежал рядом с репо; с другой машины они не обновлялись.
 
 Вопросы лежат отдельно от карточек и по `metric.id`, а не по месту: их 8 114, около 2 МБ,
 и в `content_*` они удвоили бы файл, который грузится на старте. Приложение берёт
@@ -375,6 +380,16 @@ def sobrat(db_put, out_put, data_segodnya=None):
     itog["content_full.json"] = zapisat(out / "content_full.json", sobrat_kartochki(con, vse_mesta))
     itog["content_free.json"] = zapisat(out / "content_free.json", sobrat_kartochki(con, free_mesta))
     itog["reference.json"] = zapisat(out / "reference.json", sobrat_spravochnik(con))
+    # Числа для лендинга: метрик — все записи Базы (как в справочнике), деревьев — верхние,
+    # те, что стоят плашками в каталоге; у дерева — метрик во всём разборе (`total`).
+    itog["stats.json"] = zapisat(out / "stats.json", {
+        "updated": data,
+        "metrics": con.execute("select count(*) from metric").fetchone()[0],
+        "maps": len(karty),
+        "trees": len([t for t in derevya if not t.get("parent")]),
+        "mapNodes": {k["name"].replace("\u200b", ""): k["nodes"] for k in karty},
+        "treeTotals": {t["name"]: t.get("total") for t in derevya if not t.get("parent")},
+    })
     vse_mid  = {mid for _, mid in vse_mesta}
     free_mid = {mid for _, mid in free_mesta}
     itog["questions_full.json"] = zapisat(out / "questions_full.json", sobrat_voprosy_metrik(con, vse_mid))
