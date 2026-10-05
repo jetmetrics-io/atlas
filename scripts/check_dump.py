@@ -10,7 +10,8 @@
 * бесплатная версия разошлась с полной — неоплативший видит одно, оплативший другое
   (случилось 22.09.2026: переименование доехало только до полной выгрузки);
 * у артефакта пропала ключевая метрика — карта откроется без центра;
-* связь ведёт в никуда — на карте оборванная стрелка.
+* связь ведёт в никуда — на карте оборванная стрелка;
+* в бесплатные вопросы попали вопросы платных метрик — неоплативший видит закрытое.
 
 Выход 0 — можно выкладывать, 1 — нельзя.
 """
@@ -84,6 +85,34 @@ def proverit(papka):
     if len(free["sections"]) != len(full["sections"]) or len(free["trees"]) != len(full["trees"]):
         bedy.append(f"⛔ каталог урезан: в free карт {len(free['sections'])}/{len(full['sections'])}, "
                     f"деревьев {len(free['trees'])}/{len(full['trees'])}")
+    bedy += proverit_voprosy(d, full, free)
+    return bedy
+
+
+def proverit_voprosy(d, full, free):
+    """Вопросы к метрикам: оба файла есть, тексты сквозные, бесплатный не шире бесплатных карт."""
+    bedy = []
+    qf, qb = d / "questions_full.json", d / "questions_free.json"
+    if not qf.exists() or not qb.exists():
+        return [f"⛔ нет файла вопросов: {qf.name if not qf.exists() else qb.name}"]
+    vfull = json.loads(qf.read_text(encoding="utf-8"))
+    vfree = json.loads(qb.read_text(encoding="utf-8"))
+    print(f"   вопросов: у метрик {len(vfull['metrics'])}, в бесплатных {len(vfree['metrics'])}"
+          f" · групп {len(vfull['groups'])} · базовых {len(vfull['base'])}")
+    if vfree["groups"] != vfull["groups"] or vfree["base"] != vfull["base"]:
+        bedy.append("⛔ группы или базовые вопросы free разошлись с full")
+    # гейт: в бесплатных вопросах только метрики бесплатных карт
+    mid_free = {str(n["mid"]) for n in free["nodes"]}
+    utechka = [m for m in vfree["metrics"] if m not in mid_free]
+    if utechka:
+        bedy.append(f"⛔ в бесплатных вопросах метрики платных карт: {len(utechka)} ({utechka[:5]})")
+    razn = [m for m in vfree["metrics"] if vfree["metrics"][m] != vfull["metrics"].get(m)]
+    if razn:
+        bedy.append(f"⛔ вопросы free разошлись с full: {len(razn)} ({razn[:3]})")
+    # у каждой метрики на картах и в деревьях есть вопросы, иначе «Анализ» без них
+    bez = sorted({str(n["mid"]) for n in full["nodes"]} - set(vfull["metrics"]))
+    if bez:
+        bedy.append(f"⛔ метрик без вопросов: {len(bez)} ({bez[:5]})")
     return bedy
 
 

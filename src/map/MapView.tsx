@@ -13,7 +13,7 @@ import { GroupNode } from './GroupNode'
 import { NodeCard } from './NodeCard'
 import { EdgeCard } from './EdgeCard'
 import { Tour, type TourStep } from './Tour'
-import { metricUrl } from '../site/nav'
+import { openMetricInRef } from '../site/nav'
 import { roleStyle, signColor } from '../atlas/style'
 import type { AtlasEdge } from '../atlas/types'
 import { DashPicker } from '../dash/DashPicker'
@@ -620,11 +620,9 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
         { zoom: 1, duration: 400 })
       return
     }
-    // Метрики на этой карте нет: открываем её артефакт в новой вкладке, чтобы не
-    // терять то, что человек читает сейчас. Карты и деревья живут своими страницами
-    // на Тильде (site/nav.ts), поэтому ссылка ведёт туда, а не внутрь бакета.
-    if (!to) return
-    window.open(metricUrl(to.section, to.id), '_blank', 'noopener')
+    // Метрики на этой карте нет: её карточка в справочнике, новой вкладкой — то, что
+    // человек читает сейчас, остаётся на месте (решение 05.10.2026, site/nav.ts).
+    openMetricInRef(id)
   }
   // Прямая ссылка на метрику: подвести к ней камеру, иначе на высокой карте она уедет
   // за нижний край и человек увидит карточку, но не найдёт саму метрику. Сдвиг вправо —

@@ -9,7 +9,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { NodeCard } from '../map/NodeCard'
 import { roleStyle } from '../atlas/style'
 import { BASE, resolveMetricLink } from '../atlas/atlas'
-import { metricUrl } from '../site/nav'
+import { openMetricInRef } from '../site/nav'
 import { layoutTree, type TreeLayout, TREE_GAP, TREE_HEAD } from './layout'
 import {
   AXES, SHORT, treeBySlug, specOf, canDrill, nodeByName, keepGroup, childTree, withDefaults,
@@ -747,8 +747,8 @@ export function TreeView({ slug, onBack, initialDrill }:
             // состояний, и если сдвинуть только карточку, обведёнными окажутся сразу
             // две метрики — та, с которой ушли, и та, куда пришли.
             if (here) { setCard(here.name); setSel(here.name); return }
-            if (!to) return
-            window.open(metricUrl(to.section, to.id), '_blank', 'noopener')
+            // В дереве метрики нет — карточка в справочнике, новой вкладкой (05.10.2026).
+            openMetricInRef(id)
           }}
         />
       )}

@@ -4,7 +4,8 @@ import type { AtlasNode } from '../atlas/types'
 import { roleStyle, ROLE_DEFAULT } from '../atlas/style'
 import { treeOfMetric, BASE, isSectionUnlocked } from '../atlas/atlas'
 import { metricContent, contentReady, onContentReady } from '../atlas/content'
-import { refByMid, onRefReady, midOfNode, isRefOnly, type RefPlace } from '../atlas/reference'
+import { metricQuestions, loadQuestions, questionsReady, onQuestionsReady } from '../atlas/questions'
+import { refByMid, onRefReady, midOfNode, isRefOnly, refMetrics, refReady, type RefPlace } from '../atlas/reference'
 import { metricDossier } from '../atlas/dossier'
 import { EMBED, metricUrl, openTree, refUrl, openPlaceInNewTab } from '../site/nav'
 import { copyText } from '../site/clipboard'
@@ -118,10 +119,40 @@ function bold(text: string, targets: LinkTarget[], onNav: (id: string) => void):
   return out
 }
 
+// Названия метрик в вопросах стоят в кавычках и совпадают с именами в Базе: из 2 196
+// упоминаний — все 2 196 (сверено 05.10.2026). Автоматический linkify видит только
+// соседей по карте, а вопросы называют метрики со всего Атласа. Поэтому «Имя» любой
+// метрики превращается в явную ссылку [[Имя→адрес]]: метрика этого артефакта
+// открывается на месте, остальные — в справочнике (решение 05.10.2026). Адрес берётся
+// из открытых читателю узлов, а метрике закрытой карты — из справочника: он открыт всем.
+let byName: Map<string, { id: string; mid?: number }> | null = null
+let byNameWithRef = false
+function metricsByName(): Map<string, { id: string; mid?: number }> {
+  if (byName && (byNameWithRef || !refReady())) return byName
+  const m = new Map<string, { id: string; mid?: number }>()
+  for (const n of BASE.nodes) if (!m.has(n.name)) m.set(n.name, { id: n.id, mid: n.mid })
+  // Метрика закрытой карты и метрика без места: адрес из справочника, ссылка ведёт туда.
+  for (const r of refMetrics()) {
+    const id = r.node ?? r.places[0]?.node
+    if (id && !m.has(r.name)) m.set(r.name, { id, mid: r.mid })
+  }
+  byName = m
+  byNameWithRef = refReady()
+  return m
+}
+
+function quotedLinks(text: string, selfMid?: number): string {
+  const names = metricsByName()
+  return text.replace(/«([^«»[\]→]+)»/g, (all, name: string) => {
+    const t = names.get(name)
+    return t && t.mid !== selfMid ? `«[[${name}→${t.id}]]»` : all
+  })
+}
+
 type CopyState = '' | 'ok' | 'fail'
 
 type Tab = 'essence' | 'calc' | 'why' | 'dims'
-// «Анализ» — разрезы метрики; дальше сюда же лягут вопросы к ней.
+// «Анализ» — разрезы метрики и под ними вопросы к ней.
 const TABS: { key: Tab; label: string }[] = [
   { key: 'essence', label: 'Суть' },
   { key: 'calc', label: 'Расчёт' },
@@ -163,6 +194,27 @@ function EssenceChip({ essence, note }: { essence: string; note?: string }) {
           <span className="tip__pop" role="tooltip" hidden={!open}>{note}</span>
         </span>
       )}
+    </span>
+  )
+}
+
+// Подсказка к группе вопросов: что это за вопросы. Тот же знак вопроса, что у сути
+// метрики, — второй способ показывать пояснения в карточке не заводим. Хвостик
+// всплывашки смотрит на знак: подзаголовок короткий, знак стоит у его левого края.
+function GroupHint({ text }: { text: string }) {
+  const [open, setOpen] = useState(false)
+  const btn = useRef<HTMLButtonElement>(null)
+  const ax = btn.current ? btn.current.offsetLeft + btn.current.offsetWidth / 2 - 6 : 14
+  return (
+    <span className="tip" onMouseLeave={() => setOpen(false)}>
+      <button ref={btn} type="button" className="tip__q" aria-label="Что это за вопросы"
+        aria-expanded={open}
+        onMouseEnter={() => setOpen(true)}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+        onClick={e => { e.stopPropagation(); setOpen(v => !v) }}>?</button>
+      <span className="tip__pop qgroup__pop" role="tooltip" hidden={!open}
+        style={{ '--ax': `${ax}px` } as CSSProperties}>{text}</span>
     </span>
   )
 }
@@ -269,6 +321,9 @@ export function NodeCard({ node, siblings, onNavigate, onClose, mode = 'map', lo
   const [, force] = useState(0)
   useEffect(() => onContentReady(() => force((n) => n + 1)), [])
   useEffect(() => onRefReady(() => force((n) => n + 1)), [])
+  useEffect(() => onQuestionsReady(() => force((n) => n + 1)), [])
+  // Вопросы весят около 2 МБ: файл просим, только когда открыли «Анализ».
+  useEffect(() => { if (tab === 'dims') loadQuestions() }, [tab])
   // Новая метрика — снова открываем первую вкладку.
   // Здесь же считаем открытие метрики и показ первой вкладки.
   // React.StrictMode в деве прогоняет эффект дважды — без этой отсечки открытие
@@ -328,7 +383,10 @@ export function NodeCard({ node, siblings, onNavigate, onClose, mode = 'map', lo
   const fromMap = !(BASE.trees ?? []).some((t) => t.name === node.section)
   const hasCalc = nuances.length > 0 || example.length > 0
   const hasWhy = !!(why || whenNot)
-  const hasDims = dims.length > 0
+  // Вопросы есть у каждой метрики, которую человеку видно: у неё пришла карточка.
+  // Поэтому «Анализ» открыт и у метрики без разрезов, если карточка на месте.
+  const questions = metricQuestions(node.mid)
+  const hasDims = dims.length > 0 || Object.keys(c).length > 0
 
   // Ссылка на метрику: страница Тильды её карты + ?node=. Внутри iframe адрес самого
   // приложения ведёт на бакет, поэтому собираем публичный адрес, а не берём location.
@@ -515,14 +573,37 @@ export function NodeCard({ node, siblings, onNavigate, onClose, mode = 'map', lo
         )}
 
         {tab === 'dims' && (
-          <div className="panel__section">
-            <div className="panel__label">Разрезы</div>
-            <ul className="panel__bullets">
-              {dims.map((d, i) => (
-                <li key={i}><b>{d.name}</b>{d.note ? ` — ${d.note}` : ''}</li>
-              ))}
-            </ul>
-          </div>
+          <>
+            {dims.length > 0 && (
+              <div className="panel__section">
+                <div className="panel__label">Разрезы</div>
+                <ul className="panel__bullets">
+                  {dims.map((d, i) => (
+                    <li key={i}><b>{d.name}</b>{d.note ? ` — ${d.note}` : ''}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {/* Вопросы — под разрезами (решение Марии). Группы — подзаголовками в стиле
+                заголовка, мельче его; у группы подсказка, что это за вопросы. */}
+            {questions.length > 0 ? (
+              <div className="panel__section">
+                {dims.length > 0 && <div className="panel__split" />}
+                <div className="panel__label">Вопросы</div>
+                {questions.map(({ group, items }) => (
+                  <div key={group.id} className="qgroup">
+                    <div className="panel__label qgroup__label">
+                      {group.name}<span className="qgroup__n">{items.length}</span>
+                      <GroupHint text={group.hint} />
+                    </div>
+                    <ol className="panel__bullets qgroup__list">
+                      {items.map((t, i) => <li key={i} data-n={i + 1}>{bold(quotedLinks(t, node.mid), siblings, nav)}</li>)}
+                    </ol>
+                  </div>
+                ))}
+              </div>
+            ) : !questionsReady() && <div className="panel__hint">Загружаем вопросы…</div>}
+          </>
         )}
 
         {tab === 'why' && (

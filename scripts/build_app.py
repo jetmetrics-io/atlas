@@ -3,15 +3,21 @@
 
     python3 scripts/build_app.py [--db <путь>] [--out <папка>] [--check <эталон>]
 
-Пять файлов на выходе:
+Семь файлов на выходе:
 
-| Файл                | Что внутри                                                |
-|---------------------|-----------------------------------------------------------|
-| `atlas_full.json`   | весь граф: узлы, связи, каталог                           |
-| `atlas_free.json`   | тот же каталог целиком, но узлы только бесплатных карт    |
-| `content_full.json` | карточки всех метрик                                      |
-| `content_free.json` | карточки метрик из бесплатных карт                        |
-| `reference.json`    | справочник: открытые поля всех метрик и их места          |
+| Файл                  | Что внутри                                              |
+|-----------------------|---------------------------------------------------------|
+| `atlas_full.json`     | весь граф: узлы, связи, каталог                         |
+| `atlas_free.json`     | тот же каталог целиком, но узлы только бесплатных карт  |
+| `content_full.json`   | карточки всех метрик                                    |
+| `content_free.json`   | карточки метрик из бесплатных карт                      |
+| `reference.json`      | справочник: открытые поля всех метрик и их места        |
+| `questions_full.json` | вопросы к метрикам: группы, базовые, вопросы всех метрик |
+| `questions_free.json` | то же, но вопросы только метрик бесплатных карт         |
+
+Вопросы лежат отдельно от карточек и по `metric.id`, а не по месту: их 8 114, около 2 МБ,
+и в `content_*` они удвоили бы файл, который грузится на старте. Приложение берёт
+`questions_*` только когда открыли вкладку «Анализ». Гейт тот же, что у карточек.
 
 `reference.json` один на всех: в справочнике неоплативший видит все метрики —
 название, единицу, суть, определение и формулу (решение Марии 29.09.2026).
@@ -256,6 +262,21 @@ def sobrat_kartochki(con, node_ids):
     return karty
 
 
+def sobrat_voprosy_metrik(con, mids):
+    """Вопросы к метрикам: группы с подсказками, базовые (одни на все метрики) и свои
+    вопросы каждой метрики. Порядок — группа по `question_group.sort`, внутри по `priority`."""
+    gruppy = [{"id": r["id"], "name": r["name"], "hint": r["hint"]}
+              for r in con.execute("select id, name, hint from question_group order by sort")]
+    bazovye = [r["text"] for r in con.execute("select text from question_base order by priority")]
+    voprosy = {}
+    for r in con.execute("""select q.metric_id, q.group_id, q.text from question q
+                            join question_group g on g.id = q.group_id
+                            order by q.metric_id, g.sort, q.priority"""):
+        if r["metric_id"] in mids:
+            voprosy.setdefault(str(r["metric_id"]), []).append([r["group_id"], r["text"]])
+    return {"groups": gruppy, "base": bazovye, "metrics": voprosy}
+
+
 def adres_bez_mesta(slug):
     """Адрес метрики, у которой нет места ни на карте, ни в дереве."""
     return f"spravochnik/{slug}"
@@ -354,13 +375,17 @@ def sobrat(db_put, out_put, data_segodnya=None):
     itog["content_full.json"] = zapisat(out / "content_full.json", sobrat_kartochki(con, vse_mesta))
     itog["content_free.json"] = zapisat(out / "content_free.json", sobrat_kartochki(con, free_mesta))
     itog["reference.json"] = zapisat(out / "reference.json", sobrat_spravochnik(con))
+    vse_mid  = {mid for _, mid in vse_mesta}
+    free_mid = {mid for _, mid in free_mesta}
+    itog["questions_full.json"] = zapisat(out / "questions_full.json", sobrat_voprosy_metrik(con, vse_mid))
+    itog["questions_free.json"] = zapisat(out / "questions_free.json", sobrat_voprosy_metrik(con, free_mid))
 
     print(f"── Выгрузка собрана из {db_put} ──")
     print(f"   узлов {len(uzly)} · метрик {len({u['mid'] for u in uzly})} · связей {len(svyazi)}"
           f" · карт {len(karty)} · деревьев {len(derevya)}")
     print(f"   бесплатных: узлов {len(uzly_free)} · связей {len(svyazi_free)}")
     for imya, razmer in itog.items():
-        print(f"   {imya:<20} {razmer:>9,} байт".replace(",", " "))
+        print(f"   {imya:<22} {razmer:>9,} байт".replace(",", " "))
     return itog
 
 

@@ -506,6 +506,27 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 .panel__example-result b { color: var(--jm-green-press); }
 
 .panel__hint { font-size: var(--jm-caption); color: var(--jm-faint); }
+
+/* Вопросы к метрике — во вкладке «Анализ» под разрезами (макет утверждён Марией 05.10.2026).
+   Заголовок «Вопросы» — как «Разрезы»; подзаголовки групп в том же стиле, мельче и тоньше:
+   они ниже по уровню и не должны выделяться сильнее заголовка. Номер — внутри группы. */
+.panel__split { border-top: 1px solid var(--jm-line-soft); margin: 4px 0 20px; }
+.qgroup + .qgroup { margin-top: 20px; }
+.qgroup__label {
+  position: relative; display: flex; align-items: center; gap: 8px;
+  font-size: 10.5px; font-weight: 500; margin: 8px 0 6px;
+}
+.qgroup__n { font-variant-numeric: tabular-nums; }
+.qgroup__label .tip { margin-left: 0; }
+/* всплывашка во всю ширину подзаголовка, хвостик — над знаком вопроса */
+.qgroup__label .tip__pop { left: 0; right: 0; }
+.qgroup__pop::after { right: auto; left: var(--ax, 14px); }
+.qgroup__list li { padding-left: 24px; }
+.qgroup__list li::before {
+  content: attr(data-n); background: none; width: auto; height: auto; border-radius: 0;
+  top: 1px; left: 0; font-family: var(--jm-font-mono); font-size: 11px; color: var(--jm-faint);
+  font-variant-numeric: tabular-nums;
+}
 .chip { display: inline-flex; align-items: center; gap: 5px; font-size: var(--jm-caption); font-weight: var(--jm-w-medium); border-radius: var(--jm-r-pill); padding: 3px 10px; }
 .conn-row { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--jm-line-soft); font-size: var(--jm-body-s); }
 .conn-row:last-child { border-bottom: none; }

@@ -1,4 +1,5 @@
 import { BASE } from '../atlas/atlas'
+import { midOfNode } from '../atlas/reference'
 
 // Навигация между страницами Тильды (вариант «каждая карта — своя страница»).
 // Приложение встроено в Тильду через iframe; при клике по карте уводим ВЕРХНЕЕ окно
@@ -87,6 +88,18 @@ export function refUrl(mid: number): string {
   if (EMBED) return `${CATALOG_PAGE}?view=metrics&metric=${mid}`
   const paid = new URLSearchParams(window.location.search).get('paid') === '1' ? '&paid=1' : ''
   return `${window.location.origin}${window.location.pathname}?view=metrics&metric=${mid}${paid}`
+}
+
+/**
+ * Ссылка из текста карточки на метрику, которой нет в этом артефакте, открывает её карточку
+ * в справочнике новой вкладкой (решение Марии 05.10.2026). Раньше вела на страницу её карты,
+ * но у метрики бывает несколько мест, и выбиралось первое попавшееся; справочник показывает
+ * карточку целиком, с блоком «Где стоит». Он открыт всем, поэтому так же открывается
+ * и метрика закрытой карты у неоплатившего: открытые поля видны, остальное под замком.
+ */
+export function openMetricInRef(nodeId: string) {
+  const mid = midOfNode(nodeId) ?? BASE.nodes.find((n) => n.id === nodeId)?.mid
+  if (mid != null) window.open(refUrl(mid), '_blank', 'noopener')
 }
 
 /** Открыть метрику в её карте или дереве НОВОЙ вкладкой: справочник или карта, откуда
