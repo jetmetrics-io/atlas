@@ -9,7 +9,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { NodeCard } from '../map/NodeCard'
 import { roleStyle } from '../atlas/style'
 import { BASE, resolveMetricLink } from '../atlas/atlas'
-import { openMetricInRef } from '../site/nav'
+import { openMetricInRef, openTree } from '../site/nav'
 import { layoutTree, type TreeLayout, TREE_GAP, TREE_HEAD } from './layout'
 import {
   AXES, SHORT, treeBySlug, specOf, canDrill, nodeByName, keepGroup, childTree, withDefaults,
@@ -509,7 +509,18 @@ export function TreeView({ slug, onBack, initialDrill }:
     setPan({ x: 0, y: 0 }); setZoom(1)
     setDrill((cur) => (cur === name ? null : name))
   }
-  onDrillRef.current = onDrill
+  // Чип во втором дереве ведёт ещё на ступень вниз: «Конверсия лид → сделка» в выручке,
+  // открытой из прибыли. Холст держит два уровня, и провал по имени искал бы метрику
+  // в первом дереве, где её нет: второе гасло, оставался пустой холст (07.10.2026).
+  // Поэтому открываем адресом — `?tree=<дерево>` покажет его родителя первым уровнем,
+  // а его самого вторым (App, treeFromUrl), как прямая ссылка.
+  const onDrillB = (name: string) => {
+    const n = sub ? nodeByName(sub, name) : undefined
+    const info = sub && n ? childTree(sub, n.id) : undefined
+    if (info) { openTree(info.slug); return }
+    onDrill(name)
+  }
+  onDrillRef.current = drill && B ? onDrillB : onDrill
   stageRef.current = drill && B ? B : A
 
   // Масштаб считаем по первому дереву и при провале НЕ пересчитываем: высокое
@@ -671,7 +682,7 @@ export function TreeView({ slug, onBack, initialDrill }:
           <div className="tree__b" style={{ left: A.w + TREE_GAP }}>
             <Stage lay={B} id="b" openName={card} selName={sel} drillOpen={null}
               models={models} hlName={hlCard} onHover={hoverCard}
-              onNode={(n) => { setCard(n); setSel(n) }} onDrill={onDrill} />
+              onNode={(n) => { setCard(n); setSel(n) }} onDrill={onDrillB} />
           </div>
         )}
       </div>
