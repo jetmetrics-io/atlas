@@ -208,9 +208,18 @@ export function childTree(t: Tree, id: string): TreeInfo | undefined {
   return (BASE.trees ?? []).find((x) => x.parent === t.info.slug && x.name === n.name)
 }
 
-/** Сколько метрик лежит в дочернем дереве — число на чипе «+ N». */
+/** Отдельное дерево другой группы, где эта метрика — ключевая: из «Финансовой выручки»
+ *  в «Конверсию лид → сделка». Чип у метрики открывает его целиком, а не провалом:
+ *  в разбор выручки оно не входит (Дмитрий 08.10.2026). */
+export function linkedTree(t: Tree, id: string): TreeInfo | undefined {
+  const n = t.nodes.get(id)
+  if (!n) return undefined
+  return (BASE.trees ?? []).find((x) => !!x.linkedFrom?.includes(t.info.slug) && x.name === n.name)
+}
+
+/** Сколько метрик лежит в дочернем дереве или в дереве-переходе — число на чипе «+ N». */
 export function childSize(t: Tree, id: string, profile: Profile): number {
-  const info = childTree(t, id)
+  const info = childTree(t, id) ?? linkedTree(t, id)
   if (!info) return 0
   const sub = treeBySlug(info.slug)
   if (!sub) return 0

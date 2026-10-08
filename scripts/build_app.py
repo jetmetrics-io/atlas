@@ -48,9 +48,13 @@
    раскладку дерева считает приложение, из Базы ему нужен только порядок `y`.
 3. **`style` по умолчанию `solid`.** В Базе он пуст у 175 связей.
 4. **Формула с альтернативой** склеивается как `А<br> ИЛИ<br> Б` (20 метрик).
-5. **`parent` у дерева** вычисляется: родитель — то дерево, где корневая метрика
-   этого дерева стоит обычным узлом. В Базе поля `parent` нет.
-6. **`total` у дерева** — число уникальных метрик в нём и во всех его потомках.
+5. **`parent` у дерева** вычисляется: родитель — то дерево **той же группы**, где
+   корневая метрика этого дерева стоит обычным узлом. В Базе поля `parent` нет.
+   Дерево другой группы ребёнком не становится, а получает `linkedFrom` — список
+   деревьев, откуда в него ведёт чип-переход (с 08.10.2026: «Конверсия лид → сделка»
+   из «Финансовой выручки»; Дмитрий — «не третьим уровнем, а переходом»).
+6. **`total` у дерева** — число уникальных метрик в нём и во всех его потомках
+   (потомки — по правилу 5, деревья-переходы в счёт не идут).
    У «Чистой прибыли» это 170 при 12 собственных местах: за её плашкой в каталоге
    открывается весь разбор из девяти деревьев.
 7. **`cross_section`** всегда `false` — поле осталось от старой модели карт.
@@ -185,21 +189,29 @@ def sobrat_katalog(con, uzly_po_artefaktu):
     for a in con.execute("select id, name, slug, purpose from artifact where type='tree' order by name"):
         koren = con.execute("""select node_id from metric_artifact
                                where artifact_id=? and is_key=1""", (a["id"],)).fetchone()
-        derevya.append({
+        derevo = {
             "name": a["name"], "slug": a["slug"], "nodes": uzly_po_artefaktu.get(a["id"], 0),
             "root": koren["node_id"] if koren else None,
             "purpose": a["purpose"],
             "parent": roditel(con, a["id"], a["slug"]),
             "total": vsego_metrik(con, a["id"]),
-        })
+        }
+        perehod = perehody(con, a["id"])
+        if perehod:
+            derevo["linkedFrom"] = perehod
+        derevya.append(derevo)
     return semyi, karty, derevya
 
 
 def roditel(con, artefakt_id, slug):
-    """Родитель дерева — то дерево, где его корневая метрика стоит обычным узлом.
+    """Родитель дерева — то дерево ТОЙ ЖЕ ГРУППЫ, где его корневая метрика стоит обычным узлом.
 
     Своего поля в Базе нет: родство задаётся самой разметкой. «Выручка» — ребёнок
     «Чистой прибыли» именно потому, что выручка стоит в разборе прибыли компонентом.
+    Дерево другой группы ребёнком не становится, даже если его корень стоит в чужом
+    дереве: «Конверсия лид → сделка» (продажи) — отдельное дерево со своей плашкой,
+    а не третья ступень «Финансовой выручки», из которой в него ведёт только переход
+    (`perehody`, Дмитрий 08.10.2026).
     """
     koren = con.execute("""select metric_id from metric_artifact
                            where artifact_id=? and is_key=1""", (artefakt_id,)).fetchone()
@@ -208,8 +220,25 @@ def roditel(con, artefakt_id, slug):
     r = con.execute("""select a.slug from metric_artifact pa
                        join artifact a on a.id = pa.artifact_id
                        where pa.metric_id=? and a.type='tree' and a.slug<>? and pa.is_key=0
-                       order by a.id limit 1""", (koren["metric_id"], slug)).fetchone()
+                         and a.family_id = (select family_id from artifact where id=?)
+                       order by a.id limit 1""", (koren["metric_id"], slug, artefakt_id)).fetchone()
     return r["slug"] if r else None
+
+
+def perehody(con, artefakt_id):
+    """Деревья другой группы, где корневая метрика этого дерева стоит обычным узлом.
+
+    Это не родство: в разбор того дерева это не входит и его счёт не меняет. На холсте
+    у метрики там стоит чип «+ N», он открывает это дерево отдельно, как плашка каталога.
+    """
+    return [r["slug"] for r in con.execute(
+        """select a.slug from metric_artifact pa
+           join artifact a on a.id = pa.artifact_id
+           where a.type='tree' and pa.is_key=0 and a.id<>?
+             and pa.metric_id = (select metric_id from metric_artifact
+                                 where artifact_id=? and is_key=1)
+             and a.family_id <> (select family_id from artifact where id=?)
+           order by a.id""", (artefakt_id, artefakt_id, artefakt_id))]
 
 
 def vsego_metrik(con, artefakt_id):
@@ -227,11 +256,13 @@ def vsego_metrik(con, artefakt_id):
                                    where artifact_id=? and is_key=1""", (rodit,)).fetchone()
             if not koren:
                 continue
+            # потомки — по тому же правилу, что и `roditel`: только своей группы
             for r in con.execute("""select distinct a.id from artifact a
                                     join metric_artifact pa on pa.artifact_id=a.id and pa.is_key=1
                                     join metric_artifact rodit on rodit.metric_id=pa.metric_id
-                                    where a.type='tree' and rodit.artifact_id=? and rodit.is_key=0""",
-                                 (rodit,)):
+                                    where a.type='tree' and rodit.artifact_id=? and rodit.is_key=0
+                                      and a.family_id = (select family_id from artifact where id=?)""",
+                                 (rodit, rodit)):
                 if r["id"] not in svoi:
                     deti.add(r["id"])
         svoi |= deti

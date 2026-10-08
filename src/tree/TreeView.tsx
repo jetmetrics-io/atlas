@@ -12,7 +12,7 @@ import { BASE, resolveMetricLink } from '../atlas/atlas'
 import { openMetricInRef, openTree } from '../site/nav'
 import { layoutTree, type TreeLayout, TREE_GAP, TREE_HEAD } from './layout'
 import {
-  AXES, SHORT, treeBySlug, specOf, canDrill, nodeByName, keepGroup, childTree, withDefaults,
+  AXES, SHORT, treeBySlug, specOf, canDrill, nodeByName, keepGroup, childTree, linkedTree, withDefaults,
   type Profile, type Tree,
 } from './tree'
 import type { AtlasNode } from '../atlas/types'
@@ -506,17 +506,22 @@ export function TreeView({ slug, onBack, initialDrill }:
     const pick = A.nodes.find((n) => n.name === name)?.pick ??
       B?.nodes.find((n) => n.name === name)?.pick
     if (pick) { toggleModel(pick.axis, pick.value); return }
+    // чип дерева другой группы — переход в него, а не провал (linkedTree)
+    const n = nodeByName(tree, name)
+    const link = n ? linkedTree(tree, n.id) : undefined
+    if (link) { openTree(link.slug); return }
     setPan({ x: 0, y: 0 }); setZoom(1)
     setDrill((cur) => (cur === name ? null : name))
   }
-  // Чип во втором дереве ведёт ещё на ступень вниз: «Конверсия лид → сделка» в выручке,
-  // открытой из прибыли. Холст держит два уровня, и провал по имени искал бы метрику
-  // в первом дереве, где её нет: второе гасло, оставался пустой холст (07.10.2026).
-  // Поэтому открываем адресом — `?tree=<дерево>` покажет его родителя первым уровнем,
-  // а его самого вторым (App, treeFromUrl), как прямая ссылка.
+  // Чип во втором дереве ведёт за пределы холста: холст держит два уровня, и провал
+  // по имени искал бы метрику в первом дереве, где её нет — второе гасло, оставался
+  // пустой холст (07.10.2026, на «Конверсии лид → сделка» в выручке, открытой из прибыли).
+  // Поэтому открываем адресом. Дерево-переход (с 08.10 так стоит «Конверсия лид → сделка»)
+  // откроется отдельно; дочернее третьей ступени — родителем первым уровнем, собой
+  // вторым (App, treeFromUrl), как прямая ссылка.
   const onDrillB = (name: string) => {
     const n = sub ? nodeByName(sub, name) : undefined
-    const info = sub && n ? childTree(sub, n.id) : undefined
+    const info = sub && n ? childTree(sub, n.id) ?? linkedTree(sub, n.id) : undefined
     if (info) { openTree(info.slug); return }
     onDrill(name)
   }
