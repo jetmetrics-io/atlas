@@ -22,12 +22,14 @@ let DATA: QuestionsFile | null = null
 let status: 'idle' | 'loading' | 'done' = 'idle'
 let file = 'questions_free.json'
 let root = ''
+let fetchInit: RequestInit | undefined
 const waiters = new Set<() => void>()
 
 /** Зовётся из main.tsx рядом с loadContent: какой файл брать, решает оплата. */
-export function initQuestions(paid: boolean, base = ''): void {
+export function initQuestions(paid: boolean, base = '', init?: RequestInit): void {
   file = paid ? 'questions_full.json' : 'questions_free.json'
   root = base
+  fetchInit = init  // английская Map Library: пропуск для сервера сайта (site/paidData.ts)
 }
 
 /** Загрузить файл, если ещё не грузили. Повторные вызовы ничего не делают. */
@@ -36,7 +38,7 @@ export function loadQuestions(): void {
   status = 'loading'
   // Как у контента: на dev-сервере без кэша, иначе после пересборки видны старые вопросы.
   const fresh = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
-  fetch(`${root}data/${file}`, fresh ? { cache: 'no-store' } : undefined)
+  fetch(`${root}data/${file}`, { ...(fresh ? { cache: 'no-store' as RequestCache } : {}), ...fetchInit })
     .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
     .then((json: QuestionsFile) => { DATA = json })
     .catch(() => { DATA = null })   // без файла «Анализ» показывает только разрезы
