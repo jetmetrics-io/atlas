@@ -9,6 +9,7 @@ import { initQuestions } from './atlas/questions'
 import { loadReference } from './atlas/reference'
 import { resolveEmail, isPaid } from './site/access'
 import type { AtlasBase } from './atlas/types'
+import { t } from './i18n'
 
 const root = ReactDOM.createRoot(document.getElementById('root')!)
 
@@ -25,9 +26,11 @@ const loadData = (name: string): Promise<AtlasBase> =>
 async function boot() {
   // 1. Кто залогинен → 2. оплатил ли. Одна сборка, гейт — по факту оплаты.
   const email = await resolveEmail()
-  // ?paid=1 — локальная отмычка для разработки: позволяет открыть платные карты
-  // на dev-сервере, не заводя email в paid.json. Работает только на localhost.
-  const devPaid = location.hostname === 'localhost' && new URLSearchParams(location.search).get('paid') === '1'
+  // ?paid=1 — отмычка для разработки: позволяет открыть платные карты
+  // на dev-сервере, не заводя email в paid.json. Работает только на localhost
+  // и на закрытой паролем пробной версии английского сайта preview.jetmetrics.io (14.10.2026).
+  const devPaid = (location.hostname === 'localhost' || location.hostname === 'preview.jetmetrics.io')
+    && new URLSearchParams(location.search).get('paid') === '1'
   const paid = devPaid || (await isPaid(email))
   // 3. Данные: полная база только оплатившим; остальным — три бесплатные карты.
   //    full-данные грузим лишь при оплате — бесплатнику закрытые карты физически не приходят.
@@ -52,7 +55,7 @@ boot().catch((err) => {
   console.error('[atlas] boot failed', err)
   root.render(
     <div className="boot boot--err">
-      Не удалось загрузить Атлас. Обновите страницу.
+      {t('Не удалось загрузить Атлас. Обновите страницу.')}
     </div>,
   )
 })

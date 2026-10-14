@@ -1,6 +1,7 @@
 import { memo, useState } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { roleStyle } from '../atlas/style'
+import { t } from '../i18n'
 
 export interface MetricNodeData {
   name: string
@@ -26,6 +27,7 @@ const HANDLES: [string, string, Position][] = [
 ]
 
 // ── Иконки единиц измерения (штрих, currentColor). Контурный кружок — вариант 1. ──
+// Ключи — коды единиц из данных (в английских данных те же), подписи — через t().
 const UNIT_ICON: Record<string, JSX.Element> = {
   'Количество': (
     <path d="M9.8 5.6 8.4 18.4M15.6 5.6 14.2 18.4M6.2 9.7h12.2M5.7 14.3h12.2" />
@@ -41,10 +43,10 @@ const UNIT_ICON: Record<string, JSX.Element> = {
   ),
 }
 const UNIT_TITLE: Record<string, string> = {
-  'Количество': 'Измеряется в количестве',
-  '%': 'Измеряется в процентах',
-  'Деньги': 'Измеряется в деньгах',
-  'Время': 'Измеряется во времени',
+  'Количество': t('Измеряется в количестве'),
+  '%': t('Измеряется в процентах'),
+  'Деньги': t('Измеряется в деньгах'),
+  'Время': t('Измеряется во времени'),
 }
 
 function UnitIcon({ units }: { units?: string }) {
@@ -105,7 +107,7 @@ function KeyChip() {
       <svg viewBox="0 0 24 20" width="11" height="9" fill="#F0C24D" style={{ display: 'block' }}>
         <path d="M2 6l4.2 3.4L12 2l5.8 7.4L22 6l-1.7 11H3.7L2 6z" />
       </svg>
-      Ключевая
+      {t('Ключевая')}
     </span>
   )
 }

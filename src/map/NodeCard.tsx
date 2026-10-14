@@ -10,6 +10,7 @@ import { metricDossier } from '../atlas/dossier'
 import { EMBED, metricUrl, openTree, refUrl, openPlaceInNewTab } from '../site/nav'
 import { copyText } from '../site/clipboard'
 import { openLockDialog } from '../site/LockDialog'
+import { LANG, t } from '../i18n'
 
 export type LinkTarget = { name: string; id: string }
 
@@ -141,7 +142,26 @@ function metricsByName(): Map<string, { id: string; mid?: number }> {
   return m
 }
 
+// В английской версии названия метрик в тексте стоят без кавычек (правила перевода
+// Map Library 2.0), поэтому ищем сами названия: длинные раньше коротких, чтобы
+// «Ticket Volume» не съел кусок «Forecasted Ticket Volume», и не внутри готовых ссылок.
+let enRe: { re: RegExp; size: number } | null = null
+function namedLinks(text: string, selfMid?: number): string {
+  const names = metricsByName()
+  if (!enRe || enRe.size !== names.size) {
+    const list = [...names.keys()].sort((a, b) => b.length - a.length)
+      .map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    enRe = { re: new RegExp(`\\[\\[[^\\]]*\\]\\]|(?<![A-Za-z0-9])(?:${list.join('|')})(?![A-Za-z0-9])`, 'g'), size: names.size }
+  }
+  return text.replace(enRe.re, (all) => {
+    if (all.startsWith('[[')) return all
+    const hit = names.get(all)
+    return hit && hit.mid !== selfMid ? `[[${all}→${hit.id}]]` : all
+  })
+}
+
 function quotedLinks(text: string, selfMid?: number): string {
+  if (LANG === 'en') return namedLinks(text, selfMid)
   const names = metricsByName()
   return text.replace(/«([^«»[\]→]+)»/g, (all, name: string) => {
     const t = names.get(name)
@@ -154,15 +174,16 @@ type CopyState = '' | 'ok' | 'fail'
 type Tab = 'essence' | 'calc' | 'why' | 'dims'
 // «Анализ» — разрезы метрики и под ними вопросы к ней.
 const TABS: { key: Tab; label: string }[] = [
-  { key: 'essence', label: 'Суть' },
-  { key: 'calc', label: 'Расчёт' },
-  { key: 'why', label: 'Зачем' },
-  { key: 'dims', label: 'Анализ' },
+  { key: 'essence', label: t('Суть') },
+  { key: 'calc', label: t('Расчёт') },
+  { key: 'why', label: t('Зачем') },
+  { key: 'dims', label: t('Анализ') },
 ]
 
 // ── Суть метрики ───────────────────────────────────────────────────────────────
 // Тег направления виден всегда, фраза-объяснение открывается по «?»: наведением
 // на десктопе, нажатием на тач-устройствах (там hover не существует как жест).
+// Ключи — коды из данных (и в английских данных они те же), подпись — через t().
 const ESSENCE_KIND: Record<string, 'up' | 'down' | 'bal'> = {
   'больше-лучше': 'up', 'меньше-лучше': 'down', 'баланс': 'bal',
 }
@@ -182,10 +203,10 @@ function EssenceChip({ essence, note }: { essence: string; note?: string }) {
   return (
     <span className={`sign sign--${kind}`}>
       {icon}
-      {essence}
+      {t(essence)}
       {note && (
         <span className="tip" onMouseLeave={() => setOpen(false)}>
-          <button type="button" className="tip__q" aria-label="Почему знак такой"
+          <button type="button" className="tip__q" aria-label={t('Почему знак такой')}
             aria-expanded={open}
             onMouseEnter={() => setOpen(true)}
             onFocus={() => setOpen(true)}
@@ -207,7 +228,7 @@ function GroupHint({ text }: { text: string }) {
   const ax = btn.current ? btn.current.offsetLeft + btn.current.offsetWidth / 2 - 6 : 14
   return (
     <span className="tip" onMouseLeave={() => setOpen(false)}>
-      <button ref={btn} type="button" className="tip__q" aria-label="Что это за вопросы"
+      <button ref={btn} type="button" className="tip__q" aria-label={t('Что это за вопросы')}
         aria-expanded={open}
         onMouseEnter={() => setOpen(true)}
         onFocus={() => setOpen(true)}
@@ -253,7 +274,7 @@ function WherePlaces({ places, here }: { places: RefPlace[]; here?: string }) {
       return (
         <div key={p.node} className="where__row is-here">
           <span className="where__nm">{p.type === 'tree' ? TREE_ICON : MAP_ICON}<span>{p.a}</span>
-            <span className="where__here">вы здесь</span></span>{role}
+            <span className="where__here">{t('вы здесь')}</span></span>{role}
         </div>
       )
     }
@@ -275,8 +296,8 @@ function WherePlaces({ places, here }: { places: RefPlace[]; here?: string }) {
       </div>
     ) : null
   }
-  if (!places.length) return <div className="where"><div className="where__none">Пока ни на одной карте</div></div>
-  return <div className="where">{group('map', 'На карте', 'На картах')}{group('tree', 'В дереве', 'В деревьях')}</div>
+  if (!places.length) return <div className="where"><div className="where__none">{t('Пока ни на одной карте')}</div></div>
+  return <div className="where">{group('map', t('На карте'), t('На картах'))}{group('tree', t('В дереве'), t('В деревьях'))}</div>
 }
 
 export function NodeCard({ node, siblings, onNavigate, onClose, mode = 'map', locked = false, className = '', style }: {
@@ -411,13 +432,13 @@ export function NodeCard({ node, siblings, onNavigate, onClose, mode = 'map', lo
 
   return (
     <aside className={`panel ${className}`.trim()} style={style}>
-      <button className="panel__close" onClick={onClose} aria-label="Закрыть">×</button>
+      <button className="panel__close" onClick={onClose} aria-label={t('Закрыть')}>×</button>
       <button
         className={`panel__copy${copied === 'ok' ? ' is-done' : ''}${copied === 'fail' ? ' is-fail' : ''}`}
         onClick={copyLink}
-        aria-label="Скопировать ссылку на метрику"
-        data-tip={copied === 'ok' ? 'Скопировано'
-          : copied === 'fail' ? 'Не удалось скопировать' : 'Ссылка на метрику'}
+        aria-label={t('Скопировать ссылку на метрику')}
+        data-tip={copied === 'ok' ? t('Скопировано')
+          : copied === 'fail' ? t('Не удалось скопировать') : t('Ссылка на метрику')}
       >
         <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
           <path d="M6.5 9.5a3 3 0 0 0 4.24 0l2.12-2.12a3 3 0 0 0-4.24-4.24l-.7.7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -426,8 +447,8 @@ export function NodeCard({ node, siblings, onNavigate, onClose, mode = 'map', lo
       </button>
 
       {node.mid != null && (
-        <span className="panel__mid" title="Номер метрики в Атласе">
-          №{String(node.mid).padStart(4, '0')}
+        <span className="panel__mid" title={t('Номер метрики в Атласе')}>
+          {t('№{n}', { n: String(node.mid).padStart(4, '0') })}
         </span>
       )}
 
@@ -441,7 +462,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose, mode = 'map', lo
           <div className="panel__aka">
             {synonyms.length > 0 && (
               <>
-                <span className="panel__aka-tag">она же</span>
+                <span className="panel__aka-tag">{t('она же')}</span>
                 <span className="panel__aka-names">
                   {synonyms.map((s, i) => <span key={i}>{s}</span>)}
                 </span>
@@ -495,13 +516,13 @@ export function NodeCard({ node, siblings, onNavigate, onClose, mode = 'map', lo
           <>
             {description && (
               <div className="panel__section">
-                <div className="panel__label">Что это</div>
+                <div className="panel__label">{t('Что это')}</div>
                 <div className="panel__text">{parts(description).map((p, i) => <p key={i} className="panel__para">{bold(p, siblings, nav)}</p>)}</div>
               </div>
             )}
             {formula && (
               <div className="panel__section">
-                <div className="panel__label">Формула</div>
+                <div className="panel__label">{t('Формула')}</div>
                 <div className="panel__formula">
                   {parts(formula).map((line, i) => (
                     <div key={i}>{L(line)}</div>
@@ -511,16 +532,16 @@ export function NodeCard({ node, siblings, onNavigate, onClose, mode = 'map', lo
             )}
             {(node.units || essence) && (
               <div className="panel__section">
-                <div className="panel__label">{essence ? 'Единицы и суть' : 'Единицы'}</div>
+                <div className="panel__label">{essence ? t('Единицы и суть') : t('Единицы')}</div>
                 <div className="panel__tags">
-                  {node.units && <span className="chip chip--unit">{node.units}</span>}
+                  {node.units && <span className="chip chip--unit">{t(node.units)}</span>}
                   {essence && <EssenceChip essence={essence} note={essenceNote} />}
                 </div>
               </div>
             )}
             {ref && (
               <div className="panel__section">
-                <div className="panel__label">Где стоит</div>
+                <div className="panel__label">{t('Где стоит')}</div>
                 <WherePlaces places={ref.places} here={inRef ? undefined : node.id} />
               </div>
             )}
@@ -533,12 +554,12 @@ export function NodeCard({ node, siblings, onNavigate, onClose, mode = 'map', lo
                     <rect x="2" y="7.5" width="4" height="3" rx="1" />
                     <rect x="10" y="7.5" width="4" height="3" rx="1" />
                   </svg>
-                  Дерево этой метрики
+                  {t('Дерево этой метрики')}
                   <span className="panel__tree-n">{tree.nodes - 1}</span>
                 </button>
               </div>
             )}
-            {!contentReady() && <div className="panel__hint">Загружаем подробности…</div>}
+            {!contentReady() && <div className="panel__hint">{t('Загружаем подробности…')}</div>}
           </>
         )}
 
@@ -546,7 +567,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose, mode = 'map', lo
           <>
             {nuances.length > 0 && (
               <div className="panel__section">
-                <div className="panel__label">Нюансы расчёта</div>
+                <div className="panel__label">{t('Нюансы расчёта')}</div>
                 <ul className="panel__bullets">
                   {nuances.map((n, i) => <li key={i}>{bold(n, siblings, nav)}</li>)}
                 </ul>
@@ -554,7 +575,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose, mode = 'map', lo
             )}
             {example.length > 0 && (
               <div className="panel__section">
-                <div className="panel__label">Пример расчёта</div>
+                <div className="panel__label">{t('Пример расчёта')}</div>
                 <div className="panel__example">
                   {example.map((line, i) => {
                     if (!line) return <div key={i} className="panel__example-gap" />
@@ -576,10 +597,10 @@ export function NodeCard({ node, siblings, onNavigate, onClose, mode = 'map', lo
           <>
             {dims.length > 0 && (
               <div className="panel__section">
-                <div className="panel__label">Разрезы</div>
+                <div className="panel__label">{t('Разрезы')}</div>
                 <ul className="panel__bullets">
                   {dims.map((d, i) => (
-                    <li key={i}><b>{d.name}</b>{d.note ? ` — ${d.note}` : ''}</li>
+                    <li key={i}><b>{d.name}</b>{d.note ? `${LANG === 'en' ? ': ' : ' — '}${d.note}` : ''}</li>
                   ))}
                 </ul>
               </div>
@@ -589,7 +610,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose, mode = 'map', lo
             {questions.length > 0 ? (
               <div className="panel__section">
                 {dims.length > 0 && <div className="panel__split" />}
-                <div className="panel__label">Вопросы</div>
+                <div className="panel__label">{t('Вопросы')}</div>
                 {questions.map(({ group, items }) => (
                   <div key={group.id} className="qgroup">
                     <div className="panel__label qgroup__label">
@@ -602,7 +623,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose, mode = 'map', lo
                   </div>
                 ))}
               </div>
-            ) : !questionsReady() && <div className="panel__hint">Загружаем вопросы…</div>}
+            ) : !questionsReady() && <div className="panel__hint">{t('Загружаем вопросы…')}</div>}
           </>
         )}
 
@@ -610,7 +631,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose, mode = 'map', lo
           <>
             {why && (
               <div className="panel__section">
-                <div className="panel__label">Важность</div>
+                <div className="panel__label">{t('Важность')}</div>
                 <div className="panel__text">
                   {parts(why).map((p, i) => <p key={i} className="panel__para">{bold(p, siblings, nav)}</p>)}
                 </div>
@@ -618,7 +639,7 @@ export function NodeCard({ node, siblings, onNavigate, onClose, mode = 'map', lo
             )}
             {whenNot && (
               <div className="panel__section">
-                <div className="panel__label">Когда не нужна</div>
+                <div className="panel__label">{t('Когда не нужна')}</div>
                 <div className="panel__text">
                   {parts(whenNot).map((p, i) => <p key={i} className="panel__para">{bold(p, siblings, nav)}</p>)}
                 </div>
@@ -637,9 +658,9 @@ export function NodeCard({ node, siblings, onNavigate, onClose, mode = 'map', lo
             <rect x="5.5" y="5.5" width="8" height="9" rx="1.6" stroke="currentColor" strokeWidth="1.4" />
             <path d="M10.5 3.5h-6A1.5 1.5 0 0 0 3 5v7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
           </svg>
-          {tookDossier === 'ok' ? 'Досье в буфере'
-            : tookDossier === 'fail' ? 'Не удалось скопировать'
-            : 'Скопировать досье о метрике'}
+          {tookDossier === 'ok' ? t('Досье в буфере')
+            : tookDossier === 'fail' ? t('Не удалось скопировать')
+            : t('Скопировать досье о метрике')}
         </button>
       </div>}
     </aside>

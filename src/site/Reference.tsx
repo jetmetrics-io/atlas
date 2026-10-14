@@ -18,6 +18,7 @@ import type { AtlasNode } from '../atlas/types'
 import { NodeCard } from '../map/NodeCard'
 import { EMBED, openPlaceInNewTab } from './nav'
 import { openLockDialog } from './LockDialog'
+import { LANG, t, plural } from '../i18n'
 
 const norm = (s: unknown) => String(s ?? '').toLowerCase().replace(/ё/g, 'е').replace(/\s+/g, ' ').trim()
 // Разметка хранения в таблице не нужна: [[текст→адрес]] → текст, **жирный** → текст.
@@ -25,6 +26,7 @@ const plain = (s?: string) => (s ?? '').replace(/\[\[([^\]→]+)→[^\]]*\]\]/g,
 // По первой букве: «% возвратов» стоит среди «В», а не в начале списка.
 const sortKey = (name: string) => name.toLowerCase().replace(/^[^0-9a-zа-яё]+/i, '')
 
+// Коды единиц из данных (и в английских данных они те же); подпись — через t().
 const UNITS = ['Количество', '%', 'Деньги', 'Время']
 
 // Направление отдельным фильтром не заводим: оно — группа в списке «Карта или дерево»,
@@ -32,12 +34,6 @@ const UNITS = ['Количество', '%', 'Деньги', 'Время']
 type Key = 'art' | 'unit'
 type Filters = Record<Key, Set<string>>
 const emptyFilters = (): Filters => ({ art: new Set(), unit: new Set() })
-
-function plural(n: number, one: string, few: string, many: string) {
-  const form = n % 10 === 1 && n % 100 !== 11 ? one
-    : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many
-  return `${n} ${form}`
-}
 
 const Icon = {
   map: <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="2" /><path d="M5.5 2.5v11M10.5 2.5v11" /></svg>,
@@ -113,7 +109,7 @@ export function Reference({ tq, setTq, openMid, setOpenMid }: {
     }
   }, [])
 
-  const all = useMemo(() => [...refMetrics()].sort((a, b) => sortKey(a.name).localeCompare(sortKey(b.name), 'ru')),
+  const all = useMemo(() => [...refMetrics()].sort((a, b) => sortKey(a.name).localeCompare(sortKey(b.name), LANG)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [refReady()])
 
@@ -170,7 +166,7 @@ export function Reference({ tq, setTq, openMid, setOpenMid }: {
       if (whole.length === 1 && famNames(whole[0].key).length === s.size) return `${name}: ${whole[0].title}`
     }
     const one = [...s][0]
-    return s.size === 1 ? `${name}: ${one}` : `${name} · ${s.size}`
+    return s.size === 1 ? `${name}: ${k === 'unit' ? t(one) : one}` : `${name} · ${s.size}`
   }
 
   const opt = (k: Key, v: string, text: React.ReactNode, n: number, sub = false) => (
@@ -181,7 +177,7 @@ export function Reference({ tq, setTq, openMid, setOpenMid }: {
   )
 
   const popList = (k: Key) => {
-    if (k === 'unit') return UNITS.map((u) => opt('unit', u, u, count('unit', (m) => m.unit === u)))
+    if (k === 'unit') return UNITS.map((u) => opt('unit', u, t(u), count('unit', (m) => m.unit === u)))
     const pq = norm(popQ)
     const groups = fams.map((f) => {
       const items = f.items.filter((it) => !pq || norm(it.name).includes(pq))
@@ -200,7 +196,7 @@ export function Reference({ tq, setTq, openMid, setOpenMid }: {
         </div>
       )
     })
-    return groups.some(Boolean) ? groups : <div className="ropt__empty">Ничего не нашлось</div>
+    return groups.some(Boolean) ? groups : <div className="ropt__empty">{t('Ничего не нашлось')}</div>
   }
 
   const fbtn = (k: Key, name: string) => (
@@ -213,7 +209,7 @@ export function Reference({ tq, setTq, openMid, setOpenMid }: {
         <div className={`rpop${k === 'art' ? ' rpop--wide' : ''}`} role="menu">
           {k === 'art' && (
             <input className="rpop__q" autoFocus value={popQ} onChange={(e) => setPopQ(e.target.value)}
-              placeholder="Найти карту или дерево" aria-label="Найти карту или дерево" />
+              placeholder={t('Найти карту или дерево')} aria-label={t('Найти карту или дерево')} />
           )}
           <div className="rpop__list">{popList(k)}</div>
         </div>
@@ -244,16 +240,17 @@ export function Reference({ tq, setTq, openMid, setOpenMid }: {
     return { top: y0 - (r.top + window.scrollY), height: Math.max(240, y1 - y0), right: r.right - document.documentElement.clientWidth }
   })()
 
-  if (!refReady()) return <div className="rempty">Загружаем справочник…</div>
+  if (!refReady()) return <div className="rempty">{t('Загружаем справочник…')}</div>
 
   return (
     <div className="ref" ref={root}>
       <div className="rbar">
-        {fbtn('art', 'Карта или дерево')}
-        {fbtn('unit', 'Единица')}
+        {fbtn('art', t('Карта или дерево'))}
+        {fbtn('unit', t('Единица'))}
         <span className="rbar__end">
-          <span className="rbar__n">{anyF || qn ? `Нашлось ${rows.length} из ${all.length}` : plural(all.length, 'метрика', 'метрики', 'метрик')}</span>
-          {(anyF || qn) && <button type="button" className="rbar__reset" onClick={() => { setF(emptyFilters()); setTq('') }}>Сбросить</button>}
+          <span className="rbar__n">{anyF || qn ? t('Нашлось {n} из {total}', { n: rows.length, total: all.length })
+            : `${all.length} ${plural(all.length, ['метрика', 'метрики', 'метрик'], ['metric', 'metrics'])}`}</span>
+          {(anyF || qn) && <button type="button" className="rbar__reset" onClick={() => { setF(emptyFilters()); setTq('') }}>{t('Сбросить')}</button>}
         </span>
       </div>
 
@@ -265,13 +262,13 @@ export function Reference({ tq, setTq, openMid, setOpenMid }: {
                 {/* заголовок столбца сам и есть поле поиска: «Метрика…» (решение Марии 29.09) */}
                 <label className="rth-q__f">
                   <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4 4" /></svg>
-                  <input value={tq} onChange={(e) => setTq(e.target.value)} placeholder="Метрика…"
-                    aria-label="Найти метрику в таблице по названию" />
-                  {tq && <button type="button" onClick={() => setTq('')} aria-label="Очистить">×</button>}
+                  <input value={tq} onChange={(e) => setTq(e.target.value)} placeholder={t('Метрика…')}
+                    aria-label={t('Найти метрику в таблице по названию')} />
+                  {tq && <button type="button" onClick={() => setTq('')} aria-label={t('Очистить')}>×</button>}
                 </label>
               </div>
             </th>
-            <th>Формула</th><th>Ед.</th><th>Где стоит</th>
+            <th>{t('Формула')}</th><th>{t('Ед.')}</th><th>{t('Где стоит')}</th>
           </tr></thead>
           <tbody>
             {rows.map((m) => (
@@ -283,14 +280,14 @@ export function Reference({ tq, setTq, openMid, setOpenMid }: {
                   {m.desc && <div className="rtable__ds">{plain(m.desc)}</div>}
                 </td>
                 <td className="rtable__f">{plain(m.formula)}</td>
-                <td><span className="rtable__u">{m.unit}</span></td>
+                <td><span className="rtable__u">{m.unit && t(m.unit)}</span></td>
                 <td><div className="rtable__w">{m.places.length
                   ? m.places.map((p) => <PlaceChip key={p.node} p={p} />)
-                  : <span className="rtable__none">пока ни на одной карте</span>}</div></td>
+                  : <span className="rtable__none">{t('пока ни на одной карте')}</span>}</div></td>
               </tr>
             ))}
             {!rows.length && (
-              <tr><td colSpan={4} className="rempty">Ничего не нашлось</td></tr>
+              <tr><td colSpan={4} className="rempty">{t('Ничего не нашлось')}</td></tr>
             )}
           </tbody>
         </table>

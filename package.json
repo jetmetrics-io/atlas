@@ -14,7 +14,9 @@
     "db": "python3 scripts/db.py restore",
     "db:dump": "python3 scripts/db.py dump",
     "db:check": "python3 scripts/db.py check",
-    "pull": "python3 scripts/atlas_pull.py"
+    "pull": "python3 scripts/atlas_pull.py",
+    "dev:en": "VITE_LANG=en vite",
+    "build:en": "tsc --noEmit && VITE_LANG=en vite build --outDir dist-en"
   },
   "dependencies": {
     "@xyflow/react": "^12.3.5",

@@ -1,5 +1,6 @@
 import { BASE } from '../atlas/atlas'
 import { midOfNode } from '../atlas/reference'
+import { LANG } from '../i18n'
 
 // Навигация между страницами Тильды (вариант «каждая карта — своя страница»).
 // Приложение встроено в Тильду через iframe; при клике по карте уводим ВЕРХНЕЕ окно
@@ -9,12 +10,17 @@ export const EMBED =
   typeof window !== 'undefined' &&
   new URLSearchParams(window.location.search).get('embed') === '1'
 
-const SITE = 'https://джетметрикс.рф'
+// Английская сборка (Map Library, jetmetrics.io) живёт на ОДНОЙ странице Workspace:
+// отдельных страниц у карт и деревьев там нет, карта открывается той же страницей
+// с ?map=<имя карты>, дерево — с ?tree=<slug>. Адрес сайта можно подменить при сборке
+// (VITE_SITE), по умолчанию — боевой. Русская ветка ниже не меняется.
+const IS_EN = LANG === 'en'
+const SITE = IS_EN ? (import.meta.env.VITE_SITE || 'https://jetmetrics.io') : 'https://джетметрикс.рф'
 
 // Один адрес каталога Атласа: сборка одна, гейт — внутри приложения по факту оплаты.
 // «Назад» с любой карты ведёт сюда; что покажется (3 или 28 карт) решает уже сам Атлас.
-export const CATALOG_PAGE = `${SITE}/hub-atlas`
-export const BUY_URL = `${SITE}/atlas`
+export const CATALOG_PAGE = IS_EN ? `${SITE}/workspace-map-library` : `${SITE}/hub-atlas`
+export const BUY_URL = IS_EN ? `${SITE}/map` : `${SITE}/atlas`
 
 // Адрес страницы карты на Тильде собирается из slug'а карты в Базе: `hub-atlas-<slug>`.
 // Все страницы встраивают ОДНУ сборку Атласа; бесплатные карты (finansy/lidogeneraciya/
@@ -26,6 +32,8 @@ export const BUY_URL = `${SITE}/atlas`
 // молча ломало адрес. 26.08.2026 slug'и Базы приведены к адресам страниц, словарь убран.
 export function mapPageUrl(name: string): string | null {
   const slug = BASE.sections.find((s) => s.name === name)?.slug
+  // В английской сборке карта — та же страница каталога с ?map=<имя>: его читает App.
+  if (IS_EN) return slug ? `${CATALOG_PAGE}?map=${encodeURIComponent(name)}` : null
   return slug ? `${SITE}/hub-atlas-${slug}` : null
 }
 
@@ -45,6 +53,7 @@ export function artifactPageUrl(name: string): string | null {
   if (map) return map
   const tree = (BASE.trees ?? []).find((t) => t.name === name)
   if (!tree) return null
+  if (IS_EN) return `${CATALOG_PAGE}?tree=${tree.slug}`
   const page = TREE_PAGES.has(tree.slug) ? tree.slug : TREE_SHELL
   return `${SITE}/hub-atlas-${page}?tree=${tree.slug}`
 }
@@ -68,7 +77,8 @@ export function openTree(slug: string, nodeId?: string, newTab = false) {
 export function metricUrl(section: string, nodeId: string): string {
   const tree = (BASE.trees ?? []).find((t) => t.name === section)
   const page = artifactPageUrl(section)
-  if (page) return `${page}${tree ? '&' : '?'}node=${nodeId}`
+  // в английской сборке и у карты адрес уже несёт параметр (?map=), метрика — через «&»
+  if (page) return `${page}${tree || IS_EN ? '&' : '?'}node=${nodeId}`
   const local = tree
     ? `?tree=${tree.slug}&node=${nodeId}`
     : `?map=${encodeURIComponent(section)}&node=${nodeId}`

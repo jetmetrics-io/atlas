@@ -16,15 +16,11 @@ import {
   type Profile, type Tree,
 } from './tree'
 import type { AtlasNode } from '../atlas/types'
+import { t, rich, plural } from '../i18n'
 
 // «31 метрика», «32 метрики», «177 метрик» — счётчик стоит в крошках на видном месте,
 // и несогласованное окончание там читается как недоделка.
-const metrics = (n: number) => {
-  const t = n % 10, h = n % 100
-  const word = t === 1 && h !== 11 ? 'метрика'
-    : t >= 2 && t <= 4 && (h < 10 || h >= 20) ? 'метрики' : 'метрик'
-  return `${n} ${word}`
-}
+const metrics = (n: number) => `${n} ${plural(n, ['метрика', 'метрики', 'метрик'], ['metric', 'metrics'])}`
 
 const PROFILE_KEY = 'jm-tree-profile'
 // Внизу висят крошки и подсказки: без запаса последняя карточка упирается в них.
@@ -82,9 +78,9 @@ const TIER_ICON: Record<string, JSX.Element> = {
 }
 
 const TIER = [
-  { key: 'key', label: 'Ключевая метрика' },
-  { key: 'component', label: 'Компоненты' },
-  { key: 'driver', label: 'Драйверы' },
+  { key: 'key', label: t('Ключевая метрика') },
+  { key: 'component', label: t('Компоненты') },
+  { key: 'driver', label: t('Драйверы') },
 ].map((t) => ({ ...roleStyle(t.key), ...t }))
 
 function readProfile(): Profile {
@@ -209,11 +205,11 @@ function Stage({
         <button key={c.name} className={`tchip${drillOpen === c.name ? ' is-on' : ''}`}
           style={{ left: c.x + 14, top: c.cy - 13 }}
           onClick={() => onDrill(c.name)}
-          aria-label={`Открыть дерево драйверов, ${c.total} метрик`}>
+          aria-label={t('Открыть дерево драйверов, {n} метрик', { n: c.total })}>
           <span className="tchip__s">{drillOpen === c.name ? '×' : '+'}</span>
           <span className="tchip__n">{c.total}</span>
           <span className="tchip__more">
-            {drillOpen === c.name ? 'свернуть дерево' : 'открыть дерево драйверов'}
+            {drillOpen === c.name ? t('свернуть дерево') : t('открыть дерево драйверов')}
           </span>
         </button>
       ))}
@@ -627,7 +623,7 @@ export function TreeView({ slug, onBack, initialDrill }:
 
   const crumbs = (
     <div className="tree__crumbs">
-      <button onClick={onBack}>Каталог</button>
+      <button onClick={onBack}>{t('Каталог')}</button>
       <span>›</span>
       {drill ? <button onClick={() => setDrill(null)}>{tree.info.name}</button>
              : <b>{tree.info.name}</b>}
@@ -653,9 +649,9 @@ export function TreeView({ slug, onBack, initialDrill }:
       {!flat && <div className="tree__lvls">
         {drill
           ? <button type="button" className="tlvl tlvl--go" onClick={() => setDrill(null)}
-              title="Вернуться на первый уровень"><b>1</b> уровень · {tree.info.name}</button>
-          : <span className="tlvl"><b>1</b> уровень · {tree.info.name}</span>}
-        {drill && <span className="tlvl tlvl--b"><b>2</b> уровень · {drill}</span>}
+              title={t('Вернуться на первый уровень')}>{rich('<b>1</b> уровень · {name}', { name: tree.info.name })}</button>
+          : <span className="tlvl">{rich('<b>1</b> уровень · {name}', { name: tree.info.name })}</span>}
+        {drill && <span className="tlvl tlvl--b">{rich('<b>2</b> уровень · {name}', { name: drill })}</span>}
       </div>}
 
       <div className="tree__heads">
@@ -698,40 +694,40 @@ export function TreeView({ slug, onBack, initialDrill }:
           {crumbs}
           <label className="qtoggle">
             <input type="checkbox" checked={qsOn} onChange={(e) => toggleQs(e.target.checked)} />
-            Вопросы дерева
+            {t('Вопросы дерева')}
           </label>
         </div>
       ) : crumbs}
 
       {drill && (
         <button className="tree__esc" onClick={() => setDrill(null)}>
-          <kbd>ESC</kbd> вернуться к дереву прибыли
+          {rich('<kbd>ESC</kbd> вернуться к дереву прибыли')}
         </button>
       )}
 
       <div className="tree__keys">
-        <span><kbd>↑↓</kbd>метрики</span><i>|</i>
-        <span><kbd>←→</kbd>ступени</span><i>|</i>
-        {!flat && <><span><kbd>⏎</kbd>раскрыть</span><i>|</i></>}
-        <span><kbd>␣</kbd>карточка</span><i>|</i>
-        <span><kbd>0</kbd>вид целиком</span>
+        <span><kbd>↑↓</kbd>{t('метрики')}</span><i>|</i>
+        <span><kbd>←→</kbd>{t('ступени')}</span><i>|</i>
+        {!flat && <><span><kbd>⏎</kbd>{t('раскрыть')}</span><i>|</i></>}
+        <span><kbd>␣</kbd>{t('карточка')}</span><i>|</i>
+        <span><kbd>0</kbd>{t('вид целиком')}</span>
       </div>
 
       <div className="tree__zoom">
-        <button onClick={() => setZoom((v) => Math.min(2.2, v * 1.15))} aria-label="Приблизить">+</button>
-        <button onClick={() => setZoom((v) => Math.max(0.3, v / 1.15))} aria-label="Отдалить">−</button>
+        <button onClick={() => setZoom((v) => Math.min(2.2, v * 1.15))} aria-label={t('Приблизить')}>+</button>
+        <button onClick={() => setZoom((v) => Math.max(0.3, v / 1.15))} aria-label={t('Отдалить')}>−</button>
       </div>
 
       {qsOn && qRoot && (
-        <aside className="qpanel" aria-label="Вопросы дерева">
+        <aside className="qpanel" aria-label={t('Вопросы дерева')}>
           {/* из-под открытой карточки торчит полоска: щелчок закрывает карточку */}
           <button type="button" className="qpanel__strip" onClick={() => setCard(null)}
-            title="Закрыть карточку и вернуться к вопросам"><span>Вопросы</span></button>
+            title={t('Закрыть карточку и вернуться к вопросам')}><span>{t('Вопросы')}</span></button>
           <div className="qpanel__head">
-            <span className="panel__label">Вопросы дерева</span>
+            <span className="panel__label">{t('Вопросы дерева')}</span>
             <span className="qpanel__model">{qModel}</span>
             <button type="button" className="panel__close" onClick={() => toggleQs(false)}
-              aria-label="Скрыть вопросы">×</button>
+              aria-label={t('Скрыть вопросы')}>×</button>
           </div>
           <div className="qpanel__body" ref={qbody}>
             {qrow(qRoot)}

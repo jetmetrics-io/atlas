@@ -5,20 +5,15 @@ import { EMBED, goTop, mapPageUrl } from './nav'
 import { Search } from './Search'
 import { Reference } from './Reference'
 import { openLockDialog } from './LockDialog'
+import { LANG, t, rich, plural, formatDate } from '../i18n'
+import { SaveMark } from './SaveMark'
+import { itemOfMap, itemOfTree } from './workspace'
 
 // Вид главной: каталог карт и деревьев или справочник метрик. Держим в адресе
 // (?view=metrics&metric=<номер>), чтобы на справочник и на метрику в нём можно было дать ссылку.
 const params = () => new URLSearchParams(window.location.search)
 const refFromUrl = () => params().get('view') === 'metrics'
 const midFromUrl = () => { const v = Number(params().get('metric')); return Number.isFinite(v) && v > 0 ? v : null }
-
-const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-  'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
-function fmtDate(iso?: string): string {
-  if (!iso) return '—'
-  const [y, m, d] = iso.split('-').map(Number)
-  return `${d} ${MONTHS[m - 1]} ${y}`
-}
 
 // Штриховые монохромные иконки категорий. Цвет НЕ различает категории —
 // он зарезервирован за типами метрик внутри карт. Категория = иконка + название.
@@ -50,13 +45,6 @@ const ICONS: Record<string, JSX.Element> = {
 }
 
 type Sec = { name: string; slug: string; nodes: number; total?: number }
-
-// Счёт витрины бесплатного: «3 карты + 1 дерево».
-function plural(n: number, one: string, few: string, many: string) {
-  const form = n % 10 === 1 && n % 100 !== 11 ? one
-    : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many
-  return `${n} ${form}`
-}
 
 // Тип подписан на плашке: карта и дерево читаются по-разному, и по одному имени
 // («Финансы» и «Чистая прибыль») их не различить.
@@ -98,11 +86,11 @@ export function Catalog({ onOpen, onOpenTree }: {
   const showTrees = kindFilter !== 'map'
 
   const stats: [string, string][] = [
-    [String(families.length), 'категорий'],
-    [String(totalMaps), 'карт'],
-    [String(trees.length), trees.length === 1 ? 'дерево' : 'деревьев'],
+    [String(families.length), t('категорий')],
+    [String(totalMaps), t('карт')],
+    [String(trees.length), trees.length === 1 ? t('дерево') : t('деревьев')],
     // все метрики Атласа — и неоплатившему: справочник показывает ему все, и лендинг обещает все
-    [String(refCount), 'метрик'],
+    [String(refCount), t('метрик')],
   ]
 
   // Бесплатные карты (когда пользователь без оплаты) — для витрины сверху, чтобы первый
@@ -117,12 +105,13 @@ export function Catalog({ onOpen, onOpenTree }: {
     ? allFamilies().flatMap((f) => treesOfFamily(f)).filter((t) => isSectionFree(t.name))
     : []
   const freeTitle = [
-    freeMaps.length ? `${plural(freeMaps.length, 'карта', 'карты', 'карт')}` : '',
-    freeTrees.length ? `${plural(freeTrees.length, 'дерево', 'дерева', 'деревьев')}` : '',
+    // Счёт витрины бесплатного: «3 карты + 1 дерево».
+    freeMaps.length ? `${freeMaps.length} ${plural(freeMaps.length, ['карта', 'карты', 'карт'], ['map', 'maps'])}` : '',
+    freeTrees.length ? `${freeTrees.length} ${plural(freeTrees.length, ['дерево', 'дерева', 'деревьев'], ['tree', 'trees'])}` : '',
   ].filter(Boolean).join(' + ')
   // Согласование под фильтр: одна плашка — «доступна»/«доступно», несколько — «доступны»
-  const freeVerb = freeMaps.length + freeTrees.length > 1 ? 'доступны'
-    : freeTrees.length ? 'доступно' : 'доступна'
+  const freeVerb = freeMaps.length + freeTrees.length > 1 ? t('доступны')
+    : freeTrees.length ? t('доступно') : t('доступна')
 
   // Клик по карте: закрытая → покупка; в embed открытая ведёт на СВОЮ страницу Тильды
   // (если она заведена), иначе — открываем карту внутри приложения.
@@ -133,7 +122,8 @@ export function Catalog({ onOpen, onOpenTree }: {
     if (EMBED) {
       const page = mapPageUrl(name)
       // из поиска метрика открывается сразу раскрытой: страница карты + ?node=
-      if (page) { goTop(nodeId ? `${page}?node=${nodeId}` : page); return }
+      // в английской сборке адрес карты уже несёт ?map=, метрика присоединяется через «&»
+      if (page) { goTop(nodeId ? `${page}${LANG === 'en' ? '&' : '?'}node=${nodeId}` : page); return }
     }
     onOpen(name, nodeId)
   }
@@ -152,21 +142,22 @@ export function Catalog({ onOpen, onOpenTree }: {
         {locked ? (
           // Замок-чип: в покое — только иконка; на ховере раскрывается в «Открыть все карты».
           // Абсолютное позиционирование → раскрытие НЕ меняет высоту карточки.
-          <span className="mcard__lock" aria-label="Открыть все карты">
+          <span className="mcard__lock" aria-label={t('Открыть все карты')}>
             <svg viewBox="0 0 24 24" width="15" height="15" fill="none"
               stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <rect x="5" y="11" width="14" height="9" rx="2" />
               <path d="M8 11V8a4 4 0 0 1 8 0v3" />
             </svg>
-            <span className="mcard__lock-txt">Открыть все карты</span>
+            <span className="mcard__lock-txt">{t('Открыть все карты')}</span>
           </span>
         ) : null}
-        <span className="mcard__kind">{tree ? 'Дерево' : 'Карта'}</span>
-        {!PAID && free && <span className="mcard__badge">Бесплатно</span>}
+        <span className="mcard__kind">{tree ? t('Дерево') : t('Карта')}</span>
+        {!PAID && free && <span className="mcard__badge">{t('Бесплатно')}</span>}
         <div className="mcard__nm">{s.name}</div>
         {/* У дерева на плашке весь разбор: чистая прибыль сама по себе — 12 метрик,
             а за ней стоят девять деревьев, куда читатель проваливается. */}
-        <div className="mcard__meta">{(tree && s.total) || s.nodes} метрик</div>
+        <div className="mcard__meta">{t('{n} метрик', { n: (tree && s.total) || s.nodes })}</div>
+        {!locked && <SaveMark item={tree ? itemOfTree(s.slug, s.name) : itemOfMap(s.name)} className="mcard__save" />}
       </div>
     )
   }
@@ -176,18 +167,17 @@ export function Catalog({ onOpen, onOpenTree }: {
       <div className="container">
         <div className="catalog__top">
           <div className="catalog__hero">
-            <span className="eyebrow"><span className="line" />АТЛАС МЕТРИК</span>
+            <span className="eyebrow"><span className="line" />{t('АТЛАС МЕТРИК')}</span>
             {inRef ? (
               <>
-                <h1>Справочник <span className="ac">метрик</span></h1>
-                <p>Все {plural(refCount, 'метрика', 'метрики', 'метрик')} Атласа: что показывает каждая,
-                  как её считать и в каких картах и деревьях она стоит.</p>
+                <h1>{rich('Справочник <ac>метрик</ac>', { ac: (s) => <span className="ac">{s}</span> })}</h1>
+                <p>{t('Все {count} Атласа: что показывает каждая, как её считать и в каких картах и деревьях она стоит.',
+                  { count: `${refCount} ${plural(refCount, ['метрика', 'метрики', 'метрик'], ['metric', 'metrics'])}` })}</p>
               </>
             ) : (
               <>
-                <h1>Карты метрик <span className="ac">по направлениям</span></h1>
-                <p>Выберите направление. Внутри карта показателей: что на что влияет, прямо или обратно,
-                  и на какие рычаги вы реально можете нажать.</p>
+                <h1>{rich('Карты метрик <ac>по направлениям</ac>', { ac: (s) => <span className="ac">{s}</span> })}</h1>
+                <p>{t('Выберите направление. Внутри карта показателей: что на что влияет, прямо или обратно, и на какие рычаги вы реально можете нажать.')}</p>
               </>
             )}
             <Search
@@ -200,10 +190,10 @@ export function Catalog({ onOpen, onOpenTree }: {
             />
 
             <div className="catalog__views">
-              <div className="kindbar" role="group" aria-label="Что показывать">
-                {([['all', 'Всё', totalMaps + trees.length],
-                   ['map', 'Карты', totalMaps],
-                   ['tree', 'Деревья', trees.length]] as const).map(([k, label, n]) => (
+              <div className="kindbar" role="group" aria-label={t('Что показывать')}>
+                {([['all', t('Всё'), totalMaps + trees.length],
+                   ['map', t('Карты'), totalMaps],
+                   ['tree', t('Деревья'), trees.length]] as const).map(([k, label, n]) => (
                   <button key={k} type="button"
                     className={'kindbar__b' + (!inRef && kindFilter === k ? ' is-on' : '')}
                     aria-pressed={!inRef && kindFilter === k}
@@ -220,14 +210,14 @@ export function Catalog({ onOpen, onOpenTree }: {
                     <path d="M5.5 4h8M5.5 8h8M5.5 12h8" /><circle cx="2.5" cy="4" r=".9" fill="currentColor" />
                     <circle cx="2.5" cy="8" r=".9" fill="currentColor" /><circle cx="2.5" cy="12" r=".9" fill="currentColor" />
                   </svg>
-                  Справочник метрик<span className="kindbar__n">{refCount}</span>
+                  {t('Справочник метрик')}<span className="kindbar__n">{refCount}</span>
                 </button>
               </div>
             </div>
           </div>
 
           <aside className="statspanel">
-            <div className="statspanel__h">В атласе</div>
+            <div className="statspanel__h">{t('В атласе')}</div>
             {stats.map(([v, l]) => (
               <div className="statspanel__row" key={l}>
                 <span className="sp__l">{l[0].toUpperCase() + l.slice(1)}</span>
@@ -236,7 +226,7 @@ export function Catalog({ onOpen, onOpenTree }: {
             ))}
             <div className="statspanel__upd">
               <span className="updbadge__dot" />
-              Обновлено {fmtDate(meta.updated)}
+              {t('Обновлено {date}', { date: formatDate(meta.updated) })}
             </div>
           </aside>
         </div>
@@ -248,9 +238,9 @@ export function Catalog({ onOpen, onOpenTree }: {
         {!inRef && (freeMaps.length > 0 || freeTrees.length > 0) && (
           <section className="freebar">
             <div className="freebar__head">
-              <span className="freebar__badge">Открыто бесплатно</span>
+              <span className="freebar__badge">{t('Открыто бесплатно')}</span>
               <span className="freebar__title">
-                {freeTitle} {freeVerb} целиком — откройте и посмотрите, как это работает
+                {t('{title} {verb} целиком — откройте и посмотрите, как это работает', { title: freeTitle, verb: freeVerb })}
               </span>
             </div>
             <div className="mapgrid">

@@ -15,6 +15,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { BASE, PAID, isSectionFree, isSectionUnlocked } from '../atlas/atlas'
 import { refMetrics, refReady } from '../atlas/reference'
+import { t } from '../i18n'
 
 export type SearchHit =
   | { kind: 'map'; section: string; nodes: number; locked: boolean; tree?: boolean; parent?: string }
@@ -161,26 +162,26 @@ export function Search({ q, setQ, onOpenMap, onOpenMetric, onAllInRef, onBuy }: 
         <input
           className="asearch__input"
           value={q}
-          placeholder="Поиск по картам, деревьям и метрикам"
+          placeholder={t('Поиск по картам, деревьям и метрикам')}
           onChange={(e) => { setQ(e.target.value); setOpen(true) }}
           onFocus={() => setOpen(true)}
           onKeyDown={onKey}
-          aria-label="Поиск по картам, деревьям и метрикам"
+          aria-label={t('Поиск по картам, деревьям и метрикам')}
         />
         {q && (
-          <button className="asearch__clear" onClick={() => { setQ(''); setOpen(false) }} aria-label="Очистить">×</button>
+          <button className="asearch__clear" onClick={() => { setQ(''); setOpen(false) }} aria-label={t('Очистить')}>×</button>
         )}
       </div>
 
       {showing && (
         <div className="asearch__drop">
           {total === 0 && (
-            <div className="asearch__empty">Ничего не нашлось. Попробуйте другое слово — например, «выручка» или «отток».</div>
+            <div className="asearch__empty">{t('Ничего не нашлось. Попробуйте другое слово — например, «выручка» или «отток».')}</div>
           )}
 
           {maps.length > 0 && (
             <div className="asearch__group">
-              <div className="asearch__ghead">Карты и деревья</div>
+              <div className="asearch__ghead">{t('Карты и деревья')}</div>
               {maps.map((h, i) => h.kind === 'map' && (
                 <button key={(h.tree ? 't:' : 'm:') + h.section}
                   className={`asearch__row${cursor === i ? ' is-cur' : ''}${h.locked ? ' is-locked' : ''}`}
@@ -188,9 +189,9 @@ export function Search({ q, setQ, onOpenMap, onOpenMetric, onAllInRef, onBuy }: 
                   onClick={() => go(h)}>
                   <span className="asearch__nm">{mark(h.section)}</span>
                   <span className="asearch__side">
-                    {h.tree ? (h.parent ? `дерево в «${h.parent}» · ` : 'дерево · ') : 'карта · '}
-                    {h.locked ? 'под замком' : `${h.nodes} метрик`}
-                    {!PAID && !h.locked && isSectionFree(h.section) && <span className="asearch__free">бесплатно</span>}
+                    {h.tree ? (h.parent ? t('дерево в «{parent}» · ', { parent: h.parent }) : t('дерево · ')) : t('карта · ')}
+                    {h.locked ? t('под замком') : t('{n} метрик', { n: h.nodes })}
+                    {!PAID && !h.locked && isSectionFree(h.section) && <span className="asearch__free">{t('бесплатно')}</span>}
                   </span>
                 </button>
               ))}
@@ -199,7 +200,7 @@ export function Search({ q, setQ, onOpenMap, onOpenMetric, onAllInRef, onBuy }: 
 
           {metrics.length > 0 && (
             <div className="asearch__group">
-              <div className="asearch__ghead">Метрики</div>
+              <div className="asearch__ghead">{t('Метрики')}</div>
               {metrics.map((h, i) => h.kind === 'metric' && (
                 <button key={h.mid}
                   className={`asearch__row${cursor === maps.length + i ? ' is-cur' : ''}${h.locked ? ' is-locked' : ''}`}
@@ -215,7 +216,7 @@ export function Search({ q, setQ, onOpenMap, onOpenMetric, onAllInRef, onBuy }: 
                 </button>
               ))}
               <button className="asearch__all" onClick={() => { setOpen(false); onAllInRef(q) }}>
-                <span>Все {metricsTotal} по запросу — в справочнике</span><span aria-hidden>→</span>
+                <span>{t('Все {n} по запросу — в справочнике', { n: metricsTotal })}</span><span aria-hidden>→</span>
               </button>
             </div>
           )}

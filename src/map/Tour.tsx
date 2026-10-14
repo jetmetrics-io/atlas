@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { t } from '../i18n'
 
 export interface TourStep {
   title: string
@@ -96,7 +97,7 @@ export function Tour({ steps, onClose }: { steps: TourStep[]; onClose: (done: bo
   const noMotion = prefersReducedMotion()
 
   return (
-    <div className="tour" role="dialog" aria-modal="true" aria-label={`Подсказка ${i + 1} из ${steps.length}: ${step.title}`}>
+    <div className="tour" role="dialog" aria-modal="true" aria-label={t('Подсказка {i} из {n}: {title}', { i: i + 1, n: steps.length, title: step.title })}>
       {/* Клик-ловушка: клик мимо карточки = пропустить */}
       <div className="tour__catch" onClick={() => finish(false)} />
       {/* Затемнение с вырезом (box-shadow-дырка) или сплошное, если якоря нет */}
@@ -114,7 +115,7 @@ export function Tour({ steps, onClose }: { steps: TourStep[]; onClose: (done: bo
       )}
 
       <div className="tour__card" ref={cardRef} style={{ left: cardPos.left, top: cardPos.top }} onClick={(e) => e.stopPropagation()}>
-        <div className="tour__step">Шаг {i + 1} из {steps.length}</div>
+        <div className="tour__step">{t('Шаг {i} из {n}', { i: i + 1, n: steps.length })}</div>
         <h3 className="tour__title">{step.title}</h3>
         <div className="tour__body">{step.body}</div>
         <div className="tour__foot">
@@ -124,11 +125,11 @@ export function Tour({ steps, onClose }: { steps: TourStep[]; onClose: (done: bo
             ))}
           </div>
           <div className="tour__ctl">
-            <button className="tour__skip" onClick={() => finish(false)}>Пропустить</button>
+            <button className="tour__skip" onClick={() => finish(false)}>{t('Пропустить')}</button>
             <div className="tour__nav">
-              {i > 0 && <button className="tour__btn" onClick={prev}>Назад</button>}
+              {i > 0 && <button className="tour__btn" onClick={prev}>{t('Назад')}</button>}
               <button className="tour__btn tour__btn--primary" onClick={next}>
-                {isLast ? 'Готово' : 'Далее'}
+                {isLast ? t('Готово') : t('Далее')}
               </button>
             </div>
           </div>

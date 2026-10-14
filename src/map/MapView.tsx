@@ -20,6 +20,9 @@ import { DashPicker } from '../dash/DashPicker'
 import { DashSheet } from '../dash/DashSheet'
 import { BLUEPRINTS, QUESTIONS, litNodesOf } from '../dash/blueprints'
 import '../dash/dash.css'
+import { LANG, t, rich } from '../i18n'
+import { SaveMark } from '../site/SaveMark'
+import { itemOfMap } from '../site/workspace'
 
 const nodeTypes = { metric: MetricNode, group: GroupNode }
 const edgeTypes = { metric: MetricEdge }
@@ -32,10 +35,10 @@ type Mode = 'spine' | 'full'
 
 // Формулировки взяты дословно из легенды Атласа.
 const ROLE_INFO: Record<string, { title: string; text: string }> = {
-  result: { title: 'Метрики результата', text: 'Показатели, которые являются результатом влияния других метрик (часто количественные накопленные).' },
-  action: { title: 'Метрики действия', text: 'Метрики, на которые можно воздействовать напрямую.' },
-  cost: { title: 'Метрики затрат', text: 'Метрики, которые связаны с инвестициями и затратами для функционирования процессов.' },
-  diagnostic: { title: 'Диагностические метрики', text: 'Показывают эффективность процесса. Ими нельзя управлять напрямую. Зачастую это коэффициенты, индексы и %.' },
+  result: { title: t('Метрики результата'), text: t('Показатели, которые являются результатом влияния других метрик (часто количественные накопленные).') },
+  action: { title: t('Метрики действия'), text: t('Метрики, на которые можно воздействовать напрямую.') },
+  cost: { title: t('Метрики затрат'), text: t('Метрики, которые связаны с инвестициями и затратами для функционирования процессов.') },
+  diagnostic: { title: t('Диагностические метрики'), text: t('Показывают эффективность процесса. Ими нельзя управлять напрямую. Зачастую это коэффициенты, индексы и %.') },
 }
 
 function Legend({ counts, activeRole, onToggleRole }: {
@@ -44,11 +47,11 @@ function Legend({ counts, activeRole, onToggleRole }: {
   onToggleRole: (role: string) => void
 }) {
   const roles: [string, string][] = [
-    ['result', 'Результат'], ['action', 'Действие'], ['cost', 'Затраты'], ['diagnostic', 'Диагностика'],
+    ['result', t('Результат')], ['action', t('Действие')], ['cost', t('Затраты')], ['diagnostic', t('Диагностика')],
   ]
   return (
     <div className="legend" data-tour="legend">
-      <h4>Роль метрики <span className="legend__hint">кликните — подсветит</span></h4>
+      <h4>{t('Роль метрики')} <span className="legend__hint">{t('кликните — подсветит')}</span></h4>
       {roles.map(([r, l]) => (
         <button
           type="button"
@@ -56,13 +59,13 @@ function Legend({ counts, activeRole, onToggleRole }: {
           key={r}
           onClick={() => onToggleRole(r)}
           aria-pressed={activeRole === r}
-          title={`Подсветить все метрики роли «${l}»`}
+          title={t('Подсветить все метрики роли «{role}»', { role: l })}
         >
           <span className="legend__dot" style={{ background: roleStyle(r).color }} />
           <span className="legend__lbl">{l}</span>
           <span className="legend__cnt">{counts[r] ?? 0}</span>
           <span
-            className="legend__info" tabIndex={0} aria-label={`О роли «${l}»`}
+            className="legend__info" tabIndex={0} aria-label={t('О роли «{role}»', { role: l })}
             onClick={(e) => e.stopPropagation()}
           >
             i
@@ -73,10 +76,10 @@ function Legend({ counts, activeRole, onToggleRole }: {
           </span>
         </button>
       ))}
-      <h4 style={{ marginTop: 10 }}>Связь <span className="legend__hint">кликните — объяснит</span></h4>
-      <div className="legend__row"><span className="legend__line" style={{ borderTop: '2px solid #0E9C7D' }} />Прямая (рост→рост)</div>
-      <div className="legend__row"><span className="legend__line" style={{ borderTop: '2px solid #FF5C60' }} />Обратная (рост→спад)</div>
-      <div className="legend__row"><span className="legend__line" style={{ borderTop: '2px dashed #98A0A6' }} />Пунктир, связь без влияния</div>
+      <h4 style={{ marginTop: 10 }}>{t('Связь')} <span className="legend__hint">{t('кликните — объяснит')}</span></h4>
+      <div className="legend__row"><span className="legend__line" style={{ borderTop: '2px solid #0E9C7D' }} />{t('Прямая (рост→рост)')}</div>
+      <div className="legend__row"><span className="legend__line" style={{ borderTop: '2px solid #FF5C60' }} />{t('Обратная (рост→спад)')}</div>
+      <div className="legend__row"><span className="legend__line" style={{ borderTop: '2px dashed #98A0A6' }} />{t('Пунктир, связь без влияния')}</div>
     </div>
   )
 }
@@ -119,9 +122,9 @@ function ZoomControls({ home }: { home: Viewport }) {
   const { zoomIn, zoomOut, setViewport } = useReactFlow()
   return (
     <Panel position="bottom-right" className="zoomctl">
-      <button onClick={() => zoomIn({ duration: 160 })} title="Приблизить" aria-label="Приблизить">+</button>
-      <button onClick={() => zoomOut({ duration: 160 })} title="Отдалить" aria-label="Отдалить">−</button>
-      <button onClick={() => setViewport(home, { duration: 240 })} title="Сбросить масштаб" aria-label="Сбросить масштаб">⤢</button>
+      <button onClick={() => zoomIn({ duration: 160 })} title={t('Приблизить')} aria-label={t('Приблизить')}>+</button>
+      <button onClick={() => zoomOut({ duration: 160 })} title={t('Отдалить')} aria-label={t('Отдалить')}>−</button>
+      <button onClick={() => setViewport(home, { duration: 240 })} title={t('Сбросить масштаб')} aria-label={t('Сбросить масштаб')}>⤢</button>
     </Panel>
   )
 }
@@ -147,9 +150,9 @@ function SearchBox({ nodes, onPick, onHelp }: { nodes: SearchNode[]; onPick: (id
   }
   return (
     <>
-      <button className="help__btn" onClick={onHelp} title="Как читать карту" aria-label="Как читать карту">?</button>
+      <button className="help__btn" onClick={onHelp} title={t('Как читать карту')} aria-label={t('Как читать карту')}>?</button>
       {!open ? (
-        <button className="search__btn" data-tour="search" onClick={() => setOpen(true)} title="Поиск метрики" aria-label="Поиск метрики">
+        <button className="search__btn" data-tour="search" onClick={() => setOpen(true)} title={t('Поиск метрики')} aria-label={t('Поиск метрики')}>
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round">
             <circle cx="11" cy="11" r="7" /><path d="m20 20-3.2-3.2" />
           </svg>
@@ -160,13 +163,13 @@ function SearchBox({ nodes, onPick, onHelp }: { nodes: SearchNode[]; onPick: (id
             <circle cx="11" cy="11" r="7" /><path d="m20 20-3.2-3.2" />
           </svg>
           <input
-            autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Найти метрику…"
+            autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('Найти метрику…')}
             onKeyDown={(e) => {
               if (e.key === 'Escape') { setOpen(false); setQ('') }
               if (e.key === 'Enter' && matches[0]) pick(matches[0])
             }}
           />
-          <button className="search__x" onClick={() => { setOpen(false); setQ('') }} aria-label="Закрыть">✕</button>
+          <button className="search__x" onClick={() => { setOpen(false); setQ('') }} aria-label={t('Закрыть')}>✕</button>
           {matches.length > 0 && (
             <ul className="search__list">
               {matches.map((n) => (
@@ -177,7 +180,7 @@ function SearchBox({ nodes, onPick, onHelp }: { nodes: SearchNode[]; onPick: (id
               ))}
             </ul>
           )}
-          {query.length >= 2 && matches.length === 0 && <div className="search__empty">Ничего не найдено</div>}
+          {query.length >= 2 && matches.length === 0 && <div className="search__empty">{t('Ничего не найдено')}</div>}
         </div>
       )}
     </>
@@ -215,11 +218,12 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
   // Выбранный вопрос → пошаговая сборка листа на карте → сам лист.
   // ?dash=<id> — прямая ссылка на лист (ей делятся), ?dash=<id>&gen=0 — сразу лист без сборки.
   const dashParam = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null
-  const dashFromUrl = dashParam?.get('dash') ?? null
+  // Дашборды не переведены: в английской сборке их нет — ни кнопки, ни листа по ?dash=.
+  const dashFromUrl = LANG === 'en' ? null : dashParam?.get('dash') ?? null
   const [pickerOn, setPickerOn] = useState(false)
   const [bpId, setBpId] = useState<string | null>(() => (dashFromUrl && BLUEPRINTS[dashFromUrl] ? dashFromUrl : null))
   const [genStep, setGenStep] = useState(() => (dashFromUrl && BLUEPRINTS[dashFromUrl] ? 0 : -1)) // -1 = сборка не идёт
-  const [sheetOn, setSheetOn] = useState(() => dashParam?.get('gen') === '0')
+  const [sheetOn, setSheetOn] = useState(() => LANG !== 'en' && dashParam?.get('gen') === '0')
   // Метрика, на плитку которой навели в листе — подсвечиваем её на карте.
   const [dashHover, setDashHover] = useState<string | null>(null)
 
@@ -709,7 +713,7 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
   // Локально флаг не нужен: на своей машине кнопка есть по умолчанию, иначе про неё
   // забываешь и открываешь карту без дашбордов.
   const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)
-  const dashOn = local || dashParam?.get('dash') != null
+  const dashOn = LANG !== 'en' && (local || dashParam?.get('dash') != null)
   // Первый визит: тур запускается сам (один раз, помнится через localStorage).
   useEffect(() => {
     let done = false
@@ -725,40 +729,40 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
   const rq = (sel: string) => () => document.querySelector(sel)
   const tourSteps: TourStep[] = [
     {
-      title: 'Разберём карту за минуту',
-      body: <>Это карта метрик направления. Каждая карточка — один показатель, а стрелки между ними показывают, что на что влияет. Дальше — 6 коротких подсказок, как всё это читать. Закрыть можно в любой момент.</>,
+      title: t('Разберём карту за минуту'),
+      body: rich('Это карта метрик направления. Каждая карточка — один показатель, а стрелки между ними показывают, что на что влияет. Дальше — 6 коротких подсказок, как всё это читать. Закрыть можно в любой момент.'),
       anchor: rq('[data-tour="title"]'),
       before: () => setForceEdgeKey(null),
     },
     {
-      title: 'Цвет карточки = роль метрики',
-      body: <>Цвет говорит, <b>что это за метрика</b>: зелёная — результат, синяя — действие (на него можно влиять), красная — затраты, жёлтая — диагностика (наблюдаем, но не крутим). Нажмите роль в легенде — на карте подсветятся все метрики этого типа.</>,
+      title: t('Цвет карточки = роль метрики'),
+      body: rich('Цвет говорит, <b>что это за метрика</b>: зелёная — результат, синяя — действие (на него можно влиять), красная — затраты, жёлтая — диагностика (наблюдаем, но не крутим). Нажмите роль в легенде — на карте подсветятся все метрики этого типа.'),
       anchor: rq('[data-tour="legend"]'),
       before: () => setForceEdgeKey(null),
       pad: 6,
     },
     {
-      title: 'Ключевая метрика карты',
-      body: <>Самая важная метрика раздела помечена <b>короной и надписью «Ключевая»</b>. С неё удобнее всего начинать: смотрите, какие метрики влияют на неё, а на какие влияет она сама.</>,
+      title: t('Ключевая метрика карты'),
+      body: rich('Самая важная метрика раздела помечена <b>короной и надписью «Ключевая»</b>. С неё удобнее всего начинать: смотрите, какие метрики влияют на неё, а на какие влияет она сама.'),
       anchor: () => (keyNodeId ? document.querySelector(`.react-flow__node[data-id="${CSS.escape(keyNodeId)}"]`) : null),
       before: () => { setForceEdgeKey(null); if (keyNodeId) centerOn(keyNodeId) },
     },
     {
-      title: 'Стрелки — это связи, и они кликабельны',
-      body: <>Стрелка — <b>влияние</b> одной метрики на другую. Цвет = знак: зелёная «+» — прямая (растёт одна, растёт и другая), красная «−» — обратная. Пунктир — связь без влияния (просто наблюдение). Наведите на связь — появится «<b>i</b>». Нажмите — объясним простыми словами, почему прямая или обратная. Важно: связи взяты из методологии карт, <b>а не посчитаны на ваших данных</b>.</>,
+      title: t('Стрелки — это связи, и они кликабельны'),
+      body: rich('Стрелка — <b>влияние</b> одной метрики на другую. Цвет = знак: зелёная «+» — прямая (растёт одна, растёт и другая), красная «−» — обратная. Пунктир — связь без влияния (просто наблюдение). Наведите на связь — появится «<b>i</b>». Нажмите — объясним простыми словами, почему прямая или обратная. Важно: связи взяты из методологии карт, <b>а не посчитаны на ваших данных</b>.'),
       anchor: () => document.querySelector('.edge-info') ?? (keyNodeId ? document.querySelector(`.react-flow__node[data-id="${CSS.escape(keyNodeId)}"]`) : null),
       before: () => { if (demoEdge) centerOnEdge(demoEdge, 0); setForceEdgeKey(demoEdgeKey) },
       pad: 14,
     },
     {
-      title: 'Два вида карты',
-      body: <>«<b>Основное</b>» — только каркас: результаты и то, чем можно управлять. «<b>Полностью</b>» — все связи и диагностика. Начните с «Основного», а когда захотите деталей — переключите на «Полностью».</>,
+      title: t('Два вида карты'),
+      body: rich('«<b>Основное</b>» — только каркас: результаты и то, чем можно управлять. «<b>Полностью</b>» — все связи и диагностика. Начните с «Основного», а когда захотите деталей — переключите на «Полностью».'),
       anchor: rq('[data-tour="modes"]'),
       before: () => setForceEdgeKey(null),
     },
     {
-      title: 'Поиск и повтор подсказки',
-      body: <>Не видите нужную метрику — найдите её по названию через <b>поиск</b>. А кнопка «<b>?</b>» рядом откроет эти подсказки снова в любой момент.</>,
+      title: t('Поиск и повтор подсказки'),
+      body: rich('Не видите нужную метрику — найдите её по названию через <b>поиск</b>. А кнопка «<b>?</b>» рядом откроет эти подсказки снова в любой момент.'),
       anchor: rq('[data-tour="search"]'),
       before: () => setForceEdgeKey(null),
     },
@@ -800,15 +804,16 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
             <Background color="#C4CCD4" gap={22} size={1.6} />
             {/* Верх-лево — хлебная крошка: «Каталог» (карты и деревья вместе) › текущая карта. */}
             <Panel position="top-left" className="crumbs">
-              <button className="crumbs__back" onClick={onBack} title="Каталог" aria-label="Вернуться в каталог">Каталог</button>
+              <button className="crumbs__back" onClick={onBack} title={t('Каталог')} aria-label={t('Вернуться в каталог')}>{t('Каталог')}</button>
               <span className="crumbs__sep" aria-hidden>›</span>
               <span className="crumbs__cur" data-tour="title">{section}</span>
+              <SaveMark item={itemOfMap(section)} className="crumbs__save" />
             </Panel>
             {/* Верх-право — режим карты + утилиты (помощь · поиск). */}
             <Panel position="top-right" className="tools">
               <div className="seg" data-tour="modes">
-                <button className={mode === 'spine' ? 'is-active' : ''} onClick={() => setMode('spine')}>Основное</button>
-                <button className={mode === 'full' ? 'is-active' : ''} onClick={() => setMode('full')}>Полностью</button>
+                <button className={mode === 'spine' ? 'is-active' : ''} onClick={() => setMode('spine')}>{t('Основное')}</button>
+                <button className={mode === 'full' ? 'is-active' : ''} onClick={() => setMode('full')}>{t('Полностью')}</button>
               </div>
               <div className="util">
                 <SearchBox
@@ -865,10 +870,10 @@ export function MapView({ section, onBack }: { section: string; onBack: () => vo
         {selNodeObj && <NodeCard node={selNodeObj} siblings={siblings} onNavigate={focusNode} onClose={() => setSelNode(null)} />}
         {selEdge && <EdgeCard edge={selEdge} onClose={() => setSelEdge(null)} onNavigate={focusNode} />}
         {tourOn && keyNodeId && <Tour steps={tourSteps} onClose={() => closeTour()} />}
-        {pickerOn && (
+        {pickerOn && LANG !== 'en' && (
           <DashPicker section={section} onPick={startBlueprint} onClose={() => setPickerOn(false)} />
         )}
-        {blueprint && sheetOn && (
+        {blueprint && sheetOn && LANG !== 'en' && (
           <DashSheet bp={blueprint} onClose={closeBlueprint} onHoverNode={setDashHover} />
         )}
       </div>

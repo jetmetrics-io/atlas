@@ -1,5 +1,7 @@
 node_modules/
 dist/
+# английская сборка (Map Library): npm run build:en
+dist-en/
 *.tsbuildinfo
 .DS_Store
 

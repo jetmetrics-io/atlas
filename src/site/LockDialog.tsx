@@ -5,18 +5,13 @@
 import { useEffect, useState } from 'react'
 import { BASE } from '../atlas/atlas'
 import { BUY_URL, goTop } from './nav'
+import { t, plural } from '../i18n'
 
 const listeners = new Set<(v: boolean) => void>()
 
 /** Показать окно. Зовётся откуда угодно: каталог, справочник, карточка метрики. */
 export function openLockDialog() {
   listeners.forEach((fn) => fn(true))
-}
-
-function plural(n: number, one: string, few: string, many: string) {
-  const form = n % 10 === 1 && n % 100 !== 11 ? one
-    : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many
-  return `${n} ${form}`
 }
 
 /** Ставится один раз в корне приложения. */
@@ -47,12 +42,13 @@ export function LockDialogHost() {
             <rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" />
           </svg>
         </span>
-        <h3 id="lockdlg-h">Доступно в полной версии Атласа</h3>
-        <p>Бесплатно открыты {plural(maps, 'карта', 'карты', 'карт')} и дерево чистой прибыли.</p>
+        <h3 id="lockdlg-h">{t('Доступно в полной версии Атласа')}</h3>
+        <p>{t('Бесплатно открыты {maps} и дерево чистой прибыли.',
+          { maps: `${maps} ${plural(maps, ['карта', 'карты', 'карт'], ['map', 'maps'])}` })}</p>
         <div className="lockdlg__act">
-          <button type="button" className="lockdlg__btn" onClick={() => setOpen(false)}>Понятно</button>
+          <button type="button" className="lockdlg__btn" onClick={() => setOpen(false)}>{t('Понятно')}</button>
           <button type="button" className="lockdlg__btn lockdlg__btn--go" autoFocus
-            onClick={() => { setOpen(false); goTop(BUY_URL) }}>Узнать о полной версии</button>
+            onClick={() => { setOpen(false); goTop(BUY_URL) }}>{t('Узнать о полной версии')}</button>
         </div>
       </div>
     </div>

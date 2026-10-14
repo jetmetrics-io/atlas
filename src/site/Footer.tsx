@@ -1,3 +1,5 @@
+import { t } from '../i18n'
+
 export function Footer() {
   return (
     <footer className="ftr">
@@ -7,18 +9,18 @@ export function Footer() {
             <span className="logo__mark" style={{ width: 24, height: 24, fontSize: 14 }}>J</span>
             <span className="logo__word" style={{ fontSize: '.95rem' }}>Jet<b>Metrics</b></span>
           </span>
-          <span className="ftr__muted">Атлас метрик по отраслям</span>
+          <span className="ftr__muted">{t('Атлас метрик по отраслям')}</span>
         </div>
-        <span className="ftr__domain">джетметрикс.рф</span>
+        <span className="ftr__domain">{t('джетметрикс.рф')}</span>
         <div className="ftr__links">
-          <a>Методология</a>
-          <a>Тарифы</a>
-          <a>Контакты</a>
-          <a>Оферта</a>
+          <a>{t('Методология')}</a>
+          <a>{t('Тарифы')}</a>
+          <a>{t('Контакты')}</a>
+          <a>{t('Оферта')}</a>
         </div>
       </div>
       <div className="container" style={{ paddingBottom: 24 }}>
-        <span className="ftr__muted" style={{ fontSize: 12 }}>© 2026 JetMetrics · Причинно-следственные карты метрик</span>
+        <span className="ftr__muted" style={{ fontSize: 12 }}>{t('© 2026 JetMetrics · Причинно-следственные карты метрик')}</span>
       </div>
     </footer>
   )

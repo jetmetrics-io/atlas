@@ -350,8 +350,8 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
   display: grid; grid-template-columns: auto 1fr; column-gap: 8px; row-gap: 5px; align-items: start; }
 .panel__aka-tag { font-family: var(--jm-font-mono); font-size: 9px; letter-spacing: .06em; text-transform: uppercase;
   color: var(--jm-faint); border: 1px solid var(--jm-line); border-radius: 3px;
-  /* ширину задаёт самая длинная метка, короткая центруется в той же коробке */
-  min-width: 52px; padding: 2px 0; text-align: center; line-height: 1.4; position: relative; top: 1px; }
+  /* ширину задаёт самая длинная метка, короткая центруется в той же коробке; поля по бокам — для длинной английской «Also called» (14.10.2026) */
+  min-width: 52px; padding: 2px 6px; box-sizing: border-box; text-align: center; line-height: 1.4; position: relative; top: 1px; }
 .panel__aka-names { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .panel__aka-names span { overflow-wrap: break-word; }
 .panel__body { padding: var(--jm-space-5) var(--jm-space-6); overflow-y: auto; }

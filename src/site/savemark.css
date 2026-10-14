@@ -1,0 +1,11 @@
+/* Bookmark "save to Workspace" — same look as on the Workspace pages (workspace-home/ws.js) */
+.savemark {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; padding: 0; border: 0; border-radius: 8px;
+  background: none; color: #6B7372; cursor: pointer;
+}
+.savemark:hover { background: #F0F3F5; color: #20262E; }
+.savemark.is-on { color: #0E9C7D; }
+.savemark svg { display: block; }
+.mcard .mcard__save { position: absolute; right: 10px; bottom: 10px; }
+.crumbs .crumbs__save { margin-left: 4px; width: 28px; height: 28px; }
