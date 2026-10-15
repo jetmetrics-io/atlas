@@ -11,6 +11,11 @@ import { resolveEmail, isPaid } from './site/access'
 import { workspacePaid, paidRoot, paidInit } from './site/paidData'
 import type { AtlasBase } from './atlas/types'
 import { t, LANG } from './i18n'
+// Map Library inside Workspace: where the screen is (the host page tells it, site/hostView.ts)
+import './site/hostView'
+
+// Английская сборка (Map Library): своя вёрстка для телефона — правила html.jm-en в index.css.
+if (LANG === 'en') document.documentElement.classList.add('jm-en')
 
 const root = ReactDOM.createRoot(document.getElementById('root')!)
 

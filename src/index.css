@@ -988,3 +988,40 @@ html.jm-embed, html.jm-embed body, html.jm-embed #root { height: auto; }
 .rth-q__f button { border: 0; background: none; padding: 0 2px; cursor: pointer; color: var(--jm-faint); font-size: 14px; line-height: 1; }
 .rth-q__f button:hover { color: var(--jm-ink); }
 
+/* ── Map Library (английская сборка) ──
+   Русская сборка этих правил не видит: html.jm-ws ставит site/hostView.ts (английская сборка
+   внутри Workspace на jetmetrics.io), html.jm-en — main.tsx (любая английская сборка). */
+
+/* Страница Workspace растит iframe под содержимое, поэтому 100vh внутри — высота самого iframe,
+   а не экрана: карта уходила под фиксированную шапку сайта и за нижний край окна. Страница сообщает
+   высоту видимой части под шапкой (jm-atlas-view → --jm-host-vh), карта и дерево берут ровно её,
+   iframe подстраивается под них — легенда, миниатюра и масштаб на экране. Пока сообщения нет — 100vh. */
+html.jm-ws .mapscreen,
+html.jm-ws .tree { height: var(--jm-host-vh, 100vh); }
+
+/* Окно «Доступно в полной версии» — посреди видимой части, а не посреди высокого iframe
+   (top задаёт LockDialog.tsx). Затемнение по-прежнему на весь iframe. */
+.lockdlg--at { display: block; }
+.lockdlg--at .lockdlg__box { position: absolute; left: 50%; transform: translate(-50%, -50%); width: min(380px, calc(100% - 32px)); }
+
+/* Телефон и узкое окно: на карте крошка «Catalog › карта» и переключатель Essentials/Full
+   с поиском не помещаются в одну строку — переключатель закрывал название карты. Инструменты
+   уходят второй строкой под крошку; крошка не шире экрана (длинное название — с многоточием);
+   карточка метрики и связи (и карточка в Словаре) — не шире экрана, вкладки карточки с замками
+   помещаются в ширину телефона; подсказки легенды открываются над (i), а не правее
+   края, и не раздвигают страницу вбок; миниатюры нет — на узком экране она ложилась на легенду,
+   кнопки масштаба опускаются в угол. */
+@media (max-width: 720px) {
+  html.jm-en .react-flow__panel.crumbs { max-width: calc(100% - 30px); }
+  html.jm-en .react-flow__panel.tools { top: 54px; max-width: calc(100% - 30px); }
+  html.jm-en .mapscreen .panel { width: min(420px, 100%); }
+  html.jm-en .panel.panel--ref { width: min(420px, 100vw); }
+  html.jm-en .panel__tabs { padding: 0 var(--jm-space-4); gap: 0; }
+  html.jm-en .panel__tab { padding-left: 6px; padding-right: 6px; }
+  html.jm-en .legend__tip { left: auto; right: -6px; top: auto; bottom: calc(100% + 8px); transform: translateY(4px); }
+  html.jm-en .legend__info:hover .legend__tip,
+  html.jm-en .legend__info:focus-visible .legend__tip { transform: none; }
+  html.jm-en .mapcanvas { overflow: hidden; }
+  html.jm-en .mapscreen .react-flow__minimap { display: none; }
+  html.jm-en .mapscreen .zoomctl { margin-bottom: 15px; }
+}
