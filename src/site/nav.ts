@@ -20,7 +20,8 @@ const SITE = IS_EN ? (import.meta.env.VITE_SITE || 'https://jetmetrics.io') : 'h
 // Один адрес каталога Атласа: сборка одна, гейт — внутри приложения по факту оплаты.
 // «Назад» с любой карты ведёт сюда; что покажется (3 или 28 карт) решает уже сам Атлас.
 export const CATALOG_PAGE = IS_EN ? `${SITE}/workspace-map-library` : `${SITE}/hub-atlas`
-export const BUY_URL = IS_EN ? `${SITE}/map` : `${SITE}/atlas`
+// EN: straight to the plans on the landing (15.10.2026); RU — unchanged
+export const BUY_URL = IS_EN ? `${SITE}/map#pricing` : `${SITE}/atlas`
 
 // Адрес страницы карты на Тильде собирается из slug'а карты в Базе: `hub-atlas-<slug>`.
 // Все страницы встраивают ОДНУ сборку Атласа; бесплатные карты (finansy/lidogeneraciya/
