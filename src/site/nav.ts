@@ -22,6 +22,8 @@ const SITE = IS_EN ? (import.meta.env.VITE_SITE || 'https://jetmetrics.io') : 'h
 export const CATALOG_PAGE = IS_EN ? `${SITE}/workspace-map-library` : `${SITE}/hub-atlas`
 // EN: straight to the plans on the landing (15.10.2026); RU — unchanged
 export const BUY_URL = IS_EN ? `${SITE}/map#pricing` : `${SITE}/atlas`
+// EN: страница алгоритмов Map Library (22.10.2026), алгоритм — ?a=<id>; в русской сборке не используется
+export const ALGORITHM_PAGE = `${SITE}/workspace-map-library-algorithms`
 
 // Адрес страницы карты на Тильде собирается из slug'а карты в Базе: `hub-atlas-<slug>`.
 // Все страницы встраивают ОДНУ сборку Атласа; бесплатные карты (finansy/lidogeneraciya/

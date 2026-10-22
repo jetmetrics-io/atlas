@@ -25,7 +25,7 @@ export const EN: Record<string, string> = {
   'АТЛАС МЕТРИК': 'MAP LIBRARY',
   'Карты метрик <ac>по направлениям</ac>': 'Metric maps <ac>by business area</ac>',
   'Выберите направление. Внутри карта показателей: что на что влияет, прямо или обратно, и на какие рычаги вы реально можете нажать.':
-    'Pick a business area. Each map shows which metrics affect which, directly or inversely, and which levers you can actually pull.',
+    'Pick a business area. Each map shows which metrics affect which, directly or inversely, and which levers you can actually pull. Algorithms walk you through a drop step by step.',
   'Справочник <ac>метрик</ac>': 'Metrics <ac>glossary</ac>',
   'Все {count} Атласа: что показывает каждая, как её считать и в каких картах и деревьях она стоит.':
     'All {count} in Map Library: what each one shows, how to calculate it, and which maps and trees it appears in.',
@@ -33,12 +33,14 @@ export const EN: Record<string, string> = {
   'Всё': 'All',
   'Карты': 'Maps',
   'Деревья': 'Trees',
+  'Алгоритмы': 'Algorithms',
   'Справочник метрик': 'Metrics glossary',
   'В атласе': 'In Map Library',
   'категорий': 'categories',
   'карт': 'maps',
   'дерево': 'tree',
   'деревьев': 'trees',
+  'алгоритмов': 'algorithms',
   'метрик': 'metrics',
   'Обновлено {date}': 'Updated {date}',
   'Открыто бесплатно': 'Free access',
@@ -51,6 +53,8 @@ export const EN: Record<string, string> = {
   'Карта': 'Map',
   'Бесплатно': 'Free',
   '{n} метрик': '{n} metrics',
+  'Алгоритм': 'Algorithm',
+  '{n} шагов': '{n} steps',
 
   // ── Поиск по каталогу ──
   'Поиск по картам, деревьям и метрикам': 'Search maps, trees, and metrics',

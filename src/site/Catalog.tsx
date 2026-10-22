@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { families as allFamilies, sectionsOfFamily, treesOfFamily, BASE, PAID, isSectionFree } from '../atlas/atlas'
 import { refMetrics, refReady, onRefReady } from '../atlas/reference'
-import { EMBED, goTop, mapPageUrl } from './nav'
+import { EMBED, goTop, mapPageUrl, ALGORITHM_PAGE } from './nav'
+import { ALGORITHMS, type Algorithm } from './algorithms'
 import { Search } from './Search'
 import { Reference } from './Reference'
 import { openLockDialog } from './LockDialog'
@@ -65,7 +66,8 @@ export function Catalog({ onOpen, onOpenTree }: {
 
   // Фильтр каталога: карты и деревья читаются по-разному, и человек обычно приходит
   // за чем-то одним. Витрину бесплатного фильтр разбирает вместе с группами.
-  const [kindFilter, setKindFilter] = useState<'all' | 'map' | 'tree'>('all')
+  // Алгоритмы (EN, 22.10.2026) — третий тип: у русского Атласа их нет, и вкладки не будет.
+  const [kindFilter, setKindFilter] = useState<'all' | 'map' | 'tree' | 'algo'>('all')
   // Справочник метрик — рядом с фильтром отдельной кнопкой, а не четвёртым значением
   // фильтра: метрика не тип артефакта (решение Марии 29.09.2026). Шапка, поиск и строка
   // фильтра при переключении остаются на месте — меняется только то, что под ними.
@@ -82,13 +84,15 @@ export function Catalog({ onOpen, onOpenTree }: {
     if (inRef && openMid != null) url.searchParams.set('metric', String(openMid)); else url.searchParams.delete('metric')
     window.history.replaceState(null, '', url.toString())
   }, [inRef, openMid])
-  const showMaps = kindFilter !== 'tree'
-  const showTrees = kindFilter !== 'map'
+  const showMaps = kindFilter === 'all' || kindFilter === 'map'
+  const showTrees = kindFilter === 'all' || kindFilter === 'tree'
+  const showAlgos = kindFilter === 'all' || kindFilter === 'algo'
 
   const stats: [string, string][] = [
     [String(families.length), t('категорий')],
     [String(totalMaps), t('карт')],
     [String(trees.length), trees.length === 1 ? t('дерево') : t('деревьев')],
+    ...(ALGORITHMS.length ? [[String(ALGORITHMS.length), t('алгоритмов')] as [string, string]] : []),
     // все метрики Атласа — и неоплатившему: справочник показывает ему все, и лендинг обещает все
     [String(refCount), t('метрик')],
   ]
@@ -162,6 +166,23 @@ export function Catalog({ onOpen, onOpenTree }: {
     )
   }
 
+  // Вкладки фильтра; «Алгоритмы» — только там, где они есть (английская сборка)
+  const kinds: ['all' | 'map' | 'tree' | 'algo', string, number][] = [
+    ['all', t('Всё'), totalMaps + trees.length + ALGORITHMS.length],
+    ['map', t('Карты'), totalMaps],
+    ['tree', t('Деревья'), trees.length],
+    ...(ALGORITHMS.length ? [['algo', t('Алгоритмы'), ALGORITHMS.length] as ['algo', string, number]] : []),
+  ]
+
+  // Карточка алгоритма: открывает его страницу Workspace (своего вида в приложении у алгоритма нет).
+  const algoCard = (a: Algorithm) => (
+    <div key={'algo-' + a.id} className="mcard" onClick={() => goTop(`${ALGORITHM_PAGE}?a=${a.id}`)}>
+      <span className="mcard__kind">{t('Алгоритм')}</span>
+      <div className="mcard__nm">{a.name}</div>
+      <div className="mcard__meta">{t('{n} шагов', { n: a.steps })}</div>
+    </div>
+  )
+
   return (
     <div className="catalog">
       <div className="container">
@@ -191,9 +212,7 @@ export function Catalog({ onOpen, onOpenTree }: {
 
             <div className="catalog__views">
               <div className="kindbar" role="group" aria-label={t('Что показывать')}>
-                {([['all', t('Всё'), totalMaps + trees.length],
-                   ['map', t('Карты'), totalMaps],
-                   ['tree', t('Деревья'), trees.length]] as const).map(([k, label, n]) => (
+                {kinds.map(([k, label, n]) => (
                   <button key={k} type="button"
                     className={'kindbar__b' + (!inRef && kindFilter === k ? ' is-on' : '')}
                     aria-pressed={!inRef && kindFilter === k}
@@ -253,7 +272,8 @@ export function Catalog({ onOpen, onOpenTree }: {
         {!inRef && families.map((fam) => {
           const secs = showMaps ? sectionsOfFamily(fam) : []
           const fTrees = showTrees ? treesOfFamily(fam) : []
-          if (!secs.length && !fTrees.length) return null
+          const fAlgos = showAlgos ? ALGORITHMS.filter((a) => a.family === fam.key) : []
+          if (!secs.length && !fTrees.length && !fAlgos.length) return null
           return (
             <section className="family" key={fam.key}>
               <div className="family__head">
@@ -269,6 +289,7 @@ export function Catalog({ onOpen, onOpenTree }: {
               <div className="mapgrid">
                 {fTrees.map((t) => card(t, 'tree'))}
                 {secs.map((s) => card(s))}
+                {fAlgos.map(algoCard)}
               </div>
             </section>
           )
