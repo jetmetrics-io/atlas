@@ -174,11 +174,16 @@ export function Catalog({ onOpen, onOpenTree }: {
     ...(ALGORITHMS.length ? [['algo', t('Алгоритмы'), ALGORITHMS.length] as ['algo', string, number]] : []),
   ]
 
+  // Название метрики в имени алгоритма — зелёным, как акцент в заголовках (Мария, 23.10.2026).
+  const accented = (name: string, accent: string) => {
+    const i = accent ? name.indexOf(accent) : -1
+    return i < 0 ? name : <>{name.slice(0, i)}<span className="ac">{accent}</span>{name.slice(i + accent.length)}</>
+  }
   // Карточка алгоритма: открывает его страницу Workspace (своего вида в приложении у алгоритма нет).
   const algoCard = (a: Algorithm) => (
     <div key={'algo-' + a.id} className="mcard" onClick={() => goTop(`${ALGORITHM_PAGE}?a=${a.id}`)}>
       <span className="mcard__kind">{t('Алгоритм')}</span>
-      <div className="mcard__nm">{a.name}</div>
+      <div className="mcard__nm">{accented(a.name, a.accent)}</div>
       <div className="mcard__meta">{t('{n} шагов', { n: a.steps })}</div>
     </div>
   )

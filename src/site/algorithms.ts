@@ -7,14 +7,15 @@ import { LANG } from '../i18n'
 // site/workspace-map-library-algorithms/), в каталоге — карточкой в своей категории.
 // В русском Атласе алгоритмов нет: список пуст, русская сборка не меняется.
 // Добавили алгоритм на сайте — допишите строку сюда; число шагов — из его data/index.json.
-export type Algorithm = { id: string; name: string; family: string; steps: number }
+// accent — the metric in the name, set in green on the catalog card (Maria, 23.10.2026)
+export type Algorithm = { id: string; name: string; accent: string; family: string; steps: number }
 
 export const ALGORITHMS: Algorithm[] = LANG === 'en'
   ? [
-      { id: 'cr', name: 'Why did Conversion Rate drop?', family: 'ecom', steps: 13 },
-      { id: 'aov', name: 'Why did AOV drop?', family: 'ecom', steps: 10 },
-      { id: 'key', name: 'Pick your North Star metric', family: 'ecom', steps: 13 },
-      { id: 'ltv', name: 'Why did LTV drop?', family: 'customers', steps: 27 },
-      { id: 'arpc', name: 'Why did ARPC drop?', family: 'customers', steps: 12 },
+      { id: 'cr', name: 'Why did Conversion Rate drop?', accent: 'Conversion Rate', family: 'ecom', steps: 13 },
+      { id: 'aov', name: 'Why did AOV drop?', accent: 'AOV', family: 'ecom', steps: 10 },
+      { id: 'key', name: 'Pick your North Star metric', accent: 'North Star metric', family: 'ecom', steps: 13 },
+      { id: 'ltv', name: 'Why did LTV drop?', accent: 'LTV', family: 'customers', steps: 27 },
+      { id: 'arpc', name: 'Why did ARPC drop?', accent: 'ARPC', family: 'customers', steps: 12 },
     ]
   : []
