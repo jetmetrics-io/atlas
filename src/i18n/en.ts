@@ -16,10 +16,10 @@ export const EN: Record<string, string> = {
   'Контакты': 'Contact',
   'Оферта': 'Terms',
   '© 2026 JetMetrics · Причинно-следственные карты метрик': '© 2026 JetMetrics · Cause-and-effect metric maps',
-  'Доступно в полной версии Атласа': 'Available in the full version of Map Library',
-  'Бесплатно открыты {maps} и дерево чистой прибыли.': 'Free access includes {maps}.',
+  'Доступно в полной версии Атласа': 'Part of the JetMetrics Workspace subscription',
+  'Бесплатно открыты {maps} и дерево чистой прибыли.': 'Free with your account: {maps}. All the other maps, the driver trees and the diagnostic algorithms come with the subscription: $9 a month, the first week free.',
   'Понятно': 'Got it',
-  'Узнать о полной версии': 'Learn about the full version',
+  'Узнать о полной версии': 'About the subscription',
 
   // ── Каталог ──
   'АТЛАС МЕТРИК': 'MAP LIBRARY',
@@ -48,7 +48,7 @@ export const EN: Record<string, string> = {
   'доступны': 'are',
   'доступно': 'is',
   'доступна': 'is',
-  'Открыть все карты': 'Unlock all maps',
+  'Открыть все карты': 'Subscription',
   'Дерево': 'Tree',
   'Карта': 'Map',
   'Бесплатно': 'Free',

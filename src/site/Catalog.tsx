@@ -132,6 +132,19 @@ export function Catalog({ onOpen, onOpenTree }: {
     onOpen(name, nodeId)
   }
 
+  // Замок-чип: в покое — только иконка; на ховере раскрывается в «Открыть все карты».
+  // Абсолютное позиционирование → раскрытие НЕ меняет высоту карточки.
+  const lockChip = (
+    <span className="mcard__lock" aria-label={t('Открыть все карты')}>
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none"
+        stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="5" y="11" width="14" height="9" rx="2" />
+        <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+      </svg>
+      <span className="mcard__lock-txt">{t('Открыть все карты')}</span>
+    </span>
+  )
+
   // Одна карточка каталога. showIndex — моно-индекс в углу (только оплатившим).
   const card = (s: Sec, kind: 'map' | 'tree' = 'map') => {
     const tree = kind === 'tree'
@@ -143,18 +156,7 @@ export function Catalog({ onOpen, onOpenTree }: {
     return (
       <div key={s.slug} className={cls}
         onClick={() => (locked ? openLockDialog() : tree ? onOpenTree(s.slug) : openCard(s.name))}>
-        {locked ? (
-          // Замок-чип: в покое — только иконка; на ховере раскрывается в «Открыть все карты».
-          // Абсолютное позиционирование → раскрытие НЕ меняет высоту карточки.
-          <span className="mcard__lock" aria-label={t('Открыть все карты')}>
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none"
-              stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="5" y="11" width="14" height="9" rx="2" />
-              <path d="M8 11V8a4 4 0 0 1 8 0v3" />
-            </svg>
-            <span className="mcard__lock-txt">{t('Открыть все карты')}</span>
-          </span>
-        ) : null}
+        {locked ? lockChip : null}
         <span className="mcard__kind">{tree ? t('Дерево') : t('Карта')}</span>
         {!PAID && free && <span className="mcard__badge">{t('Бесплатно')}</span>}
         <div className="mcard__nm">{s.name}</div>
@@ -180,8 +182,11 @@ export function Catalog({ onOpen, onOpenTree }: {
     return i < 0 ? name : <>{name.slice(0, i)}<span className="ac">{accent}</span>{name.slice(i + accent.length)}</>
   }
   // Карточка алгоритма: открывает его страницу Workspace (своего вида в приложении у алгоритма нет).
+  // Алгоритмы — только по подписке: без неё замок и то же окно, что у закрытых карт (23.10.2026).
   const algoCard = (a: Algorithm) => (
-    <div key={'algo-' + a.id} className="mcard" onClick={() => goTop(`${ALGORITHM_PAGE}?a=${a.id}`)}>
+    <div key={'algo-' + a.id} className={'mcard' + (PAID ? '' : ' mcard--locked')}
+      onClick={() => (PAID ? goTop(`${ALGORITHM_PAGE}?a=${a.id}`) : openLockDialog())}>
+      {PAID ? null : lockChip}
       <span className="mcard__kind">{t('Алгоритм')}</span>
       <div className="mcard__nm">{accented(a.name, a.accent)}</div>
       <div className="mcard__meta">{t('{n} шагов', { n: a.steps })}</div>
