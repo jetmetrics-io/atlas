@@ -52,6 +52,7 @@ export const EN: Record<string, string> = {
   'Дерево': 'Tree',
   'Карта': 'Map',
   'Бесплатно': 'Free',
+  'Первый шаг бесплатно': 'First step free',
   '{n} метрик': '{n} metrics',
   'Алгоритм': 'Algorithm',
   '{n} шагов': '{n} steps',

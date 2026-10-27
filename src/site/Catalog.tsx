@@ -182,12 +182,13 @@ export function Catalog({ onOpen, onOpenTree }: {
     return i < 0 ? name : <>{name.slice(0, i)}<span className="ac">{accent}</span>{name.slice(i + accent.length)}</>
   }
   // Карточка алгоритма: открывает его страницу Workspace (своего вида в приложении у алгоритма нет).
-  // Алгоритмы — только по подписке: без неё замок и то же окно, что у закрытых карт (23.10.2026).
+  // Бесплатная версия (Мария, 27.10.2026): алгоритм CR — целиком, у остальных — первый шаг, дальше
+  // по подписке; замок ставит сама страница алгоритма, поэтому карточка открывается всем.
   const algoCard = (a: Algorithm) => (
-    <div key={'algo-' + a.id} className={'mcard' + (PAID ? '' : ' mcard--locked')}
-      onClick={() => (PAID ? goTop(`${ALGORITHM_PAGE}?a=${a.id}`) : openLockDialog())}>
-      {PAID ? null : lockChip}
+    <div key={'algo-' + a.id} className={'mcard' + (!PAID && a.free ? ' mcard--free' : '')}
+      onClick={() => goTop(`${ALGORITHM_PAGE}?a=${a.id}`)}>
       <span className="mcard__kind">{t('Алгоритм')}</span>
+      {!PAID && <span className="mcard__badge">{a.free ? t('Бесплатно') : t('Первый шаг бесплатно')}</span>}
       <div className="mcard__nm">{accented(a.name, a.accent)}</div>
       <div className="mcard__meta">{t('{n} шагов', { n: a.steps })}</div>
     </div>

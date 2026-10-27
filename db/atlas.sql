@@ -27352,7 +27352,7 @@ INSERT INTO artifact_en VALUES(26,'SEO',1,'paid','0607869e0556');
 INSERT INTO artifact_en VALUES(27,'Mobile app',1,'paid','f9886ca2bcdc');
 INSERT INTO artifact_en VALUES(28,'Referral program',1,'paid','b1d70dadee03');
 INSERT INTO artifact_en VALUES(38,'Revenue from repeat customers',1,'paid','c5c44dd1ef9d');
-INSERT INTO artifact_en VALUES(39,'Customer lifetime value (LTV)',1,'paid','cb3d6beedc9b');
+INSERT INTO artifact_en VALUES(39,'Customer lifetime value (LTV)',1,'free','cb3d6beedc9b');
 INSERT INTO artifact_en VALUES(40,'Lead-to-deal conversion',1,'paid','1bb8c71847ae');
 CREATE TABLE family_en (family_key text primary key, name text not null, blurb text);
 INSERT INTO family_en VALUES('marketing','Marketing','Acquisition channels: ads, content, search, email.');

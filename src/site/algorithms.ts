@@ -8,11 +8,12 @@ import { LANG } from '../i18n'
 // В русском Атласе алгоритмов нет: список пуст, русская сборка не меняется.
 // Добавили алгоритм на сайте — допишите строку сюда; число шагов — из его data/index.json.
 // accent — the metric in the name, set in green on the catalog card (Maria, 23.10.2026)
-export type Algorithm = { id: string; name: string; accent: string; family: string; steps: number }
+// free — бесплатно целиком (Мария, 27.10.2026: CR); у остальных без подписки бесплатен первый шаг
+export type Algorithm = { id: string; name: string; accent: string; family: string; steps: number; free?: boolean }
 
 export const ALGORITHMS: Algorithm[] = LANG === 'en'
   ? [
-      { id: 'cr', name: 'Why did Conversion Rate drop?', accent: 'Conversion Rate', family: 'ecom', steps: 13 },
+      { id: 'cr', name: 'Why did Conversion Rate drop?', accent: 'Conversion Rate', family: 'ecom', steps: 13, free: true },
       { id: 'aov', name: 'Why did AOV drop?', accent: 'AOV', family: 'ecom', steps: 10 },
       { id: 'key', name: 'Pick your North Star metric', accent: 'North Star metric', family: 'ecom', steps: 13 },
       { id: 'ltv', name: 'Why did LTV drop?', accent: 'LTV', family: 'customers', steps: 27 },
