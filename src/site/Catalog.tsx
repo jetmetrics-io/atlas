@@ -67,7 +67,11 @@ export function Catalog({ onOpen, onOpenTree }: {
   // Фильтр каталога: карты и деревья читаются по-разному, и человек обычно приходит
   // за чем-то одним. Витрину бесплатного фильтр разбирает вместе с группами.
   // Алгоритмы (EN, 22.10.2026) — третий тип: у русского Атласа их нет, и вкладки не будет.
-  const [kindFilter, setKindFilter] = useState<'all' | 'map' | 'tree' | 'algo'>('all')
+  // ?kind=algo (map, tree) opens that tab: the crumbs of an algorithm page lead to it (EN, 28.10.2026)
+  const [kindFilter, setKindFilter] = useState<'all' | 'map' | 'tree' | 'algo'>(() => {
+    const k = params().get('kind')
+    return k === 'map' || k === 'tree' || k === 'algo' ? k : 'all'
+  })
   // Справочник метрик — рядом с фильтром отдельной кнопкой, а не четвёртым значением
   // фильтра: метрика не тип артефакта (решение Марии 29.09.2026). Шапка, поиск и строка
   // фильтра при переключении остаются на месте — меняется только то, что под ними.
