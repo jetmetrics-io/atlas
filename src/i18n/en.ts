@@ -17,7 +17,7 @@ export const EN: Record<string, string> = {
   'Оферта': 'Terms',
   '© 2026 JetMetrics · Причинно-следственные карты метрик': '© 2026 JetMetrics · Cause-and-effect metric maps',
   'Доступно в полной версии Атласа': 'Part of the JetMetrics Workspace subscription',
-  'Бесплатно открыты {maps} и дерево чистой прибыли.': 'Free with your account: {maps}. All the other maps, the driver trees and the diagnostic algorithms come with the subscription: $9 a month, the first week free.',
+  'Бесплатно открыты {maps} и дерево чистой прибыли.': 'Free with your account: {maps}, the customer lifetime value (LTV) tree and the conversion rate (CR) algorithm; the other algorithms open their first step. Everything else comes with the subscription: $9 a month, the first week free.',
   'Понятно': 'Got it',
   'Узнать о полной версии': 'About the subscription',
 

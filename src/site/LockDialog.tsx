@@ -4,14 +4,23 @@
 // и оказывался на продающей странице, не понимая почему (решение Марии 29.09.2026).
 import { useEffect, useState } from 'react'
 import { BASE } from '../atlas/atlas'
-import { BUY_URL, goTop } from './nav'
-import { t, plural } from '../i18n'
+import { BUY_URL, EMBED, goTop } from './nav'
+import { t, plural, LANG } from '../i18n'
 import { useHostView } from './hostView'
 
 const listeners = new Set<(v: boolean) => void>()
 
-/** Показать окно. Зовётся откуда угодно: каталог, справочник, карточка метрики. */
+/** Показать окно. Зовётся откуда угодно: каталог, справочник, карточка метрики.
+ *  Map Library внутри Workspace (английская сборка в рамке сайта): окно подписки самого сайта — то же, что на всех
+ *  платных страницах: цена, «Start the free week» сразу на Gumroad с почтой входа, «I've subscribed» (Мария
+ *  28.10.2026: кнопка окна приложения уводила на лендинг /map). Нет доступа к странице сайта — своё окно. */
 export function openLockDialog() {
+  if (LANG === 'en' && EMBED) {
+    try {
+      const host = window.parent as Window & { JMPAID?: { offer?: () => void } }
+      if (host !== window && typeof host.JMPAID?.offer === 'function') { host.JMPAID.offer(); return }
+    } catch { /* сайт на другом адресе — окно приложения */ }
+  }
   listeners.forEach((fn) => fn(true))
 }
 
