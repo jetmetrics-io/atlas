@@ -203,7 +203,8 @@ export function Catalog({ onOpen, onOpenTree }: {
       <div className="container">
         <div className="catalog__top">
           <div className="catalog__hero">
-            <span className="eyebrow"><span className="line" />{t('АТЛАС МЕТРИК')}</span>
+            {/* EN in Workspace: the site's crumbs carry the way (My Workspace › Map Library), no label (28.10.2026) */}
+            {LANG !== 'en' && <span className="eyebrow"><span className="line" />{t('АТЛАС МЕТРИК')}</span>}
             {inRef ? (
               <>
                 <h1>{rich('Справочник <ac>метрик</ac>', { ac: (s) => <span className="ac">{s}</span> })}</h1>
